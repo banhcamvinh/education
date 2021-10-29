@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * { box-sizing: border-box; padding: 0; margin: 0; }
+        html, body { height: 100%; }
+        #chatBar {
+        padding: 20px 0;
+        height: 100vh;
+        background-color: white;
+        display: flex;
+        flex-flow: column;
+        }
+
+        #chatList {
+        flex: 1 1 20%;
+        display: flex;
+        flex-direction: column;
+        overflow-y: scroll;
+        }
+
+        #chatBarInput {
+        flex: 0 0 80%;
+        }
+
+        .chat {
+        /* flex: 1 1 auto; */
+        align-self: flex-end;
+        background-color: white;
+        border: solid black 2px;
+        color: hotpink;
+        border-radius: 5px;
+        padding: 5px 30px;
+        font-size: 30px;
+        margin: 10px 0;
+        }
+
+        .chat.mine {
+        align-self: flex-start;
+        color: black;
+        }
+        
+        a,input,span{
+            height: 50px;
+        }
+        a,span{
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 30px;
+            color: hotpink;
+            font-weight: bold;
+        }
+        a{
+            text-decoration: none;
+        }
+        input{
+            background-color: lavender;
+            padding-left: 20px;
+            font-size: 30px;
+        }
+
+    </style>
+</head>
+    <div id="chatBar">
+        <div id="chatList">
+            <div class="chat theirs">Xin chào ! Tôi là chat bot tôi có thể giúp gì cho bạn ?</div>
+          <!-- <div class="chat mine">hello world</div>
+          <div class="chat theirs">hello moon</div>
+          <div class="chat mine">still there?</div>
+          <div class="chat theirs">yes</div> -->
+        </div>
+    <input placeholder="Chat ở đây">
+    <span>Click to send</span>
+    <a href="">Quay về</a>
+    </div>
+
+    
+</body>
+<script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+<script>
+    let input = document.querySelector('input')
+    let button = document.querySelector('span')
+    let chatlistdiv = document.querySelector('#chatList')
+    button.addEventListener("click",sendmessage);
+    function sendmessage(){
+        message = input.value
+        if (message.length == 0){return;}
+        input.value=''
+        div = document.createElement('div')
+        div.className = "chat mine";
+        div.innerText = message
+        chatlistdiv.appendChild(div)
+        $.ajax({
+            url: '/chat',
+            type: "POST",
+            dataType: "json",
+            data: JSON.stringify({payload: message,}),
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            success: (data) => {
+                // console.log(data.message);
+                div = document.createElement('div')
+                div.className = "chat theirs";
+                div.innerText = data.message
+                chatlistdiv.appendChild(div)
+            },
+            error: (error) => {
+                console.log(error);
+            }
+        });
+    }
+    
+</script>
+</html>

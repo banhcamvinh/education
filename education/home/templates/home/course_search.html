@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% load static %}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>simplecode</title>
+    <link rel="stylesheet" href="{% static 'home/assets/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface&amp;display=swap">
+    <link rel="stylesheet" href="{% static 'home/assets/css/FontAwesome.css' %}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:400,600,800">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Condensed:400,400i,700,700i">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab:300,400&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700">
+    <link rel="stylesheet" href="{% static 'home/assets/fonts/fontawesome-all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/fonts/font-awesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/fonts/fontawesome5-overrides.min.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/--mp---Multiple-items-slider-responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/4-Col-Small-Slider.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/404-NOT-FOUND-animated.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Accordion-3338arvorept-1.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Accordion-3338arvorept.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/best-carousel-slide-1.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/best-carousel-slide.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Brands.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Features-Clean.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Footer-Dark.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Header-Blue.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Highlight-Phone.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.10.0/baguetteBox.min.css">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Lightbox-Gallery.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Ludens-Users---1-Login.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Ludens-Users---2-Register.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Media-Slider-Bootstrap-3-1.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Media-Slider-Bootstrap-3.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/MUSA_carousel-product-cart-sl' %ider-1.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/MUSA_carousel-product-cart-slider.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Navigation-with-Button.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Newsletter-Subscription-Form.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Pretty-Product-List.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Search-Input-Responsive-with-Icon.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/sticky-dark-top-nav.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Swipe-Slider-7.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Team-Boxed.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Testimonials.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Ultimate-Testimonial-Slider-BS5.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/User-Rating-F19690.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Video-Responsive-YouTube.css' %}">
+</head>
+
+<body>
+    <nav class="navbar navbar-light navbar-expand-md navigation-clean-button" style="/*position: sticky;*/background-color: hotpink;">
+        <div class="container"><a class="navbar-brand" data-bss-hover-animate="jello" href="/" style="transition: all ease 0.3s;/*height: auto;*/">&nbsp;<img src="{% static 'home/assets/img/newava.png' %}" style="width: 60px;height: 60px;">Simple Code</a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse d-lg-flex" id="navcol-1" style="height: 70px;">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="{% url 'home:course' %}" style="font-family: Roboto, sans-serif;font-weight: bold;">Khóa học</a></li>
+                    <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"></li>
+                    <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="#rating" style="font-family: Roboto, sans-serif;font-weight: bold;">Đánh giá</a></li>
+                    <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="#contact" style="font-family: Roboto, sans-serif;font-weight: bold;">Liên hệ</a></li>
+                    <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="home.html" style="font-family: Roboto, sans-serif;font-weight: bold;">Giỏ hàng</a></li>
+                </ul>
+                <!-- If đăng nhập rồi thì đổi thành nút đăng xuất -->
+                {% if request.session.username %}
+                <span class="navbar-text actions" data-bss-disabled-mobile="true" data-bss-hover-animate="swing"> <a class="btn btn-light text-uppercase action-button" role="button" href="{% url 'home:login' %}" style="margin-right: 10px;margin-left: 10px;background: rgba(10,10,9,0.51);">Đăng xuất</a></span>
+                <span class="navbar-text actions" data-bss-disabled-mobile="true" data-bss-hover-animate="swing"> <a class="btn btn-light text-uppercase action-button" role="button" href="#" style="margin-right: 10px;margin-left: 10px;background: rgba(10,10,9,0.51);">{{ request.session.username }}</a></span>
+                {% else %}
+                <span class="navbar-text actions" data-bss-disabled-mobile="true" data-bss-hover-animate="swing"> <a class="btn btn-light text-uppercase action-button" role="button" href="{% url 'home:login' %}" style="margin-right: 10px;margin-left: 10px;background: rgba(10,10,9,0.51);">Đăng nhập</a></span>
+                {% endif %}
+                
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-10 offset-md-1">
+                <div class="card m-auto" style="max-width:850px">
+                    <div class="card-body">
+                        <form class="d-flex align-items-center"><i class="fas fa-search d-none d-sm-block h4 text-body m-0"></i>
+                        <input class="form-control form-control-lg flex-shrink-1 form-control-borderless" type="text" placeholder="Nhập tên khóa học" name="searchbar" value="{{searchkey}}">
+                        <a href="javascript: void(0)" onclick="submitForms()" class="btn btn-success btn-lg" data-bss-disabled-mobile="true" data-bss-hover-animate="pulse" style="color: rgb(255, 255, 255);background: rgb(255,105,180);border-style: none;border-top-color: rgb(255,;border-right-color: 255,;border-bottom-color: 255);border-left-color: 255,;">Search</a></form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <p style="font-size: 30px;margin-top: 16px;">Có {{count}} kết quả cho từ khóa "{{searchkey}}"</p>
+            </div>
+            <div class="col d-flex justify-content-around align-items-center">
+                    <a href="javascript: void(0)" onclick="submitForms('viewmost')" style="color: white;text-decoration: snow;padding: 5px 10px;background-color: hotpink;">Xem nhiều</a>
+                    <a href="javascript: void(0)" onclick="submitForms('enrollmost')"  style="color: white;text-decoration: snow;padding: 5px 10px;background-color: hotpink;">Bán chạy</a>
+                    <a href="javascript: void(0)" onclick="submitForms('newest')"  style="color: white;text-decoration: snow;padding: 5px 10px;background-color: hotpink;">Mới nhất</a>
+                    <a href="javascript: void(0)" onclick="submitForms('toprating')"  style="color: white;text-decoration: snow;padding: 5px 10px;background-color: hotpink;">Đánh giá cao</a>
+                    <a href="javascript: void(0)" onclick="submitForms('cheapest')"  style="color: white;text-decoration: snow;padding: 5px 10px;background-color: hotpink;">Giá thấp</a></div>
+
+                </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <form method="get" id="leftform" >
+
+                    {% for el in filter_value_list %}
+                        {% if el in filter_checked %}
+                        <input style="display: none;" type="radio" name="filter" value="{{el}}" checked>
+                        {% else %}
+                        <input style="display: none;" type="radio" name="filter" value="{{el}}">
+                        {% endif %}
+                    {% endfor %}
+
+                    <input type="text" value="{{searchkey}}" name='searchkey' style="display: none;">
+                    <input type="text" value="{{cur_page}}" name='page' style="display: none;">
+                    
+                    <h1>Bộ lọc</h1>
+                    <div class="row">
+                        <div class="col">
+                            <h1 style="font-size: 20px;">Giá tiền</h1>
+                            {% for el in price_value_list %}
+                                {% if el in price_checked_list %}
+                                <div class="form-check"><input class="form-check-input" name= "price" value="{{ el }}" type="checkbox" id="formCheck-1" checked><label class="form-check-label" for="formCheck-1">{{el}}</label></div>
+                                {% else %}
+                                <div class="form-check"><input class="form-check-input" name= "price" value="{{ el }}" type="checkbox" id="formCheck-1"><label class="form-check-label" for="formCheck-1">{{el}}</label></div>
+                                {% endif %}
+                            {% endfor %}
+                            <!-- <div class="form-check"><input class="form-check-input" name= "price" value="free" type="checkbox" id="formCheck-1"><label class="form-check-label" for="formCheck-1">Có phí</label></div>
+                            <div class="form-check"><input class="form-check-input" name= "price" value="fee" type="checkbox" id="formCheck-2"><label class="form-check-label" for="formCheck-1">Miễn phí</label></div> -->
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <h1 style="font-size: 20px;">Đánh giá</h1>
+                            {% for el in rating_value_list %}
+                                {% if el == rating_checked %}
+                                <div class="form-check"><input class="form-check-input" name="rating" value="{{el}}" type="radio" id="formCheck-3" checked><label class="form-check-label" for="formCheck-1">>= {{el}} sao<br></label></div>
+                                {% else %}
+                                <div class="form-check"><input class="form-check-input" name="rating" value="{{el}}" type="radio" id="formCheck-3"><label class="form-check-label" for="formCheck-1">>= {{el}} sao<br></label></div>
+                                {% endif %}
+                            {% endfor %}
+                            <!-- <div class="form-check"><input class="form-check-input" name="rating" value="1" type="radio" id="formCheck-3"><label class="form-check-label" for="formCheck-1">trên một sao<br></label></div>
+                            <div class="form-check"><input class="form-check-input" name="rating" value="2" type="radio" id="formCheck-4"><label class="form-check-label" for="formCheck-1">trên hai sao</label></div>
+                            <div class="form-check"><input class="form-check-input" name="rating" value="3" type="radio" id="formCheck-7"><label class="form-check-label" for="formCheck-1">trên ba sao</label></div>
+                            <div class="form-check"><input class="form-check-input" name="rating" value="4" type="radio" id="formCheck-6" checked><label class="form-check-label" for="formCheck-1">trên bốn sao</label></div> -->
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <h1 style="font-size: 20px;">Danh mục</h1>
+                            {% for el in category_value_list %}
+                                {% if el in category_checked_list %}
+                                <div class="form-check"><input class="form-check-input" type="checkbox" name="category" value="{{el}}" id="formCheck-12" checked><label class="form-check-label" for="formCheck-1">{{el}}<br></label></div>
+                                {% else %}
+                                <div class="form-check"><input class="form-check-input" type="checkbox" name="category" value="{{el}}" id="formCheck-12"><label class="form-check-label" for="formCheck-1">{{el}}<br></label></div>
+                    
+                                {% endif %}
+                            {% endfor %}
+                            <!-- <div class="form-check"><input class="form-check-input" type="checkbox" id="formCheck-12"><label class="form-check-label" for="formCheck-1">Front-end<br></label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="formCheck-13"><label class="form-check-label" for="formCheck-1">Back-end</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="formCheck-14"><label class="form-check-label" for="formCheck-1">Data Engineer</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="formCheck-15"><label class="form-check-label" for="formCheck-1">Data Sciene</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="formCheck-16"><label class="form-check-label" for="formCheck-1">AI</label></div> -->
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <h1 style="font-size: 20px;">Cấp độ</h1>
+                            {% for el in level_value_list %}
+                                {% if el in level_checked_list %}
+                                <div class="form-check"><input class="form-check-input" name="level" value="{{el}}" type="checkbox" id="formCheck-17" checked><label class="form-check-label" for="formCheck-1">{{el}}<br></label></div>
+                                {% else %}
+                                <div class="form-check"><input class="form-check-input" name="level" value="{{el}}" type="checkbox" id="formCheck-17"><label class="form-check-label" for="formCheck-1">{{el}}<br></label></div>      
+                                {% endif %}
+                            {% endfor %}
+                            <!-- <div class="form-check"><input class="form-check-input" name="level" value="hihi" type="checkbox" id="formCheck-17"><label class="form-check-label" for="formCheck-1">Cơ bản<br></label></div>
+                            <div class="form-check"><input class="form-check-input" name="level" value="hihi" type="checkbox" id="formCheck-18"><label class="form-check-label" for="formCheck-1">&nbsp;Vừa phải</label></div>
+                            <div class="form-check"><input class="form-check-input" name="level" value="hihi" type="checkbox" id="formCheck-21"><label class="form-check-label" for="formCheck-1">Chuyên nghiệp</label></div> -->
+                        </div>
+                    </div>
+                    <br>
+                    <button id="filter_btn">Lọc thôi</button>
+                </form>
+            </div>
+            <div class="col-md-8" style="/*border: 1px solid;*/">
+                {% for el in course_list %}
+                <div class="row" style="border: 1px solid black;/*border-left: 1px solid;*/">
+                    <div class="col d-flex justify-content-center align-items-center"><img src="{% static 'home/assets/img/desk.jpg'%}" style="width: 200px;height: 120px;"></div>
+                    <div class="col" style="/*border-left: 1px solid black;*/"><a href="/course_overview/{{el.id}}" style="text-decoration: none;color: black;">
+                            <p style="font-size: 20px;font-weight: bold;margin-bottom: 0;">{{ el.name }}</p>
+                            <p style="margin-bottom: 0;">{{el.content}}</p><span>{{ el.num_of_view }} views&nbsp;</span>
+                            <span>
+                                {% with ''|center:el.star as range %}
+                                    {% if not range %}
+                                        <i class="fa fa-star" style="color: rgb(228, 228, 228);"></i>
+                                        <i class="fa fa-star" style="color: rgb(228, 228, 228);"></i>
+                                        <i class="fa fa-star" style="color: rgb(228, 228, 228);"></i>
+                                        <i class="fa fa-star" style="color: rgb(228, 228, 228);"></i>
+                                        <i class="fa fa-star" style="color: rgb(228, 228, 228);"></i>
+                                        
+                                    {% endif %}
+                                    {% for _ in range %}
+                                        <i class="fa fa-star" style="color: rgb(187, 154, 5)"></i>
+                                    {% endfor %}
+                                {% endwith %}
+                                <!-- <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i> -->
+                            </span>
+                            <!-- <p style="margin-bottom: 0;">3 hour - 10 lesson</p> -->
+                            <span>{{ el.price }} VNĐ</span>
+                            <!-- <span style="text-decoration: line-through;">&nbsp; 100000 vnd</span> -->
+                        </a></div>
+                </div>
+                {% endfor %}
+                <!-- <div class="row" style="border: 1px solid black;/*border-left: 1px solid;*/">
+                    <div class="col d-flex justify-content-center align-items-center"><img src="{% static 'home/assets/img/desk.jpg'%}" style="width: 200px;height: 120px;"></div>
+                    <div class="col" style="/*border-left: 1px solid black;*/"><a href="#" style="text-decoration: none;color: black;">
+                            <p style="font-size: 20px;font-weight: bold;margin-bottom: 0;">Python cơ bản</p>
+                            <p style="margin-bottom: 0;">Nội dung giới thiệu khóa học</p><span>1000views&nbsp;</span><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span>
+                            <p style="margin-bottom: 0;">3 hour - 10 lesson</p><span>100000 vnd</span><span style="text-decoration: line-through;">&nbsp; 100000 vnd</span>
+                        </a></div>
+                </div>
+                <div class="row" style="border: 1px solid black;/*border-left: 1px solid;*/">
+                    <div class="col d-flex justify-content-center align-items-center"><img src="{% static 'home/assets/img/desk.jpg'%}" style="width: 200px;height: 120px;"></div>
+                    <div class="col" style="/*border-left: 1px solid black;*/"><a href="#" style="text-decoration: none;color: black;">
+                            <p style="font-size: 20px;font-weight: bold;margin-bottom: 0;">Python cơ bản</p>
+                            <p style="margin-bottom: 0;">Nội dung giới thiệu khóa học</p><span>1000views&nbsp;</span><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span>
+                            <p style="margin-bottom: 0;">3 hour - 10 lesson</p><span>100000 vnd</span><span style="text-decoration: line-through;">&nbsp; 100000 vnd</span>
+                        </a></div>
+                </div>
+                <div class="row" style="border: 1px solid black;/*border-left: 1px solid;*/">
+                    <div class="col d-flex justify-content-center align-items-center"><img src="{% static 'home/assets/img/desk.jpg'%}" style="width: 200px;height: 120px;"></div>
+                    <div class="col" style="/*border-left: 1px solid black;*/"><a href="#" style="text-decoration: none;color: black;">
+                            <p style="font-size: 20px;font-weight: bold;margin-bottom: 0;">Python cơ bản</p>
+                            <p style="margin-bottom: 0;">Nội dung giới thiệu khóa học</p><span>1000views&nbsp;</span><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span>
+                            <p style="margin-bottom: 0;">3 hour - 10 lesson</p><span>100000 vnd</span><span style="text-decoration: line-through;">&nbsp; 100000 vnd</span>
+                        </a></div>
+                </div>
+                <div class="row" style="border: 1px solid black;/*border-left: 1px solid;*/">
+                    <div class="col d-flex justify-content-center align-items-center"><img src="{% static 'home/assets/img/desk.jpg'%}" style="width: 200px;height: 120px;"></div>
+                    <div class="col" style="/*border-left: 1px solid black;*/"><a href="#" style="text-decoration: none;color: black;">
+                            <p style="font-size: 20px;font-weight: bold;margin-bottom: 0;">Python cơ bản</p>
+                            <p style="margin-bottom: 0;">Nội dung giới thiệu khóa học</p><span>1000views&nbsp;</span><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span>
+                            <p style="margin-bottom: 0;">3 hour - 10 lesson</p><span>100000 vnd</span><span style="text-decoration: line-through;">&nbsp; 100000 vnd</span>
+                        </a></div>
+                </div>
+                <div class="row" style="border: 1px solid black;/*border-left: 1px solid;*/">
+                    <div class="col d-flex justify-content-center align-items-center"><img src="{% static 'home/assets/img/desk.jpg'%}" style="width: 200px;height: 120px;"></div>
+                    <div class="col" style="/*border-left: 1px solid black;*/"><a href="#" style="text-decoration: none;color: black;">
+                            <p style="font-size: 20px;font-weight: bold;margin-bottom: 0;">Python cơ bản</p>
+                            <p style="margin-bottom: 0;">Nội dung giới thiệu khóa học</p><span>1000views&nbsp;</span><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span>
+                            <p style="margin-bottom: 0;">3 hour - 10 lesson</p><span>100000 vnd</span><span style="text-decoration: line-through;">&nbsp; 100000 vnd</span>
+                        </a></div>
+                </div>
+                <div class="row" style="border: 1px solid black;/*border-left: 1px solid;*/">
+                    <div class="col d-flex justify-content-center align-items-center"><img src="{% static 'home/assets/img/desk.jpg'%}" style="width: 200px;height: 120px;"></div>
+                    <div class="col" style="/*border-left: 1px solid black;*/"><a href="#" style="text-decoration: none;color: black;">
+                            <p style="font-size: 20px;font-weight: bold;margin-bottom: 0;">Python cơ bản</p>
+                            <p style="margin-bottom: 0;">Nội dung giới thiệu khóa học</p><span>1000views&nbsp;</span><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span>
+                            <p style="margin-bottom: 0;">3 hour - 10 lesson</p><span>100000 vnd</span><span style="text-decoration: line-through;">&nbsp; 100000 vnd</span>
+                        </a></div>
+                </div>
+                <div class="row" style="border: 1px solid black;/*border-left: 1px solid;*/">
+                    <div class="col d-flex justify-content-center align-items-center"><img src="{% static 'home/assets/img/desk.jpg'%}" style="width: 200px;height: 120px;"></div>
+                    <div class="col" style="/*border-left: 1px solid black;*/"><a href="#" style="text-decoration: none;color: black;">
+                            <p style="font-size: 20px;font-weight: bold;margin-bottom: 0;">Python cơ bản</p>
+                            <p style="margin-bottom: 0;">Nội dung giới thiệu khóa học</p><span>1000views&nbsp;</span><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span>
+                            <p style="margin-bottom: 0;">3 hour - 10 lesson</p><span>100000 vnd</span><span style="text-decoration: line-through;">&nbsp; 100000 vnd</span>
+                        </a></div>
+                </div>
+                <div class="row" style="border: 1px solid black;/*border-left: 1px solid;*/">
+                    <div class="col d-flex justify-content-center align-items-center"><img src="{% static 'home/assets/img/desk.jpg'%}" style="width: 200px;height: 120px;"></div>
+                    <div class="col" style="/*border-left: 1px solid black;*/"><a href="#" style="text-decoration: none;color: black;">
+                            <p style="font-size: 20px;font-weight: bold;margin-bottom: 0;">Python cơ bản</p>
+                            <p style="margin-bottom: 0;">Nội dung giới thiệu khóa học</p><span>1000views&nbsp;</span><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span>
+                            <p style="margin-bottom: 0;">3 hour - 10 lesson</p><span>100000 vnd</span><span style="text-decoration: line-through;">&nbsp; 100000 vnd</span>
+                        </a></div>
+                </div>
+                <div class="row" style="border: 1px solid black;/*border-left: 1px solid;*/">
+                    <div class="col d-flex justify-content-center align-items-center"><img src="{% static 'home/assets/img/desk.jpg'%}" style="width: 200px;height: 120px;"></div>
+                    <div class="col" style="/*border-left: 1px solid black;*/"><a href="#" style="text-decoration: none;color: black;">
+                            <p style="font-size: 20px;font-weight: bold;margin-bottom: 0;">Python cơ bản</p>
+                            <p style="margin-bottom: 0;">Nội dung giới thiệu khóa học</p><span>1000views&nbsp;</span><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span>
+                            <p style="margin-bottom: 0;">3 hour - 10 lesson</p><span>100000 vnd</span><span style="text-decoration: line-through;">&nbsp; 100000 vnd</span>
+                        </a></div>
+                </div>
+                <div class="row" style="border: 1px solid black;/*border-left: 1px solid;*/">
+                    <div class="col d-flex justify-content-center align-items-center"><img src="{% static 'home/assets/img/desk.jpg'%}" style="width: 200px;height: 120px;"></div>
+                    <div class="col" style="/*border-left: 1px solid black;*/"><a href="#" style="text-decoration: none;color: black;">
+                            <p style="font-size: 20px;font-weight: bold;margin-bottom: 0;">Python cơ bản</p>
+                            <p style="margin-bottom: 0;">Nội dung giới thiệu khóa học</p><span>1000views&nbsp;</span><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span>
+                            <p style="margin-bottom: 0;">3 hour - 10 lesson</p><span>100000 vnd</span><span style="text-decoration: line-through;">&nbsp; 100000 vnd</span>
+                        </a></div>
+                </div> -->
+                <nav class="d-flex justify-content-center align-items-center">
+                    <ul class="pagination">
+                        <li class="page-item"><a class="page-link" onclick="submitForms({{pre_page}})" href="javascript: void(0)" aria-label="Previous"><span aria-hidden="true">«</span></a></li>
+                        {% for el in page_value_list %}
+                            {% if el == cur_page %}
+                            <li class="page-item"><a class="page-link" onclick="submitForms({{el}})" style="color: hotpink;" href="javascript: void(0)">{{el}}</a></li>
+                            {% else %}
+                            <li class="page-item"><a class="page-link" onclick="submitForms({{el}})" href="javascript: void(0)">{{el}}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        <li class="page-item"><a class="page-link" onclick="submitForms({{nex_page}})" href="javascript: void(0)" aria-label="Next"><span aria-hidden="true">»</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <footer id="contact" class="footer-dark" style="background: rgb(255,105,180);color: rgb(255,255,255);padding-bottom: 10px;">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-6 col-md-3 item">
+                    <h3>Simple Code</h3>
+                    <ul>
+                        <li><a href="#"><i class="fa fa-envelope-o"></i>&nbsp; simplecodecodesimple@gmail.com</a></li>
+                        <li><a href="https://www.youtube.com/channel/UCIyQPdxwhuLv0GaEXI5kOjA"><i class="fa fa-youtube-play"></i>&nbsp; Simple Code Channel</a></li>
+                        <li><a href="https://www.facebook.com/simplecodechanel/"><i class="fa fa-facebook-square"></i>&nbsp; Simple Code Fanpage</a></li>
+                    </ul>
+                </div>
+                <div class="col-sm-6 col-md-3 item">
+                    <h3>Mentor</h3>
+                    <ul>
+                        <li><a href="#"><i class="fa fa-envelope-o"></i>&nbsp; banhcamvinh121@gmail.com</a></li>
+                        <li></li>
+                        <li><a href="https://www.facebook.com/bcviuppl/"><i class="fa fa-facebook-square"></i>&nbsp; Cẩm Vỉnh</a></li>
+                        <li><a href="https://github.com/banhcamvinh"><i class="fa fa-github"></i>&nbsp; Github</a></li>
+                        <li><a href="https://www.linkedin.com/in/banhcamvinh/"><i class="fa fa-linkedin-square"></i>&nbsp; Linkedin</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-6 item text" style="margin-bottom: 0px;">
+                    <p></p>
+                    <section class="newsletter-subscribe" style="padding-top: 20px;padding-bottom: 20px;border-radius: 15px;">
+                        <div class="container">
+                            <div class="intro">
+                                <h2 class="text-center">Đăng ký email để nhận thông tin và ưu đãi mới nhất</h2>
+                            </div>
+                            <form class="d-flex justify-content-center flex-wrap" method="post" action="{% url 'home:subscribe' %}">
+                                {% csrf_token %} 
+                                <div class="mb-3"><input class="form-control" type="email" name="email" placeholder="Your Email" required></div>
+                                <div class="mb-3"><button class="btn btn-primary" type="submit">Subscribe </button></div>
+                            </form>
+                        </div>
+                    </section>
+                </div>
+            </div>
+            <p class="copyright">Simple Code © 2021</p>
+        </div>
+    </footer>
+    <script src="{% static 'home/assets/bootstrap/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'home/assets/js/bs-init.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.10.0/baguetteBox.min.js"></script>
+    <script src="{% static 'home/assets/js/--mp---Multiple-items-slider-responsive-1.js' %}"></script>
+    <script src="{% static 'home/assets/js/--mp---Multiple-items-slider-responsive.js' %}"></script>
+    <script src="{% static 'home/assets/js/Accordion-3338arvorept.js' %}"></script>
+    <script src="{% static 'home/assets/js/Counting.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick.js"></script>
+    <script src="https://code.jquery.com/jquery-2.2.0.min.js&quot; type=&quot;text/javascript"></script>
+    <script src="{% static 'home/assets/js/Lightbox-Gallery.js' %}"></script>
+    <script src="{% static 'home/assets/js/Media-Slider-Bootstrap-3.js' %}"></script>
+    <script src="{% static 'home/assets/js/Swipe-Slider-7.js' %}"></script>
+    <script src="{% static 'home/assets/js/Ultimate-Testimonial-Slider-BS5.js' %}"></script>
+</body>
+<script>
+    let search_bar = document.querySelector('input[name="searchbar"]')
+    search_bar.addEventListener("input", function() {
+        searchkey = document.querySelector('input[name="searchkey"]')
+        searchkey.setAttribute("value",search_bar.value)
+    });
+    submitForms = function(filter){
+        if (Number.isInteger(filter)){
+            page = document.querySelector('input[name="page"]')
+            page.setAttribute("value",filter)
+        }
+        else{
+            target = document.querySelector("input[value="+filter+"]")
+            if (target != null){
+            target.checked =true
+            }
+        }
+        document.getElementById("leftform").submit();
+    }
+</script>
+
+</html>

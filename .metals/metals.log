@@ -1,0 +1,15 @@
+[0m2021.10.12 22:25:18 INFO  Started: Metals version 0.10.7 in workspace 'C:\Users\ROG\Desktop\education' for client Visual Studio Code 1.61.0.[0m
+[0m2021.10.12 22:25:19 INFO  time: initialize in 0.48s[0m
+[0m2021.10.12 22:25:19 WARN  Build server is not auto-connectable.[0m
+[0m2021.10.12 22:25:19 WARN  no build tool detected in workspace 'C:\Users\ROG\Desktop\education'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. [0m
+[0m2021.10.16 19:13:50 INFO  Started: Metals version 0.10.7 in workspace 'C:\Users\ROG\Desktop\education' for client Visual Studio Code 1.61.0.[0m
+[0m2021.10.16 19:13:51 INFO  time: initialize in 0.92s[0m
+[0m2021.10.16 19:13:56 WARN  Build server is not auto-connectable.[0m
+[0m2021.10.16 19:13:56 WARN  no build tool detected in workspace 'C:\Users\ROG\Desktop\education'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. [0m
+Oct 16, 2021 7:18:08 PM org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint notify
+INFO: Unsupported notification method: $/setTrace
+[0m2021.10.16 19:58:36 INFO  shutting down Metals[0m
+[0m2021.10.22 18:49:35 INFO  Started: Metals version 0.10.7 in workspace 'C:\Users\ROG\Desktop\education' for client Visual Studio Code 1.61.2.[0m
+[0m2021.10.22 18:49:35 INFO  time: initialize in 0.62s[0m
+[0m2021.10.22 18:49:36 WARN  Build server is not auto-connectable.[0m
+[0m2021.10.22 18:49:36 WARN  no build tool detected in workspace 'C:\Users\ROG\Desktop\education'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. [0m

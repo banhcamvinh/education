@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>simplecode</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:400,600,800">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Condensed:400,400i,700,700i">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab:300,400&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{% static 'home/assets/fonts/fontawesome5-overrides.min.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/--mp---Multiple-items-slider-responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/4-Col-Small-Slider.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/404-NOT-FOUND-animated.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/best-carousel-slide-1.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/best-carousel-slide.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Brands.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Features-Clean.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Footer-Dark.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Header-Blue.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Highlight-Phone.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.10.0/baguetteBox.min.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Lightbox-Gallery.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Ludens-Users---1-Login.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Ludens-Users---2-Register.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Media-Slider-Bootstrap-3-1.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Media-Slider-Bootstrap-3.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/MUSA_carousel-product-cart-slider-1.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/MUSA_carousel-product-cart-slider.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Navigation-with-Button.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Newsletter-Subscription-Form.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Pretty-Product-List.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Search-Input-Responsive-with-Icon.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/sticky-dark-top-nav.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Swipe-Slider-7.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Team-Boxed.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Testimonials.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Ultimate-Testimonial-Slider-BS5.css' %}">
+</head>
+
+<body>
+    <nav class="navbar navbar-light navbar-expand-md navigation-clean-button" style="/*position: sticky;*/background-color: hotpink;">
+        <div class="container"><a class="navbar-brand" data-bss-hover-animate="jello" href="/" style="transition: all ease 0.3s;/*height: auto;*/">&nbsp;<img src="{% static 'home/assets/img/newava.png' %}" style="width: 60px;height: 60px;">Simple Code</a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse d-lg-flex" id="navcol-1" style="height: 70px;">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="{% url 'home:course' %}" style="font-family: Roboto, sans-serif;font-weight: bold;">Khóa học</a></li>
+                    <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"></li>
+                    <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="#rating" style="font-family: Roboto, sans-serif;font-weight: bold;">Đánh giá</a></li>
+                    <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="#contact" style="font-family: Roboto, sans-serif;font-weight: bold;">Liên hệ</a></li>
+                    <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="home.html" style="font-family: Roboto, sans-serif;font-weight: bold;">Giỏ hàng</a></li>
+                </ul>
+                <!-- If đăng nhập rồi thì đổi thành nút đăng xuất -->
+                {% if request.session.username %}
+                <span class="navbar-text actions" data-bss-disabled-mobile="true" data-bss-hover-animate="swing"> <a class="btn btn-light text-uppercase action-button" role="button" href="{% url 'home:login' %}" style="margin-right: 10px;margin-left: 10px;background: rgba(10,10,9,0.51);">Đăng xuất</a></span>
+                <span class="navbar-text actions" data-bss-disabled-mobile="true" data-bss-hover-animate="swing"> <a class="btn btn-light text-uppercase action-button" role="button" href="#" style="margin-right: 10px;margin-left: 10px;background: rgba(10,10,9,0.51);">{{ request.session.username }}</a></span>
+                {% else %}
+                <span class="navbar-text actions" data-bss-disabled-mobile="true" data-bss-hover-animate="swing"> <a class="btn btn-light text-uppercase action-button" role="button" href="{% url 'home:login' %}" style="margin-right: 10px;margin-left: 10px;background: rgba(10,10,9,0.51);">Đăng nhập</a></span>
+                {% endif %}
+                
+            </div>
+        </div>
+    </nav>
+    <header class="header-blue" style="color: black;padding-bottom: 50px;padding-top: 10px;">
+        <div class="container hero" style="margin-top: 0px;padding-top: 30px;">
+            <div class="row">
+                <div class="col-12 col-lg-6 col-xl-5 offset-xl-1" style="color: black;">
+                    <h1 class="text-start">Lập trình cùng Simple Code</h1>
+                    <p>Đào tạo tư duy và kỹ năng lập trình từ cơ bản đến nâng cao, theo lộ trình chuyên nghiệp, giúp bạn có năng lực toàn diện, sẵn sàng làm việc ngay tại doanh nghiệp.<br><br></p><a href="course.html" style="transition: all ease 0.4s;border-radius: 15px;text-decoration: none;color: rgb(255,255,255);background: #ff69b4;padding-top: 10px;padding-bottom: 10px;padding-right: 30px;padding-left: 30px;">Tìm hiểu thêm</a>
+                </div>
+                <div class="col-md-5 col-lg-5 offset-lg-1 offset-xl-0 d-none d-lg-block phone-holder">
+                    <div class="phone-mockup"><img class="device" src="{% static 'home/assets/img/phone.svg' %}">
+                        <div class="screen"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <section class="features-clean" style="background: rgb(255,105,180);color: white;padding-bottom: 50px;padding-top: 10px;">
+        <div class="container">
+            <div class="intro">
+                <h2 class="text-center">Tại sao bạn nên lựa chọn Simple Code&nbsp;</h2>
+            </div>
+            <div class="row flex-row flex-sm-column align-content-sm-center flex-md-column flex-lg-row features">
+                <div class="col-sm-6 col-lg-4 item"><i class="fa fa-male icon" style="/*color: #0000ff;*/"></i>
+                    <h3 class="name">Giảng viên</h3>
+                    <p class="description">Kiến thức chuyên sâu, nhiều kinh nghiệm<br>Kĩ năng sư phajm tốt, truyền đạt kiến thức một cách dễ hiểu<br>Tận tâm, hỗ trợ học viên</p>
+                </div>
+                <div class="col-sm-6 col-lg-4 item"><i class="fa fa-clock-o icon"></i>
+                    <h3 class="name">Lịch học</h3>
+                    <p class="description">Lịch học linh động, sắp xếp phù hợp, khoa học<br>Nhiều khóa học, lớp học diễn ra giúp bạn dễ dàng lựa chọn</p>
+                </div>
+                <div class="col-sm-6 col-lg-4 item"><i class="fa fa-list-alt icon"></i>
+                    <h3 class="name">Lộ trình học</h3>
+                    <p class="description">Lộ trình học bài bản, thực tế<br>Lý thuyết song song với thực hành các dự án thực tế, rèn luyện kĩ năng mềm và chuyên môn</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <h1 id="course" style="text-align: center;padding-top: 50px;padding-bottom: 50px;background: #ffffff;margin-bottom: 0;">KHÓA HỌC NỔI BẬT</h1>
+    <div class="carousel slide" data-bs-ride="carousel" data-bs-interval="10000" id="carousel-t" style="background: rgb(255,255,255);height: 600px;">
+        <div class="carousel-inner">
+            <!-- <div class="carousel-item active">
+                <div class="col-9 text-center d-flex flex-column justify-content-end align-items-center mx-auto testimonial-content"><img class="rounded-circle" src="{% static 'home/assets/img/Testimonial%20male%20white.svg' %}" width="100">
+                    <p class="text-center rating" style="background: rgb(255,105,180);">5&nbsp;<i class="fa fa-star"></i></p><a href="#" style="padding: 10px 30px;text-decoration: none;background: #ff69b4;color: white;border-radius: 15px;margin: 10px 0px;">Chi tiết khóa học</a>
+                    <p class="text-center" style="background: rgba(0,0,0,0.58);color: rgb(255,255,255);width: 50%;margin-bottom: 0;padding-top: 10px;padding-bottom: 10px;padding-right: 0;padding-left: 0;"><em>Đây là khóa học Python</em><br><em>Khóa học abc</em><br><em>khóa học Xyz</em><br><em>Khóa học XYZABCDEF</em></p>
+                </div>
+            </div> -->
+            {% if course_info_lst %}
+            {% for el in course_info_lst %}
+                {% if el == course_info_lst.0 %}
+            <div class="carousel-item active">
+                {% else %}
+            <div class="carousel-item">
+                {% endif %}
+                <div class="col-9 text-center d-flex flex-column justify-content-end align-items-center mx-auto testimonial-content"><img class="rounded-circle" src="{% static 'home/assets/img/Testimonial%20male%20white.svg' %}" width="100">
+                    <p class="text-center rating" style="background: rgb(255,105,180);">{{el.course_rating}}&nbsp;<i class="fa fa-star"></i></p><a href="#" style="padding: 10px 30px;text-decoration: none;background: #ff69b4;color: white;border-radius: 15px;margin: 10px 0px;">Chi tiết khóa học</a>
+                    <p class="text-center" style="background: rgba(0,0,0,0.58);color: rgb(255,255,255);width: 50%;margin-bottom: 0;padding-top: 10px;padding-bottom: 10px;padding-right: 0;padding-left: 0;"><em>{{el.course_name}}</em><br><em>{{el.course_content}}</em></p>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+            <!-- <div class="carousel-item">
+                <div class="col-9 text-center d-flex flex-column justify-content-end align-items-center mx-auto testimonial-content"><img class="rounded-circle" src="{% static 'home/assets/img/Testimonial%20male%20white.svg' %}" width="100">
+                    <p class="text-center rating" style="background: rgb(255,105,180);">5&nbsp;<i class="fa fa-star"></i></p><a href="#" style="padding: 10px 30px;text-decoration: none;background: #ff69b4;color: white;border-radius: 15px;margin: 10px 0px;">Chi tiết khóa học</a>
+                    <p class="text-center" style="background: rgba(0,0,0,0.58);color: rgb(255,255,255);width: 50%;margin-bottom: 0;padding-top: 10px;padding-bottom: 10px;padding-right: 0;padding-left: 0;"><em>Đây là khóa học Python</em><br><em>Khóa học abc</em><br><em>khóa học Xyz</em><br><em>Khóa học XYZABCDEF</em></p>
+                </div>
+            </div>
+            <div class="carousel-item">
+                <div class="col-9 text-center d-flex flex-column justify-content-end align-items-center mx-auto testimonial-content"><img class="rounded-circle" src="{% static 'home/assets/img/Testimonial%20male%20white.svg' %}" width="100">
+                    <p class="text-center rating" style="background: rgb(255,105,180);">5&nbsp;<i class="fa fa-star"></i></p><a href="#" style="padding: 10px 30px;text-decoration: none;background: #ff69b4;color: white;border-radius: 15px;margin: 10px 0px;">Chi tiết khóa học</a>
+                    <p class="text-center" style="background: rgba(0,0,0,0.58);color: rgb(255,255,255);width: 50%;margin-bottom: 0;padding-top: 10px;padding-bottom: 10px;padding-right: 0;padding-left: 0;"><em>Đây là khóa học Python</em><br><em>Khóa học abc</em><br><em>khóa học Xyz</em><br><em>Khóa học XYZABCDEF</em></p>
+                </div>
+            </div> -->
+        </div>
+        <div style="background: #ffffff;"><a class="carousel-control-prev" href="#carousel-t" role="button" data-bs-slide="prev" style="background: #ffffff;"><span class="carousel-control-prev-icon" style="background: #ffffff;color: rgb(0,0,0);font-weight: bold;font-size: 30px;">&lt;</span><span class="visually-hidden">Previous</span></a><a class="carousel-control-next" href="#carousel-t" role="button" data-bs-slide="next" style="background: #ffffff;"><span class="carousel-control-next-icon" style="background: #ffffff;color: rgb(0,0,0);font-size: 30px;font-weight: bold;">&gt;</span><span class="visually-hidden">Next</span></a></div>
+        <ol class="carousel-indicators" style="margin-bottom: 0px;background: rgba(255,255,255,0);width: auto;margin-right: 0;margin-left: 0;">
+            {% if course_info_lst %}
+            {% for el in course_info_lst %}
+                {% if el == course_info_lst.0 %}
+                <li data-bs-target="#carousel-t" data-bs-slide-to="{{ forloop.counter0 }}" class="active" ></li>
+                {% else %}
+                <li data-bs-target="#carousel-t" data-bs-slide-to="{{ forloop.counter0 }}" ></li>
+                {% endif %}
+            <!-- <li data-bs-target="#carousel-t" data-bs-slide-to="0" class="active"></li>
+            <li data-bs-target="#carousel-t" data-bs-slide-to="1" ></li>
+            <li data-bs-target="#carousel-t" data-bs-slide-to="2" ></li>
+            <li data-bs-target="#carousel-t" data-bs-slide-to="3" ></li> -->
+            {% endfor %}
+            {% endif %}
+        </ol>
+    </div>
+    <section id="mentor" class="team-boxed" style="background: hotpink;">
+        <div class="container">
+            <div class="intro">
+                <h2 class="text-center" style="color: rgb(255,255,255);">Mentor</h2>
+                <p class="text-center" style="font-weight: bold;color: rgb(255,255,255);">Hi! Mình là Cẩm Vỉnh<br>Lập trình là một thứ gì đó rất thú vị và đối với mình nó rất hấp dẫn.<br>Mong muốn của mình là giúp đỡ các bạn mới tiếp xúc với con đường lập trình một cách tốt nhất, hiệu quả nhất.</p>
+            </div>
+            <div class="row justify-content-center people">
+                <div class="col-md-6 col-lg-4 item">
+                    <div class="box"><img class="rounded-circle" src="{% static 'home/assets/img/camvinh.jpg' %}">
+                        <h3 class="name">Cẩm Vỉnh</h3>
+                        <p class="title">Data engineer</p>
+                        <p class="description">Tốt nghiệp CNTT trường Học viện Công nghệ Bưu chính Viễn Thông<br>Founder Simple Code Youtube Channel<br>Data Engineer</p>
+                        <div class="social"><a href="https://www.facebook.com/bcviuppl/"><i class="fa fa-facebook-official"></i></a><a href="https://github.com/banhcamvinh"><i class="fa fa-github"></i></a><a href="https://www.instagram.com/cvinh_/?hl=vi"><i class="fa fa-instagram"></i></a><a href="https://www.linkedin.com/in/banhcamvinh/"><i class="fa fa-linkedin-square"></i></a><a href="https://www.youtube.com/channel/UCIyQPdxwhuLv0GaEXI5kOjA"><i class="fa fa-youtube-play"></i></a></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section id="rating" class="testimonials-clean">
+        <div class="container">
+            <div class="intro">
+                <h2 class="text-center">CẢM NHẬN CỦA HỌC VIÊN</h2>
+            </div>
+            <div class="row people" style="padding-top: 10px;">
+                <div class="col-md-6 col-lg-4 item" data-bss-disabled-mobile="true" data-bss-hover-animate="pulse">
+                    <div class="box">
+                        <p class="description" style="user-select: none;">Thầy dạy kĩ, giảng dạy để hiểu bản chất nên có thể nhớ lâu. Tâm huyết nhiệt tình, tận tình, vui tính nên rất được lòng các học viên :v</p>
+                    </div>
+                    <div class="author"><img class="rounded-circle" src="{% static 'home/assets/img/1.jpg' %}">
+                        <h5 class="name">Ben Johnson</h5>
+                        <p class="title">CEO of Company Inc.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 item" data-bss-disabled-mobile="true" data-bss-hover-animate="pulse">
+                    <div class="box" style="/*pointer-events: cursor;*/user-select: none;">
+                        <p class="description">Thầy rất tâm huyết và dễ hiểu. Lớp học hòa đồng. Các bạn mất gốc nên đăng ký học nha 😄Đáng đồng tiền bát gạo à 😂😂😂</p>
+                    </div>
+                    <div class="author"><img class="rounded-circle" src="{% static 'home/assets/img/3.jpg' %}">
+                        <h5 class="name">Carl Kent</h5>
+                        <p class="title">Founder of Style Co.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 item" data-bss-disabled-mobile="true" data-bss-hover-animate="pulse">
+                    <div class="box">
+                        <p class="description" style="user-select: none;">Đã theo dõi trung tâm trước đó ở youtube. Thấy trung tâm dạy rất chu đáo và nhiệt tình nên tìm hiểu để đi học.</p>
+                    </div>
+                    <div class="author"><img class="rounded-circle" src="{% static 'home/assets/img/2.jpg' %}">
+                        <h5 class="name">Emily Clark</h5>
+                        <p class="title">Owner of Creative Ltd.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 item" data-bss-disabled-mobile="true" data-bss-hover-animate="pulse">
+                    <div class="box" style="/*pointer-events: cursor;*/user-select: none;">
+                        <p class="description">Thầy rất tâm huyết và dễ hiểu. Lớp học hòa đồng. Các bạn mất gốc nên đăng ký học nha 😄Đáng đồng tiền bát gạo à 😂😂😂</p>
+                    </div>
+                    <div class="author"><img class="rounded-circle" src="{% static 'home/assets/img/3.jpg' %}">
+                        <h5 class="name">Carl Kent</h5>
+                        <p class="title">Founder of Style Co.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 item" data-bss-disabled-mobile="true" data-bss-hover-animate="pulse">
+                    <div class="box">
+                        <p class="description" style="user-select: none;">Đã theo dõi trung tâm trước đó ở youtube. Thấy trung tâm dạy rất chu đáo và nhiệt tình nên tìm hiểu để đi học.</p>
+                    </div>
+                    <div class="author"><img class="rounded-circle" src="{% static 'home/assets/img/2.jpg' %}">
+                        <h5 class="name">Emily Clark</h5>
+                        <p class="title">Owner of Creative Ltd.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 item" data-bss-disabled-mobile="true" data-bss-hover-animate="pulse">
+                    <div class="box">
+                        <p class="description" style="user-select: none;">Thầy dạy kĩ, giảng dạy để hiểu bản chất nên có thể nhớ lâu. Tâm huyết nhiệt tình, tận tình, vui tính nên rất được lòng các học viên :v</p>
+                    </div>
+                    <div class="author"><img class="rounded-circle" src="{% static 'home/assets/img/1.jpg' %}">
+                        <h5 class="name">Ben Johnson</h5>
+                        <p class="title">CEO of Company Inc.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <footer id="contact" class="footer-dark" style="background: rgb(255,105,180);color: rgb(255,255,255);padding-bottom: 10px;">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-6 col-md-3 item">
+                    <h3>Simple Code</h3>
+                    <ul>
+                        <li><a href="#"><i class="fa fa-envelope-o"></i>&nbsp; simplecodecodesimple@gmail.com</a></li>
+                        <li><a href="https://www.youtube.com/channel/UCIyQPdxwhuLv0GaEXI5kOjA"><i class="fa fa-youtube-play"></i>&nbsp; Simple Code Channel</a></li>
+                        <li><a href="https://www.facebook.com/simplecodechanel/"><i class="fa fa-facebook-square"></i>&nbsp; Simple Code Fanpage</a></li>
+                    </ul>
+                </div>
+                <div class="col-sm-6 col-md-3 item">
+                    <h3>Mentor</h3>
+                    <ul>
+                        <li><a href="#"><i class="fa fa-envelope-o"></i>&nbsp; banhcamvinh121@gmail.com</a></li>
+                        <li></li>
+                        <li><a href="https://www.facebook.com/bcviuppl/"><i class="fa fa-facebook-square"></i>&nbsp; Cẩm Vỉnh</a></li>
+                        <li><a href="https://github.com/banhcamvinh"><i class="fa fa-github"></i>&nbsp; Github</a></li>
+                        <li><a href="https://www.linkedin.com/in/banhcamvinh/"><i class="fa fa-linkedin-square"></i>&nbsp; Linkedin</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-6 item text" style="margin-bottom: 0px;">
+                    <p></p>
+                    <section class="newsletter-subscribe" style="padding-top: 20px;padding-bottom: 20px;border-radius: 15px;">
+                        <div class="container">
+                            <div class="intro">
+                                <h2 class="text-center">Đăng ký email để nhận thông tin và ưu đãi mới nhất</h2>
+                            </div>
+                            <form class="d-flex justify-content-center flex-wrap" method="post" action="{% url 'home:subscribe' %}">
+                                {% csrf_token %} 
+                                <div class="mb-3"><input class="form-control" type="email" name="email" placeholder="Your Email" required></div>
+                                <div class="mb-3"><button class="btn btn-primary" type="submit">Subscribe </button></div>
+                            </form>
+                        </div>
+                    </section>
+                </div>
+            </div>
+            <p class="copyright">Simple Code © 2021</p>
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'home/assets/js/bs-init.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.10.0/baguetteBox.min.js' %}"></script>
+    <script src="{% static 'home/assets/js/--mp---Multiple-items-slider-responsive-1.js' %}"></script>
+    <script src="{% static 'home/assets/js/--mp---Multiple-items-slider-responsive.js' %}"></script>
+    <script src="{% static 'home/assets/js/Counting.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick.js' %}"></script>
+    <script src="https://code.jquery.com/jquery-2.2.0.min.js&quot; type=&quot;text/javascript"></script>
+    <script src="{% static 'home/assets/js/Lightbox-Gallery.js' %}"></script>
+    <script src="{% static 'home/assets/js/Media-Slider-Bootstrap-3.js' %}"></script>
+    <script src="{% static 'home/assets/js/Swipe-Slider-7.js' %}"></script>
+    <script src="{% static 'home/assets/js/Ultimate-Testimonial-Slider-BS5.js' %}"></script>
+</body>
+</html>

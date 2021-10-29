@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% load static %}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>simplecode</title>
+    <link rel="stylesheet" href="{% static 'home/assets/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:400,600,800">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Condensed:400,400i,700,700i">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab:300,400&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700">
+    <link rel="stylesheet" href="{% static 'home/assets/fonts/fontawesome-all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/fonts/font-awesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/fonts/fontawesome5-overrides.min.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/--mp---Multiple-items-slider-responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/4-Col-Small-Slider.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/404-NOT-FOUND-animated.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/best-carousel-slide-1.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/best-carousel-slide.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Brands.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Features-Clean.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Footer-Dark.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Header-Blue.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Highlight-Phone.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.10.0/baguetteBox.min.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Lightbox-Gallery.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Ludens-Users---1-Login.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Ludens-Users---2-Register.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Media-Slider-Bootstrap-3-1.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Media-Slider-Bootstrap-3.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/MUSA_carousel-product-cart-slider-1.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/MUSA_carousel-product-cart-slider.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Navigation-with-Button.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Newsletter-Subscription-Form.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Pretty-Product-List.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Search-Input-Responsive-with-Icon.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/sticky-dark-top-nav.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Swipe-Slider-7.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Team-Boxed.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Testimonials.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Ultimate-Testimonial-Slider-BS5.css' %}">
+</head>
+
+<body>
+    <section class="login-clean" style="background-color: transparent;font-family: Poppins, sans-serif;">
+        <form method="post" style="margin-top: 40px;" action="{% url 'home:login' %}">
+            {% csrf_token %}
+            <h2 class="visually-hidden">Login Form</h2>
+            <div class="illustration"><img data-bss-hover-animate="swing" src="{% static 'home/assets/img/newava.png' %}" width="150px" height="150px"></div><a class="forgot" href="{% url 'home:register' %}">Bạn đã có tài khoản ? Đăng ký tài khoản</a>
+            <div class="form-group mb-3"><input class="form-control" type="text" name="username" placeholder="Nhập Username"></div>
+            <div class="form-group mb-3"><input class="form-control" type="password" name="password" placeholder="Nhập password"></div>
+            <div class="form-group mb-3"><button class="btn btn-primary text-uppercase d-block w-100" data-bss-hover-animate="pulse" type="submit" style="background: hotpink;">Đăng nhập</button>
+            <p class="text-start" style="color: hotpink;text-align: left;">{{alert}}</p>
+            </div><a class="forgot" href="{% url 'home:forgotpass' %}">Quên mật khẩu ?</a><a class="d-flex justify-content-center align-items-center" data-bss-disabled-mobile="true" data-bss-hover-animate="pulse" href="{% url 'home:home' %}" style="width: 100%;color: rgb(255,105,180);"><i class="fa fa-home" style="font-size: 30px;color: rgb(255,105,180);"></i></a>
+        </form>
+    </section>
+    <script src="{% static 'home/assets/bootstrap/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'home/assets/js/bs-init.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.10.0/baguetteBox.min.js"></script>
+    <script src="{% static 'home/assets/js/--mp---Multiple-items-slider-responsive-1.js' %}"></script>
+    <script src="{% static 'home/assets/js/--mp---Multiple-items-slider-responsive.js' %}"></script>
+    <script src="{% static 'home/assets/js/Counting.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick.js"></script>
+    <script src="https://code.jquery.com/jquery-2.2.0.min.js&quot; type=&quot;text/javascript"></script>
+    <script src="{% static 'home/assets/js/Lightbox-Gallery.js' %}"></script>
+    <script src="{% static 'home/assets/js/Media-Slider-Bootstrap-3.js' %}"></script>
+    <script src="{% static 'home/assets/js/Swipe-Slider-7.js' %}"></script>
+    <script src="{% static 'home/assets/js/Ultimate-Testimonial-Slider-BS5.js' %}"></script>
+</body>
+
+</html>
