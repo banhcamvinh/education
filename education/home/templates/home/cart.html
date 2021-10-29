@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% load static %}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>simplecode</title>
+    <link rel="stylesheet" href="{% static 'home/assets/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface&amp;display=swap">
+    <link rel="stylesheet" href="{% static 'home/assets/css/FontAwesome.css' %}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:400,600,800">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Condensed:400,400i,700,700i">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab:300,400&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700">
+    <link rel="stylesheet" href="{% static 'home/assets/fonts/fontawesome-all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/fonts/font-awesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/fonts/fontawesome5-overrides.min.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/--mp---Multiple-items-slider-responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/4-Col-Small-Slider.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/404-NOT-FOUND-animated.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Accordion-3338arvorept-1.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Accordion-3338arvorept.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/best-carousel-slide-1.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/best-carousel-slide.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Brands.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Features-Clean.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Footer-Dark.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Header-Blue.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Highlight-Phone.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.10.0/baguetteBox.min.css">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Lightbox-Gallery.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Ludens-Users---1-Login.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Ludens-Users---2-Register.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Media-Slider-Bootstrap-3-1.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Media-Slider-Bootstrap-3.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/MUSA_carousel-product-cart-slider-1.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/MUSA_carousel-product-cart-slider.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Navigation-with-Button.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Newsletter-Subscription-Form.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Pretty-Product-List.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Search-Input-Responsive-with-Icon.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/sticky-dark-top-nav.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Swipe-Slider-7.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Team-Boxed.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Testimonials.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Ultimate-Testimonial-Slider-BS5.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/User-Rating-F19690.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Video-Responsive-YouTube.css' %}">
+</head>
+
+<body>
+    <div class="container">
+        {% if cart_list %}
+            {% for el in cart_list %}
+        <div class="row" style="margin-top: 15px;margin-bottom: 15px;">
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col text-end"><img src="{% static 'home/assets/img/desk.jpg' %}" style="height: 100px;"></div>
+                    <div class="col d-flex flex-column justify-content-around align-items-center">
+                        <p>{{el.name}}</p><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span><span>{{el.views}} views</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 text-center d-flex flex-column justify-content-center">
+                <div class="row">
+                    <div class="col">
+                        <a class="remove btn btn-primary" value="{{el.id}}" href="javascript: void(0)" onclick="submitForms()">Xóa</a>
+                        {% if el.ismark == 1%}
+                        <a class="unmark btn btn-primary" value={{el.id}} href="javascript: void(0)" onclick="submitForms()">Bỏ Lưu</a></div>
+                        {% else %}
+                        <a class="mark btn btn-primary" value={{el.id}} href="javascript: void(0)" onclick="submitForms()">Lưu</a></div>
+                        {% endif %}
+                    <div class="col d-flex justify-content-center align-content-center">
+                        <p class="d-xl-flex justify-content-xl-center align-items-xl-center" style="margin-bottom: 0px;">{{el.price}} VNĐ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+            {% endfor %}
+
+        <!-- <div class="row" style="margin-top: 15px;margin-bottom: 15px;">
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col text-end"><img src="{% static 'home/assets/img/desk.jpg' %}" style="height: 100px;"></div>
+                    <div class="col d-flex flex-column justify-content-around align-items-center">
+                        <p>Tên khóa học</p><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span><span>1000 views</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 text-center d-flex flex-column justify-content-center">
+                <div class="row">
+                    <div class="col"><button class="btn btn-primary" type="button">Xóa</button><button class="btn btn-primary" type="button">Lưu</button></div>
+                    <div class="col d-flex justify-content-center align-content-center">
+                        <p class="d-xl-flex justify-content-xl-center align-items-xl-center" style="margin-bottom: 0px;">1000 000 vnđ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 15px;margin-bottom: 15px;">
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col text-end"><img src="{% static 'home/assets/img/desk.jpg' %}" style="height: 100px;"></div>
+                    <div class="col d-flex flex-column justify-content-around align-items-center">
+                        <p>Tên khóa học</p><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span><span>1000 views</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 text-center d-flex flex-column justify-content-center">
+                <div class="row">
+                    <div class="col"><button class="btn btn-primary" type="button">Xóa</button><button class="btn btn-primary" type="button">Lưu</button></div>
+                    <div class="col d-flex justify-content-center align-content-center">
+                        <p class="d-xl-flex justify-content-xl-center align-items-xl-center" style="margin-bottom: 0px;">1000 000 vnđ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 15px;margin-bottom: 15px;">
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col text-end"><img src="{% static 'home/assets/img/desk.jpg' %}" style="height: 100px;"></div>
+                    <div class="col d-flex flex-column justify-content-around align-items-center">
+                        <p>Tên khóa học</p><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span><span>1000 views</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 text-center d-flex flex-column justify-content-center">
+                <div class="row">
+                    <div class="col"><button class="btn btn-primary" type="button">Xóa</button><button class="btn btn-primary" type="button">Lưu</button></div>
+                    <div class="col d-flex justify-content-center align-content-center">
+                        <p class="d-xl-flex justify-content-xl-center align-items-xl-center" style="margin-bottom: 0px;">1000 000 vnđ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 15px;margin-bottom: 15px;">
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col text-end"><img src="{% static 'home/assets/img/desk.jpg' %}" style="height: 100px;"></div>
+                    <div class="col d-flex flex-column justify-content-around align-items-center">
+                        <p>Tên khóa học</p><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span><span>1000 views</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 text-center d-flex flex-column justify-content-center">
+                <div class="row">
+                    <div class="col"><button class="btn btn-primary" type="button">Xóa</button><button class="btn btn-primary" type="button">Lưu</button></div>
+                    <div class="col d-flex justify-content-center align-content-center">
+                        <p class="d-xl-flex justify-content-xl-center align-items-xl-center" style="margin-bottom: 0px;">1000 000 vnđ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 15px;margin-bottom: 15px;">
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col text-end"><img src="{% static 'home/assets/img/desk.jpg' %}" style="height: 100px;"></div>
+                    <div class="col d-flex flex-column justify-content-around align-items-center">
+                        <p>Tên khóa học</p><span><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span><span>1000 views</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 text-center d-flex flex-column justify-content-center">
+                <div class="row">
+                    <div class="col"><button class="btn btn-primary" type="button">Xóa</button><button class="btn btn-primary" type="button">Lưu</button></div>
+                    <div class="col d-flex justify-content-center align-content-center">
+                        <p class="d-xl-flex justify-content-xl-center align-items-xl-center" style="margin-bottom: 0px;">1000 000 vnđ</p>
+                    </div>
+                </div>
+            </div>
+        </div> -->
+        {% else %}
+        <p>Bạn chưa có gì trong giỏ hàng</p>
+        {% endif %}
+
+    <form method="get" id="mainform">
+        <input style="display:none" id="remove" name="remove" value="" type="text">
+        <input style="display:none" id="mark" name="mark" value="" type="text">
+        <input style="display:none" id="unmark" name="unmark" value="" type="text">
+        <input style="display:none" id="code" name="code" value="" type="text">
+    </form>
+    
+    </div>
+    <div class="row" style="padding-top: 10px;border-style: dashed;padding-bottom: 10px;background: #d6d3d3;">
+        <div class="col d-flex flex-column justify-content-center align-items-end">
+            <span>Total: 1000 vnđ </span>
+            <span>Discount: - {{discount_price}} vnđ </span>
+        </div>
+        <div class="col d-flex flex-column justify-content-center align-items-center">
+            {% if code %}
+                <input id="inputcode" placeholder="Nhập code giảm giá" type="text" disabled value="{{code}}">
+                {% if codevalid %}
+                <p style="margin-bottom: 0px;">Mã hợp lệ</p>
+                {% else %}
+                <p style="margin-bottom: 0px;">Code không hợp lệ</p>
+                {% endif %}
+            <a href="javascript: void(0)" onclick="submitForms()" class="removecode btn btn-primary" >Xóa mã</a>
+            {% else %}
+            <input id="inputcode" placeholder="Nhập code giảm giá" type="text">
+            <a href="javascript: void(0)" onclick="submitForms()" class="addcode btn btn-primary">Nhập mã</a>
+            {% endif %}
+
+        </div>
+        <div class="col d-flex flex-column justify-content-center align-items-start">
+        <button class="btn btn-primary" type="button">Thanh toán</button></div>
+    </div>
+    <script src="{% static 'home/assets/bootstrap/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'home/assets/js/bs-init.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.10.0/baguetteBox.min.js"></script>
+    <script src="{% static 'home/assets/js/--mp---Multiple-items-slider-responsive-1.js' %}"></script>
+    <script src="{% static 'home/assets/js/--mp---Multiple-items-slider-responsive.js' %}"></script>
+    <script src="{% static 'home/assets/js/Accordion-3338arvorept.js' %}"></script>
+    <script src="{% static 'home/assets/js/Counting.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick.js"></script>
+    <script src="https://code.jquery.com/jquery-2.2.0.min.js&quot; type=&quot;text/javascript"></script>
+    <script src="{% static 'home/assets/js/Lightbox-Gallery.js' %}"></script>
+    <script src="{% static 'home/assets/js/Media-Slider-Bootstrap-3.js' %}"></script>
+    <script src="{% static 'home/assets/js/Swipe-Slider-7.js' %}"></script>
+    <script src="{% static 'home/assets/js/Ultimate-Testimonial-Slider-BS5.js' %}"></script>
+</body>
+<script>
+    let action_btn_lst = document.querySelectorAll('a.remove.btn.btn-primary')
+    action_btn_lst.forEach((btn, index)=>{
+        btn.addEventListener('mouseover',event=>{
+            remove = document.querySelector('#remove')
+            remove.setAttribute("value",btn.getAttribute("value"))
+        })
+    });
+    action_btn_lst.forEach((btn, index)=>{
+        btn.addEventListener('mouseout',event=>{
+            remove = document.querySelector('#remove')
+            remove.setAttribute("value",'')
+        })
+    });
+
+    let mark_btn_lst = document.querySelectorAll('a.mark.btn.btn-primary')
+    mark_btn_lst.forEach((btn, index)=>{
+        btn.addEventListener('mouseover',event=>{
+            mark = document.querySelector('#mark')
+            mark.setAttribute("value",btn.getAttribute("value"))
+        })
+    });
+    mark_btn_lst.forEach((btn, index)=>{
+        btn.addEventListener('mouseout',event=>{
+            mark = document.querySelector('#mark')
+            mark.setAttribute("value",'')
+        })
+    });
+
+    let unmark_btn_lst = document.querySelectorAll('a.unmark.btn.btn-primary')
+    unmark_btn_lst.forEach((btn, index)=>{
+        btn.addEventListener('mouseover',event=>{
+            unmark = document.querySelector('#unmark')
+            unmark.setAttribute("value",btn.getAttribute("value"))
+        })
+    });
+    unmark_btn_lst.forEach((btn, index)=>{
+        btn.addEventListener('mouseout',event=>{
+            unmark = document.querySelector('#unmark')
+            unmark.setAttribute("value",'')
+        })
+    });
+
+    let addcode_btn_lst = document.querySelectorAll('a.addcode.btn.btn-primary')
+    addcode_btn_lst.forEach((btn, index)=>{
+        btn.addEventListener('mouseover',event=>{
+            addcode = document.querySelector('#code')
+            inputcode = document.querySelector('#inputcode')
+            addcode.setAttribute("value",inputcode.value)
+        })
+    });
+
+    submitForms = function(filter){
+        document.getElementById("mainform").submit();
+    }
+
+</script>
+</html>

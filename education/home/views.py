@@ -591,7 +591,85 @@ def courseoverview(request,id):
     template = loader.get_template('home/course_overview.html')
     return HttpResponse(template.render(context,request))
 
+def cart(request):
+    if request.method == "GET":
+        if 'username' not in request.session:
+            return redirect('/login')
+        else:
+            username = request.session['username']
+            myconnect = db.neo4j("bolt://localhost","neo4j","123")
+            remove = request.GET.get('remove',None)
+            if remove and remove != '':
+                query ="""
+                    match (:Account{{username:'{}'}})-[:has_cart]-(ca:Cart)-[hc:has_course]-(co:Course{{id:{} }})
+                    delete hc
+                """.format(username,remove)
+                myconnect.query(query)
 
+            mark = request.GET.get('mark',None)
+            if mark and mark != '':
+                query ="""
+                    match (:Account{{username:'{}'}})-[:has_course_mark]-(cm:Course_Mark),(c:Course{{ id:{} }})
+                    merge (cm)-[:with_course]-(c)
+                """.format(username,mark)
+                myconnect.query(query)
+
+            unmark = request.GET.get('unmark',None)
+            if unmark and unmark != '':
+                query ="""
+                    match (:Account{{ username:'{}' }})-[:has_course_mark]-(cm:Course_Mark)-[wc:with_course]-(c:Course{{id:{} }})
+                    delete wc
+                """.format(username,unmark)
+                myconnect.query(query)
+            
+            codevalid =  False
+            discount_price = 0
+            code = request.GET.get('code',None)
+            if code and code != '':
+                query ="""
+                    match (:Code{{value:'{}'}})-[:has_discount_price]-(p:Discount_Price)
+                    return p.value as price
+                """.format(code)
+                rs = myconnect.query(query)
+                price = list(rs)
+                if len(price) != 0:
+                    codevalid = True
+                    discount_price = price[0]['price']
+            # check mã code xem có trong hệ thống không
+            # Nếu không thì báo lõi
+            # có thì giảm giá 
+
+            # Get cart_list
+            query = """
+                match (a:Account{{username:'{}'}})-[:has_cart]-(:Cart)-[:has_course]-(c:Course)
+                with c,a
+                match (c)
+                optional match (c)-[:with_course]-(:Course_Mark)-[hcm:has_course_mark]-(a)
+                with c,count(hcm) as ismark
+                with c,ismark
+                match (c)
+                optional match (c)-[wc:watching_course]-(:Account)
+                with c, count(wc) as num_of_view,ismark
+                match (c)
+                optional match (c)-[:to_course]-(rc:Rating_Course)
+                with c,num_of_view, coalesce(avg(rc.star),0) as star,ismark
+                match (c)
+                optional match (c)-[:has_price]->(cp:Course_Price)-[:at]-(d:Day)<-[:in_day]-(m:Month)-[:in_month]-(y:Year)
+                with  c as course, cp.value as price,d.value as day,m.value as month,y.value as year,num_of_view,star,ismark
+                order by year desc,month desc,day desc
+                return course.id as id,course.name as name, apoc.agg.first(price)as price,num_of_view, star,ismark
+            """.format(username)
+            rs = myconnect.query(query)
+            cart_list = list(rs)
+    
+    context = {
+        'cart_list':cart_list,
+        'code':code,
+        'codevalid':codevalid,
+        'discount_price':discount_price,
+    }
+    template = loader.get_template('home/cart.html')
+    return HttpResponse(template.render(context,request))
 
 
 
