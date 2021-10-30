@@ -12,7 +12,8 @@ urlpatterns = [
     path('course',views.course, name='course'),
     re_path(r'^coursesearch',views.coursesearch, name='coursesearch'),
     path('course_overview/<int:id>',views.courseoverview,name='courseoverview'),
-    path('cart',views.cart,name='cart'),
+    path('cart', views.cart,name='cart'),
+    path('pay/<str:code>', views.pay, name='pay'),
 
 
 

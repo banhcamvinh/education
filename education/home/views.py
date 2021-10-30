@@ -10,6 +10,7 @@ import json
 import db
 import mymail
 import mywit
+from datetime import datetime
 
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
@@ -524,20 +525,25 @@ def courseoverview(request,id):
         query = """ 
             match (c:Course{{ id:{} }})
             with (c)
-            match (c)-[:has_introduce_video]-(iv:`Introduce Video`)
-            with (c),(iv)
-            match (c)-[wc:watching_course]-(:Account)
+            match (c)
+            optional match (c)-[:has_introduce_video]-(iv:`Introduce Video`)
+            with (c),coalesce(iv.url,'https://www.youtube.com/embed/QupuYcUFuI8') as iv
+            match (c)
+            optional match (c)-[wc:watching_course]-(:Account)
             with (c),(iv),count(wc) as views
-            match (c)-[:to_course]-(rc:Rating_Course)
-            with (c),(iv),views,(avg(rc.star))as star
-            match path = (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+            match (c)
+            optional match (c)-[:to_course]-(rc:Rating_Course)
+            with (c),(iv),views,coalesce((avg(rc.star)),0) as star
+            match (c)
+            optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
             , (p)-[:head]-(:Lesson)-[:next*0..]->(l:Lesson)
             with (c),(iv),views,star, count(distinct p)as part,count(l)as lesson,sum(l.duration) as duration
-            match (c)-[:has_price]->(cp:Course_Price)-[:at]-(pd:Day)<-[:in_day]-(pm:Month)-[:in_month]-(py:Year)
+            match (c)
+            optional match (c)-[:has_price]->(cp:Course_Price)-[:at]-(pd:Day)<-[:in_day]-(pm:Month)-[:in_month]-(py:Year)
             with  c as course, coalesce(cp.value,0) as price,pd.value as pday,pm.value as pmonth,py.value as pyear,(c),(iv)as video ,views,star,part,lesson,duration/60 as duration
             order by pyear desc,pmonth desc,pday desc
             return course.id as id,course.name as name,course.content as content,course.course_goal as goal,course.requirements as requirements,
-            apoc.agg.first(price)as price,video.url as url ,views,star,part,lesson,duration
+            apoc.agg.first(price)as price,video as url ,views,star,part,lesson,duration
         """.format(id)
         rs = myconnect.query(query)
         course_detail = None
@@ -598,6 +604,7 @@ def cart(request):
         else:
             username = request.session['username']
             myconnect = db.neo4j("bolt://localhost","neo4j","123")
+
             remove = request.GET.get('remove',None)
             if remove and remove != '':
                 query ="""
@@ -627,7 +634,7 @@ def cart(request):
             code = request.GET.get('code',None)
             if code and code != '':
                 query ="""
-                    match (:Code{{value:'{}'}})-[:has_discount_price]-(p:Discount_Price)
+                    match (:Discount_Code{{value:'{}'}})-[:has_discount_price]-(p:Discount_Price)
                     return p.value as price
                 """.format(code)
                 rs = myconnect.query(query)
@@ -671,6 +678,48 @@ def cart(request):
     template = loader.get_template('home/cart.html')
     return HttpResponse(template.render(context,request))
 
+def pay(request,code):
+    if 'username' not in request.session:
+            return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+
+    dt = datetime.today()
+    year = dt.year
+    month = dt.month
+    day = dt.day
+
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+
+    if code == 'nonecode':
+        code = None
+
+    print(year,month,day,current_time,code,username)
+    query = """
+        // Create payment
+        merge (d:Day{{value:{} }})
+        merge (m:Month{{ value:{} }})
+        merge (d)<-[:in_day]-(m)
+        merge (y:Year{{ value:{} }})
+        merge (m)<-[:in_month]-(y)
+        merge (y)<-[:in_year]-(:Time)
+        with d,m,y
+        match (a:Account{{ username:'{}' }})
+        with d,m,y,a
+        create (a)-[:pay]->(e:Enrollment{{ time:'{}' }})-[:at]->(d)
+        with a,e
+        match (a)-[:has_cart]-(:Cart)-[hc:has_course]-(c:Course)
+        create (e)-[:to_course]->(c)
+        delete hc
+        with e
+        match (dc:Discount_Code{{ value:'{}' }})
+        create (e)-[:with_discount_code]->(dc)
+    """.format(day,month,year,username,current_time,code)
+    myconnect.query(query)
+    print("Thanh toán thành công")
+
+    return redirect('/')
 
 
 def test(request):
