@@ -62,26 +62,48 @@
                 <h1>Tên bài học</h1>
                 <div class="steps-progressbar">
                     <ul>
-                        <li class="previous">Item 1</li>
-                        <li class="active">Item 2</li>
-                        <li>Item 3</li>
-                        <li>Item 4</li>
-                        <li>Item 3</li>
-                        <li>Item 4</li>
+                        {% with ''|center:part_count as range %}
+                        {% if not range %}
+                        {% endif %}
+                        {% for _ in range %}
+                            {% if forloop.counter < watching_part %}
+                            <li class="previous">Chương {{forloop.counter}}</li>
+                            {% endif %}
+                            {% if  forloop.counter == watching_part %}
+                            <li class="active">Chương {{forloop.counter}}</li>
+                            {% endif %}
+                            {% if  forloop.counter > watching_part %}
+                            <li>Chương {{forloop.counter}}</li>
+                            {% endif %}
+                        {% endfor %}
+                        {% endwith %}
                     </ul>
                 </div>
                 <div class="steps-progressbar">
                     <ul>
-                        <li class="previous">Item 1</li>
-                        <li class="active">Item 2</li>
-                        <li>Item 3</li>
-                        <li>Item 4</li>
-                        <li>Item 3</li>
-                        <li>Item 4</li>
+                        {% with ''|center:lesson_count as range %}
+                        {% if not range %}
+                        {% endif %}
+                        {% for _ in range %}
+                            {% if forloop.counter < watching_lesson %}
+                            <li class="previous">Bài {{forloop.counter}}</li>
+                            {% endif %}
+                            {% if  forloop.counter == watching_lesson %}
+                            <li class="active">Bài {{forloop.counter}}</li>
+                            {% endif %}
+                            {% if  forloop.counter > watching_lesson %}
+                            <li>Bài {{forloop.counter}}</li>
+                            {% endif %}
+                        {% endfor %}
+                        {% endwith %}
                     </ul>
                 </div>
-                <button class="btn btn-primary" type="button" style="width: 100%;">Đã hoàn thành khóa học</button>
-                <p>Ghi chú cho bài học</p>
+                {% if is_finish_course%}
+                <button class="btn btn-primary" type="button" style="width: 100%;">Hoàn thành khóa học</button>
+                {% else %}
+                <button disabled class="btn btn-primary" type="button" style="width: 100%;">Hoàn thành khóa học</button>
+                {% endif %}
+                <p>Thêm ghi chú cho bài học</p>
             </div>
             <div class="col-md-12"><textarea style="width: 100%;height: 100px;"></textarea><button class="btn btn-primary" type="button">Note</button></div>
         </div>
@@ -114,53 +136,58 @@
                 </div>
             </div>
             <div class="col-xxl-6">
-                <div><button class="ps-accordion" type="button">Section 1</button>
-                    <div class="ps-panel" style="border-width: 1px;">
-                        <div class="row" style="padding-top: 5px;padding-bottom: 5px;border-width: 1px;border-style: solid;">
-                            <div class="col"><input type="checkbox"></div>
-                            <div class="col"><a href="#">Link</a></div>
-                        </div>
-                        <div class="row" style="padding-top: 5px;padding-bottom: 5px;border-width: 1px;border-style: solid;">
-                            <div class="col"><input type="checkbox"></div>
-                            <div class="col"><a href="#">Link</a></div>
-                        </div>
-                        <div class="row" style="padding-top: 5px;padding-bottom: 5px;border-width: 1px;border-style: solid;">
-                            <div class="col"><input type="checkbox"></div>
-                            <div class="col"><a href="#">Link</a></div>
-                        </div>
-                    </div>
-                </div>
-                <div><button class="ps-accordion" type="button">Section 1</button>
-                    <div class="ps-panel" style="border-width: 1px;">
-                        <div class="row" style="padding-top: 5px;padding-bottom: 5px;border-width: 1px;border-style: solid;">
-                            <div class="col"><input type="checkbox"></div>
-                            <div class="col"><a href="#">Link</a></div>
-                            <div><button class="ps-accordion" type="button">Section 1</button>
-                                <div class="ps-panel" style="border-width: 1px;">
-                                    <div class="row" style="padding-top: 5px;padding-bottom: 5px;border-width: 1px;border-style: solid;">
-                                        <div class="col"><input type="checkbox"></div>
-                                        <div class="col"><a href="#">Link</a></div>
+                <div class="accordion" id="accordionPart">
+                    {% for part,part_detail in part_dict.items  %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingPart{{forloop.counter}}">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePart{{forloop.counter}}" aria-expanded="false" aria-controls="collapsePart{{forloop.counter}}">
+                            Chương {{forloop.counter}}: {{part}}
+                            </button>
+                        </h2>
+                        <div id="collapsePart{{forloop.counter}}" class="accordion-collapse collapse show" aria-labelledby="headingPart{{forloop.counter}}" data-bs-parent="#accordionPart">
+                            <div class="accordion-body">
+
+                                <div class="accordion" id="accordionLesson">
+                                    {% for lesson,lesson_detail in part_detail.items  %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingLesson{{forloop.counter}}">
+                                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLesson{{forloop.counter}}" aria-expanded="false" aria-controls="collapseLesson{{forloop.counter}}">
+                                            Bài {{forloop.counter}}: {{lesson}}
+                                            </button>
+                                        </h2>
+                                        <div id="collapseLesson{{forloop.counter}}" class="accordion-collapse collapse show" aria-labelledby="headingLesson{{forloop.counter}}" data-bs-parent="#accordionLesson">
+                                            <div class="accordion-body">
+                                                
+                                                <div class="accordion" id="accordionQuestion">
+                                                    Bài tập
+                                                    {% for question in lesson_detail.question_list  %}
+                                                    <div class="accordion-item">
+                                                        <h2 class="accordion-header" id="headingQuestion{{forloop.counter}}">
+                                                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseQuestion{{forloop.counter}}" aria-expanded="false" aria-controls="collapseQuestion{{forloop.counter}}">
+                                                            Câu hỏi {{forloop.counter}}: {{question}}
+                                                            </button>
+                                                        </h2>
+                                                        <!-- <div id="collapseQuestion{{forloop.counter}}" class="accordion-collapse collapse show" aria-labelledby="headingQuestion{{forloop.counter}}" data-bs-parent="#accordionQuestion">
+                                                            <div class="accordion-body">
+                                                                
+                                
+                                                            </div>
+                                                        </div> -->
+                                                    </div>
+                                                    {% endfor %} 
+                                                </div>
+
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="row" style="padding-top: 5px;padding-bottom: 5px;border-width: 1px;border-style: solid;">
-                                        <div class="col"><input type="checkbox"></div>
-                                        <div class="col"><a href="#">Link</a></div>
-                                    </div>
-                                    <div class="row" style="padding-top: 5px;padding-bottom: 5px;border-width: 1px;border-style: solid;">
-                                        <div class="col"><input type="checkbox"></div>
-                                        <div class="col"><a href="#">Link</a></div>
-                                    </div>
+                                    {% endfor %} 
                                 </div>
+
+
                             </div>
                         </div>
-                        <div class="row" style="padding-top: 5px;padding-bottom: 5px;border-width: 1px;border-style: solid;">
-                            <div class="col"><input type="checkbox"></div>
-                            <div class="col"><a href="#">Link</a></div>
-                        </div>
-                        <div class="row" style="padding-top: 5px;padding-bottom: 5px;border-width: 1px;border-style: solid;">
-                            <div class="col"><input type="checkbox"></div>
-                            <div class="col"><a href="#">Link</a></div>
-                        </div>
                     </div>
+                    {% endfor %} 
                 </div>
             </div>
         </div>

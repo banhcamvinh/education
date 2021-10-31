@@ -772,56 +772,57 @@ def course_learn(request,id):
     part_count = len(course_learn_rs)
     lesson_count = 0
 
+    watching_part = 1
+    watching_lesson = 1
 
     part_dict = {}
     for rc in course_learn_rs:
+        # convert query data to dict to return to template part dict -> lesson dict -> excercise list
         lesson_dict = {}
         for index,lesson in enumerate(rc['lesson_name']):
             question = rc['question_list'][index]
+            watching = rc['watching'][index]
             if lesson not in lesson_dict:
-                # nếu bài học chưa có thì add vào dict
-                lesson_dict[lesson] = []
-            lesson_dict[lesson].append(question)
-                # nếu bài học có rồi thì bổ sung vào dict
+                lesson_count += 1
+                lesson_dict[lesson] = {}
+                lesson_dict[lesson]['question_list'] = []
+                lesson_dict[lesson]['watching_list'] = []
+            if question != '':
+                lesson_dict[lesson]['question_list'].append(question)
+            lesson_dict[lesson]['watching_list'].append(watching)
         part_dict[rc['part_name']] = lesson_dict
     
-
+    part_index = 0
+    lesson_index = 0
+    # how to get result
     for part,part_detail in part_dict.items():
-        print(part)
+        # print("Chương " + part)
+        # print("=======")
         for lesson,lesson_detail in part_detail.items():
-            print(lesson)
-            print(lesson_detail)
-        print()
-
-
-
-
-
-    # part_dict = dict()
-    # for rc in course_learn_rs:
-    #     lesson_list = []
-    #     for index,el in enumerate(rc['lesson_name']):
-    #         if el not in lesson_list:
-    #             lesson_list.append(el)
-
-    #     part_dict[rc['part_name']] = lesson_list
+            # print("Bài " + lesson)
+            # print(lesson_detail)
+            # print("=======")
+            for question in lesson_detail['question_list']:
+                # print(question)
+                pass
+            for check in lesson_detail['watching_list']:
+                if check == 1:
+                    watching_lesson = lesson_index
+                # print(check)
+            lesson_index += 1
+        part_index +=1
+        # print()
     
 
-            
-
-        
-        # part_dict sẽ add list lesson dict
-        # lessondict sẽ có list 
-
-
- 
-
-
-
-
+    is_finish_course = False
 
     context = {
-        'course_learn_all':course_learn_rs
+        'part_dict': part_dict,
+        'part_count': part_count ,
+        'lesson_count':lesson_count,
+        'watching_part':watching_part + 1,
+        'watching_lesson':watching_lesson + 1,
+        'is_finish_course': is_finish_course,
     }
     template = loader.get_template('home/course_learn.html')
     return HttpResponse(template.render(context,request))
