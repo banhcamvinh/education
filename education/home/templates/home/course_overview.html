@@ -104,7 +104,7 @@
             <div class="col-md-6">
                 <p style="font-size: 30px;color: rgb(0,0,0);">&nbsp;{{course_detail.price}} VNĐ</p>
                 {% if isbought %}
-                <a href="/course/{{course_detail.id}}" class="btn btn-primary">Vào học</a>
+                <a href="/course_learn/{{course_detail.id}}" class="btn btn-primary">Vào học</a>
                 {% else %} 
                     {% if isadded %}
                         <a href="javascript: void(0)" value="remove_cart" onclick="submitForms('remove_cart')" class="action btn btn-primary">Bỏ thêm khỏi giỏ hàng</a>

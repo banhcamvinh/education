@@ -721,6 +721,114 @@ def pay(request,code):
 
     return redirect('/')
 
+def course_learn(request,id):
+    # courseid 
+    # part = ? lesson = ? excercise = ? 
+
+    # Các part - đang học ở part nào
+    # Các lesson - đang học ở chương nào
+    # các notion trong lesson
+    # If finish course -> open button to download certificate
+    # Lesson nào xong thì tick
+    # Edit note
+    # Remove note
+    # add note
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+    # check xem user có mua khóa học này chưa chưa mua redirect qua overview
+    query = """
+        match (a:Account{{ username:'{}' }})-[:pay]-(:Enrollment)-[:to_course]-(c:Course{{ id:{} }})
+        return count(a)
+    """.format(username,id)
+    rs = myconnect.query(query)
+    if len(list(rs)) == 0:
+        return redirect('/course_overview/{}'.format(id))
+    # Đổ dữ liệu chung cho từng bài học
+    query = """
+        match (c:Course{{  id: {} }} )
+        with (c)
+        match (c)
+        optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+        with p,c
+        match (p)
+        optional match (p)-[:head]-(:Lesson)-[:next*0..]->(l:Lesson)
+        with p,l,c
+        match (l)
+        optional match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
+        with p,l,coalesce(e.question,"") as q,coalesce(e.answer,"") as a,c
+        with p,l,a,q,c
+        match (l)
+        optional match (:Account{{ username:'{}' }})-[:pay]-(e:Enrollment)-[:to_course]-(c),
+        (e)-[:watching_lesson]-(wcl:Lesson)
+        where (l)=(wcl)
+        with p,l,a,q,count(wcl) as wcl
+        with p,l,a,q,coalesce(wcl,"") as wcl
+        return p.name as part_name,collect(l.name) as lesson_name,collect(l.url) as lesson_url,collect(q) as question_list,collect(a) as answer_list,collect(wcl) as watching
+    """.format(id,username)
+    rs = myconnect.query(query)
+    course_learn_rs = list(rs)
+    part_count = len(course_learn_rs)
+    lesson_count = 0
+
+
+    part_dict = {}
+    for rc in course_learn_rs:
+        lesson_dict = {}
+        for index,lesson in enumerate(rc['lesson_name']):
+            question = rc['question_list'][index]
+            if lesson not in lesson_dict:
+                # nếu bài học chưa có thì add vào dict
+                lesson_dict[lesson] = []
+            lesson_dict[lesson].append(question)
+                # nếu bài học có rồi thì bổ sung vào dict
+        part_dict[rc['part_name']] = lesson_dict
+    
+
+    for part,part_detail in part_dict.items():
+        print(part)
+        for lesson,lesson_detail in part_detail.items():
+            print(lesson)
+            print(lesson_detail)
+        print()
+
+
+
+
+
+    # part_dict = dict()
+    # for rc in course_learn_rs:
+    #     lesson_list = []
+    #     for index,el in enumerate(rc['lesson_name']):
+    #         if el not in lesson_list:
+    #             lesson_list.append(el)
+
+    #     part_dict[rc['part_name']] = lesson_list
+    
+
+            
+
+        
+        # part_dict sẽ add list lesson dict
+        # lessondict sẽ có list 
+
+
+ 
+
+
+
+
+
+    context = {
+        'course_learn_all':course_learn_rs
+    }
+    template = loader.get_template('home/course_learn.html')
+    return HttpResponse(template.render(context,request))
+
+
+
+
 
 def test(request):
     return render(request,'home/test.html',)
