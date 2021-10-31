@@ -725,8 +725,7 @@ def course_learn(request,id):
     # courseid 
     # part = ? lesson = ? excercise = ? 
 
-    # Các part - đang học ở part nào
-    # Các lesson - đang học ở chương nào
+
     # các notion trong lesson
     # If finish course -> open button to download certificate
     # Lesson nào xong thì tick
@@ -735,8 +734,33 @@ def course_learn(request,id):
     # add note
     if 'username' not in request.session:
         return redirect('/login')
+
     username = request.session['username']
     myconnect = db.neo4j("bolt://localhost","neo4j","123")
+
+    # nếu trang là question thì sẽ vào question 
+    # không phải thì vào trang lesson
+    question = request.GET.get('question',None)
+    if question == None:
+        lesson = request.GET.get('lesson',None)
+        print(lesson)
+        if lesson is None:
+            query = """
+                match (a:Account{{ username:'{}' }})-[:pay]-(e:Enrollment)-[:to_course]-(:Course{{ id: {} }}), (e)-[:watching_lesson]-(l:Lesson)
+                return l.name as name
+            """.format(username,id)
+            rs = myconnect.query(query)
+            lesson = list(rs)[0]['name']
+            context = {
+                'auto_submit_lesson':True,
+                'lesson':lesson
+            }
+            template = loader.get_template('home/course_learn.html')
+            return HttpResponse(template.render(context,request))
+
+
+
+
     # check xem user có mua khóa học này chưa chưa mua redirect qua overview
     query = """
         match (a:Account{{ username:'{}' }})-[:pay]-(:Enrollment)-[:to_course]-(c:Course{{ id:{} }})
@@ -815,8 +839,18 @@ def course_learn(request,id):
     
 
     is_finish_course = False
+    query = """
+        match (a:Account{{ username:'{}' }})-[:finish_course]-(c:Course{{id: {} }})
+        return count(a)
+    """.format(username,id)
+    rs = myconnect.query(query)
+    if len(list(rs)) != 0:
+        is_finish_course = True
+
+
 
     context = {
+        'course_id': id,
         'part_dict': part_dict,
         'part_count': part_count ,
         'lesson_count':lesson_count,
@@ -827,7 +861,12 @@ def course_learn(request,id):
     template = loader.get_template('home/course_learn.html')
     return HttpResponse(template.render(context,request))
 
+def course_certificate(request,id):
+    context = {
 
+    }
+    template = loader.get_template('home/course_certificate.html')
+    return HttpResponse(template.render(context,request))
 
 
 
