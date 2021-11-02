@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <video id="myvideo" width="620" height="440" controls>
+        <source src="https://firebasestorage.googleapis.com/v0/b/education-5dcf4.appspot.com/o/Kuber.mp4?alt=media&token=ddb8e1f1-fb58-4512-a28f-3f88be659a4e" type="video/mp4">
+    </video>
+    <p>Time: 00</p>
+    <span>Action: None</span>
+    <a href="test">link</a>
+</body>
+<script>
+    // Khi người time thay đổi thì cập nhật time vào một cái biến
+    // Khi người ta thoát khỏi web thì bắn
+    output = document.querySelector('p')
+    video = document.querySelector('#myvideo')
+
+    video.ontimeupdate = function() {timeupdate()};
+    cur_time = video.currentTime
+    window.addEventListener('beforeunload', (event) => {
+        event.preventDefault();
+        // Bắn vào database để ghi lại event
+    });
+
+
+
+
+</script>
+</html>
+

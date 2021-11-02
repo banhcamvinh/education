@@ -1,3 +1,4 @@
+from logging import currentframe
 from django import template
 from django.http import response
 from django.http.response import HttpResponse
@@ -721,13 +722,17 @@ def pay(request,code):
 
     return redirect('/')
 
+@csrf_exempt
 def course_learn(request,id):
+    if request.method == 'POST':
+        data = json.load(request)
+        time = data.get('time')
+        note = data.get('note')
+        
+
     # courseid 
     # part = ? lesson = ? excercise = ? 
 
-
-    # các notion trong lesson
-    # If finish course -> open button to download certificate
     # Lesson nào xong thì tick
     # Edit note
     # Remove note
@@ -738,29 +743,6 @@ def course_learn(request,id):
     username = request.session['username']
     myconnect = db.neo4j("bolt://localhost","neo4j","123")
 
-    # nếu trang là question thì sẽ vào question 
-    # không phải thì vào trang lesson
-    question = request.GET.get('question',None)
-    if question == None:
-        lesson = request.GET.get('lesson',None)
-        print(lesson)
-        if lesson is None:
-            query = """
-                match (a:Account{{ username:'{}' }})-[:pay]-(e:Enrollment)-[:to_course]-(:Course{{ id: {} }}), (e)-[:watching_lesson]-(l:Lesson)
-                return l.name as name
-            """.format(username,id)
-            rs = myconnect.query(query)
-            lesson = list(rs)[0]['name']
-            context = {
-                'auto_submit_lesson':True,
-                'lesson':lesson
-            }
-            template = loader.get_template('home/course_learn.html')
-            return HttpResponse(template.render(context,request))
-
-
-
-
     # check xem user có mua khóa học này chưa chưa mua redirect qua overview
     query = """
         match (a:Account{{ username:'{}' }})-[:pay]-(:Enrollment)-[:to_course]-(c:Course{{ id:{} }})
@@ -769,6 +751,7 @@ def course_learn(request,id):
     rs = myconnect.query(query)
     if len(list(rs)) == 0:
         return redirect('/course_overview/{}'.format(id))
+
     # Đổ dữ liệu chung cho từng bài học
     query = """
         match (c:Course{{  id: {} }} )
@@ -777,7 +760,7 @@ def course_learn(request,id):
         optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
         with p,c
         match (p)
-        optional match (p)-[:head]-(:Lesson)-[:next*0..]->(l:Lesson)
+        optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
         with p,l,c
         match (l)
         optional match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
@@ -785,19 +768,16 @@ def course_learn(request,id):
         with p,l,a,q,c
         match (l)
         optional match (:Account{{ username:'{}' }})-[:pay]-(e:Enrollment)-[:to_course]-(c),
-        (e)-[:watching_lesson]-(wcl:Lesson)
-        where (l)=(wcl)
-        with p,l,a,q,count(wcl) as wcl
-        with p,l,a,q,coalesce(wcl,"") as wcl
-        return p.name as part_name,collect(l.name) as lesson_name,collect(l.url) as lesson_url,collect(q) as question_list,collect(a) as answer_list,collect(wcl) as watching
+        (e)-[:finish_lesson]-(fnl:Lesson)
+        where (l)=(fnl)
+        with p,l,a,q,count(fnl) as fnl
+        with p,l,a,q,coalesce(fnl,"") as fnl
+        return p.name as part_name,collect(l.name) as lesson_name,collect(l.url) as lesson_url,collect(q) as question_list,collect(a) as answer_list,collect(fnl) as finish
     """.format(id,username)
     rs = myconnect.query(query)
     course_learn_rs = list(rs)
     part_count = len(course_learn_rs)
     lesson_count = 0
-
-    watching_part = 1
-    watching_lesson = 1
 
     part_dict = {}
     for rc in course_learn_rs:
@@ -805,48 +785,100 @@ def course_learn(request,id):
         lesson_dict = {}
         for index,lesson in enumerate(rc['lesson_name']):
             question = rc['question_list'][index]
-            watching = rc['watching'][index]
+            finish = rc['finish'][index]
             if lesson not in lesson_dict:
                 lesson_count += 1
                 lesson_dict[lesson] = {}
                 lesson_dict[lesson]['question_list'] = []
-                lesson_dict[lesson]['watching_list'] = []
+                lesson_dict[lesson]['finish_list'] = []
             if question != '':
                 lesson_dict[lesson]['question_list'].append(question)
-            lesson_dict[lesson]['watching_list'].append(watching)
+            lesson_dict[lesson]['finish_list'].append(finish)
         part_dict[rc['part_name']] = lesson_dict
     
+    finish_part = 0
+    finish_lesson = 0
     part_index = 0
     lesson_index = 0
+    is_not_start = False
+
     # how to get result
     for part,part_detail in part_dict.items():
         # print("Chương " + part)
-        # print("=======")
         for lesson,lesson_detail in part_detail.items():
             # print("Bài " + lesson)
             # print(lesson_detail)
-            # print("=======")
             for question in lesson_detail['question_list']:
                 # print(question)
                 pass
-            for check in lesson_detail['watching_list']:
+            for check in lesson_detail['finish_list']:
                 if check == 1:
-                    watching_lesson = lesson_index
+                    finish_lesson = lesson_index
+                    finish_part = part_index
                 # print(check)
             lesson_index += 1
         part_index +=1
         # print()
-    
 
+    
+    # nếu trang là question thì sẽ vào question 
+    # không phải thì vào trang lesson
+    question = request.GET.get('question',None)
+    if question == None:
+        cur_lesson = request.GET.get('lesson',None)
+        if cur_lesson is None:
+            lesson_temp_index = 0
+            last_dict = part_dict[(list(part_dict)[-1])]
+            last_lesson = (list(last_dict)[-1])
+            cur_lesson = last_lesson
+            part_break = False
+            for part,part_detail in part_dict.items():
+                for lesson,lesson_detail in part_detail.items():
+                    if finish_lesson == 0:
+                        is_not_start = True
+                        cur_lesson = lesson
+                        part_break = True
+                        break
+                    if lesson_temp_index == finish_lesson + 1:
+                        cur_lesson = lesson
+                        part_break = True
+                        break
+                    lesson_temp_index += 1
+                if part_break:
+                    break
+            context = {
+                'auto_submit_lesson':True,
+                'lesson':cur_lesson
+            }
+            template = loader.get_template('home/course_learn.html')
+            return HttpResponse(template.render(context,request))
+        
+    # check xem finish course chưa -> turn on certificate button
     is_finish_course = False
     query = """
-        match (a:Account{{ username:'{}' }})-[:finish_course]-(c:Course{{id: {} }})
-        return count(a)
+        match (a:Account{{username:'{}'}})-[:finish_course]-(:Course{{id:{}}})
+        return a
     """.format(username,id)
     rs = myconnect.query(query)
     if len(list(rs)) != 0:
         is_finish_course = True
 
+    # Get note từ cur_lesson
+    query = """
+        match (c:Course{{ id: {} }} )
+        with (c)
+        match (c)
+        optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+        with p,c
+        match (p)
+        optional match (p)-[:head]-(:Lesson)-[:next*0..]->(l:Lesson)
+        with p,l,c
+        match (a:Account{{ username:'{}' }})-[:create_notion]-(n:notion)-[:in_lesson]- (l2:Lesson{{name:'{}' }})
+        where l2 = l
+        return n.content as note, n.time as video_time
+    """.format(id,username,cur_lesson)
+    rs = myconnect.query(query)
+    notion_list = list(rs)
 
 
     context = {
@@ -854,9 +886,12 @@ def course_learn(request,id):
         'part_dict': part_dict,
         'part_count': part_count ,
         'lesson_count':lesson_count,
-        'watching_part':watching_part + 1,
-        'watching_lesson':watching_lesson + 1,
+        'finish_part':finish_part + 1,
+        'finish_lesson':finish_lesson + 1,
+        'is_not_start': is_not_start,
         'is_finish_course': is_finish_course,
+        'notion_list': notion_list,
+        'watching_time': '30',
     }
     template = loader.get_template('home/course_learn.html')
     return HttpResponse(template.render(context,request))

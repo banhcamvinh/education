@@ -54,15 +54,18 @@
     <link rel="stylesheet" href="{% static 'home/assets/css/User-Rating-F19690.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Video-Responsive-YouTube.css' %}">
 </head>
-
+<script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
 {% if auto_submit_lesson %}
 <form method="get" id="lesson_form" name="lesson_form">
     <input style="display: none;" name="lesson" value="{{lesson}}" type="text">
-    <h1>Đang chuyển đến khóa học bạn đang học</h1>
+    <h1>Đang chuyển đến bài bạn đang học</h1>
 </form>
 {% else %} 
 <body>
-    <iframe allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/cldULNca6fk" height="0" style="width: 100%;height: 600px;"></iframe>
+    <!-- <iframe id="youtube_video" allowfullscreen="" frameborder="0" src="https://firebasestorage.googleapis.com/v0/b/education-5dcf4.appspot.com/o/test?alt=media&token=8ec574b6-6fc2-4861-89d6-a0d785db415c" height="0" style="width: 100%;height: 600px;"></iframe> -->
+    <video id="myvideo" width="100%" style="height: 600px;" controls>
+        <source src="https://firebasestorage.googleapis.com/v0/b/education-5dcf4.appspot.com/o/test?alt=media&token=8ec574b6-6fc2-4861-89d6-a0d785db415c" type="video/mp4">
+    </video>
     <div class="container">
         <div class="row">
             <div class="col">
@@ -73,13 +76,13 @@
                         {% if not range %}
                         {% endif %}
                         {% for _ in range %}
-                            {% if forloop.counter < watching_part %}
+                            {% if forloop.counter < finish_part %}
                             <li class="previous">Chương {{forloop.counter}}</li>
                             {% endif %}
-                            {% if  forloop.counter == watching_part %}
+                            {% if  forloop.counter == finish_part %}
                             <li class="active">Chương {{forloop.counter}}</li>
                             {% endif %}
-                            {% if  forloop.counter > watching_part %}
+                            {% if  forloop.counter > finish_part %}
                             <li>Chương {{forloop.counter}}</li>
                             {% endif %}
                         {% endfor %}
@@ -92,31 +95,51 @@
                         {% if not range %}
                         {% endif %}
                         {% for _ in range %}
-                            {% if forloop.counter < watching_lesson %}
+                            {% if forloop.counter < finish_lesson %}
                             <li class="previous">Bài {{forloop.counter}}</li>
                             {% endif %}
-                            {% if  forloop.counter == watching_lesson %}
+                            {% if  forloop.counter == finish_lesson %}
                             <li class="active">Bài {{forloop.counter}}</li>
                             {% endif %}
-                            {% if  forloop.counter > watching_lesson %}
+                            {% if  forloop.counter > finish_lesson %}
                             <li>Bài {{forloop.counter}}</li>
                             {% endif %}
                         {% endfor %}
                         {% endwith %}
                     </ul>
                 </div>
-                {% if is_finish_course%}
+                {% if is_finish_course == True%}
                 <a href="/course_certificate/{{course_id}}" class="btn btn-primary" style="width: 100%;">Hoàn thành khóa học</a>
                 {% else %}
-                <a href="/course_certificate/{{course_id}}" disabled class="btn btn-primary" style="width: 100%;">Hoàn thành khóa học</a>
+                <button  disabled class="btn btn-primary" style="width: 100%;">Hoàn thành khóa học</button>
                 {% endif %}
-                <p>Thêm ghi chú cho bài học</p>
+                <p style="font-size: 30px; margin-top: 10px;">Thêm ghi chú cho bài học</p>
             </div>
-            <div class="col-md-12"><textarea style="width: 100%;height: 100px;"></textarea><button class="btn btn-primary" type="button">Note</button></div>
+            <div class="col-md-12">
+                <textarea id="create_note_textarea" style="width: 100%;height: 100px;"></textarea>
+                <button id="create_note_btn" class="btn btn-primary" type="button">Note</button>
+            </div>
+            <form name="main_form" method="get">
+                <input style="display: none;" type="text" name="note">
+            </form>
         </div>
         <div class="row">
-            <div class="col" style="overflow-y: scroll; height: 400px;">
+            <div id='notion_area' class="col" style="overflow-y: scroll; height: 500px;">
+                <h2> Danh sách ghi chú của bài học</h2>
+                {% if not notion_list %}
+                <p>Chưa có ghi chú nào</p>
+                {% endif %}
+                {% for el in notion_list %}
                 <div class="row">
+                    <div class="col">
+                        <h1>{{ el.video_time }}</h1>
+                        <textarea disabled style="width: 100%;height: 100px;">{{el.note}}</textarea>
+                        <button class="btn btn-primary" type="button">Edit</button>
+                        <button class="btn btn-primary" type="button">Xóa</button>
+                    </div>
+                </div>
+                {% endfor %}
+                <!-- <div class="row">
                     <div class="col">
                         <h1>Heading</h1><textarea style="width: 100%;height: 100px;"></textarea><button class="btn btn-primary" type="button">Edit</button><button class="btn btn-primary" type="button">Xóa</button>
                     </div>
@@ -135,12 +158,7 @@
                     <div class="col">
                         <h1>Heading</h1><textarea style="width: 100%;height: 100px;"></textarea><button class="btn btn-primary" type="button">Edit</button><button class="btn btn-primary" type="button">Xóa</button>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col">
-                        <h1>Heading</h1><textarea style="width: 100%;height: 100px;"></textarea><button class="btn btn-primary" type="button">Edit</button><button class="btn btn-primary" type="button">Xóa</button>
-                    </div>
-                </div>
+                </div> -->
             </div>
             <div class="col-xxl-6">
                 <div class="accordion" id="accordionPart">
@@ -160,6 +178,11 @@
                                         <h2 class="accordion-header" id="headingLesson{{forloop.counter}}">
                                             <a href="/{{course_id}}?={{lesson}}" style="font-size: 10px;">Truy cập {{ lesson }}</a>
                                             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLesson{{forloop.counter}}" aria-expanded="false" aria-controls="collapseLesson{{forloop.counter}}">
+                                            {% if forloop.counter <= finish_lesson and forloop.parentloop.counter <= finish_part and not_start == True %}
+                                                <input type="checkbox" checked disabled>
+                                            {% else %}
+                                                <input type="checkbox" disabled>
+                                            {% endif %}
                                             Bài {{forloop.counter}}: {{lesson}}
                                             </button>
                                         </h2>
@@ -213,13 +236,88 @@
     <script src="{% static 'home/assets/js/Media-Slider-Bootstrap-3.js' %}"></script>
     <script src="{% static 'home/assets/js/Swipe-Slider-7.js' %}"></script>
     <script src="{% static 'home/assets/js/Ultimate-Testimonial-Slider-BS5.js' %}"></script>
+    <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
 </body>
 {% endif %} 
 
 <script>
+    {% if auto_submit_lesson %}
     window.onload = function(){
-    document.forms['lesson_form'].submit();
-}
+        document.forms['lesson_form'].submit();
+    }
+    {% endif %}
+
+    cur_time = {{ watching_time }}
+    video = document.querySelector('#myvideo')
+    video.currentTime = cur_time
+    video.ontimeupdate = function() {timeupdate()};
+    window.addEventListener('beforeunload', (event) => {
+        event.preventDefault();
+        // Bắn vào database để ghi lại event
+    });
+    function timeupdate(){
+        cur_time = video.currentTime
+    }
+
+    let note_time_list_el = document.querySelectorAll('#notion_area h1')
+    let note_time_list = []
+    note_time_list_el.forEach(el =>{
+        note_time_list.push(el.innerText)
+    })
+    console.log(note_time_list)
+
+
+    let create_note_textarea = document.querySelector('#create_note_textarea')
+    let create_note_btn = document.querySelector('#create_note_btn')
+    let notion_area = document.querySelector('#notion_area')
+    create_note_btn.addEventListener('click',event=>{
+        if (create_note_textarea.value == ''){return;}
+        row = document.createElement('div')
+        row.classList.add('row')
+        col = document.createElement('div')
+        col.classList.add('col')
+        h1 = document.createElement('h1')
+        h1.innerText = new Date(cur_time * 1000).toISOString().substr(11, 8)
+        textarea = document.createElement('textarea')
+        textarea.disabled = true
+        textarea.style.width = '100%'
+        textarea.style.height = '100px'
+        textarea.value = create_note_textarea.value
+        edit_btn = document.createElement('button')
+        edit_btn.className += 'btn'
+        edit_btn.className += ' btn-primary'
+        edit_btn.innerText = 'Edit'
+        remove_btn = document.createElement('button')
+        remove_btn.className += 'btn'
+        remove_btn.className += ' btn-primary'
+        remove_btn.innerText = 'Xóa'
+
+        col.appendChild(h1)
+        col.appendChild(textarea)
+        col.appendChild(edit_btn)
+        col.appendChild(remove_btn)
+        row.appendChild(col)
+        notion_area.appendChild(row)
+        $.ajax({
+            url: '/course_learn/{{course_id}}',
+            type: "POST",
+            dataType: "json",
+            data: JSON.stringify({time: cur_time,note: create_note_textarea.value }),
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            success: (data) => {
+            },
+            error: (error) => {
+                console.log(error);
+            }
+        });
+        create_note_textarea.value = ''
+    })
+
+
+
+
 </script>
 
 </html>
