@@ -11,7 +11,10 @@ import json
 import db
 import mymail
 import mywit
+import time as t
+from datetime import timedelta
 from datetime import datetime
+
 
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
@@ -878,7 +881,15 @@ def course_learn(request,id):
         return n.content as note, n.time as video_time
     """.format(id,username,cur_lesson)
     rs = myconnect.query(query)
-    notion_list = list(rs)
+    notion_list = []
+    for el in list(rs):
+        el_dict = dict()
+        el_dict['video_time'] = el['video_time']
+        el_dict['note'] = el['note']
+        notion_list.append(el_dict)
+
+    for note in notion_list:
+        note['video_time'] =t.strftime('%H:%M:%S', t.gmtime(note['video_time']))
 
 
     context = {

@@ -133,7 +133,7 @@
                 <div class="row">
                     <div class="col">
                         <h1>{{ el.video_time }}</h1>
-                        <textarea disabled style="width: 100%;height: 100px;">{{el.note}}</textarea>
+                        <textarea id="note" disabled style="width: 100%;height: 100px;">{{el.note}}</textarea>
                         <button class="btn btn-primary" type="button">Edit</button>
                         <button class="btn btn-primary" type="button">Xóa</button>
                     </div>
@@ -247,6 +247,23 @@
     }
     {% endif %}
 
+    let create_note_textarea = document.querySelector('#create_note_textarea')
+    let create_note_btn = document.querySelector('#create_note_btn')
+    let notion_area = document.querySelector('#notion_area')
+    let note_list_el = document.querySelectorAll('#note')
+    
+    let note_list = []
+    let note_time_list_el = document.querySelectorAll('#notion_area h1')
+    let note_time_list = []
+    note_time_list_el.forEach(el =>{
+        note_time_list.push(el.innerText)
+    })
+    note_list_el.forEach(el =>{
+        note_list.push(el.value)
+    })
+    console.log(note_list)
+
+
     cur_time = {{ watching_time }}
     video = document.querySelector('#myvideo')
     video.currentTime = cur_time
@@ -257,21 +274,18 @@
     });
     function timeupdate(){
         cur_time = video.currentTime
+        cur_hhmmss = new Date(cur_time * 1000).toISOString().substr(11, 8)
+        if ( note_time_list.includes(cur_hhmmss.toString()) ){
+            create_note_textarea.innerText = "Test"
+        }else{
+            create_note_textarea.innerText = ""
+        }
     }
 
-    let note_time_list_el = document.querySelectorAll('#notion_area h1')
-    let note_time_list = []
-    note_time_list_el.forEach(el =>{
-        note_time_list.push(el.innerText)
-    })
-    console.log(note_time_list)
 
-
-    let create_note_textarea = document.querySelector('#create_note_textarea')
-    let create_note_btn = document.querySelector('#create_note_btn')
-    let notion_area = document.querySelector('#notion_area')
     create_note_btn.addEventListener('click',event=>{
         if (create_note_textarea.value == ''){return;}
+      
         row = document.createElement('div')
         row.classList.add('row')
         col = document.createElement('div')
