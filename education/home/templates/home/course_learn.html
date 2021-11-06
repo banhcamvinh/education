@@ -134,8 +134,11 @@
                     <div class="col">
                         <h1>{{ el.video_time }}</h1>
                         <textarea id="note" disabled style="width: 100%;height: 100px;">{{el.note}}</textarea>
-                        <button class="btn btn-primary" type="button">Edit</button>
-                        <button class="btn btn-primary" type="button">Xóa</button>
+                        <p class="temp" style="display: none;"></p>
+                        <button class="edit btn btn-primary" type="button">Edit</button>
+                        <button class="delete btn btn-primary" type="button">Xóa</button>
+                        <button style="display: none;" class="ok btn btn-primary" type="button">Ok</button>
+                        <button style="display: none;" class="cancel btn btn-primary" type="button">Hủy</button>
                     </div>
                 </div>
                 {% endfor %}
@@ -251,7 +254,6 @@
     let create_note_btn = document.querySelector('#create_note_btn')
     let notion_area = document.querySelector('#notion_area')
     let note_list_el = document.querySelectorAll('#note')
-    
     let note_list = []
     let note_time_list_el = document.querySelectorAll('#notion_area h1')
     let note_time_list = []
@@ -261,10 +263,11 @@
     note_list_el.forEach(el =>{
         note_list.push(el.value)
     })
-    console.log(note_list)
+
 
 
     cur_time = {{ watching_time }}
+    cur_hhmmss = new Date(cur_time * 1000).toISOString().substr(11, 8)
     video = document.querySelector('#myvideo')
     video.currentTime = cur_time
     video.ontimeupdate = function() {timeupdate()};
@@ -273,45 +276,255 @@
         // Bắn vào database để ghi lại event
     });
     function timeupdate(){
+        note_list_el = document.querySelectorAll('#note')
+        note_time_list_el = document.querySelectorAll('#notion_area h1')
         cur_time = video.currentTime
         cur_hhmmss = new Date(cur_time * 1000).toISOString().substr(11, 8)
         if ( note_time_list.includes(cur_hhmmss.toString()) ){
-            create_note_textarea.innerText = "Test"
+            index = note_time_list.indexOf(cur_hhmmss.toString())
+            create_note_textarea.value = note_list[index]
         }else{
-            create_note_textarea.innerText = ""
+            create_note_textarea.value = ""
         }
     }
+    // Pasue video khi người dùng bắt tay vào note 
+    create_note_textarea.addEventListener('focus',(event)=>{
+        video.pause();
+    })
+    // Khi edit note đã tạo
+    let edit_note_btn_list_el =  document.querySelectorAll('button.edit')
+    let delete_note_btn_list_el =  document.querySelectorAll('button.delete')
+    let ok_note_btn_list_el =  document.querySelectorAll('button.ok')
+    let cancel_note_btn_list_el =  document.querySelectorAll('button.cancel')
+    let temp_list_el = document.querySelectorAll('p.temp')
+
+    edit_note_btn_list_el.forEach((el,index)=>{
+        el.addEventListener('click',event=>{
+            note_list_el[index].disabled = false
+            edit_note_btn_list_el[index].style.display = "none"
+            delete_note_btn_list_el[index].style.display = "none"
+            ok_note_btn_list_el[index].style.display = "inline-block"
+            cancel_note_btn_list_el[index].style.display = "inline-block"
+            temp_list_el[index].innerText = note_list_el[index].value
+        })
+    })
+    cancel_note_btn_list_el.forEach((el,index)=>{
+        el.addEventListener('click',event=>{
+            note_list_el[index].disabled = true
+            note_list_el[index].value = temp_list_el[index].innerText
+            edit_note_btn_list_el[index].style.display = "inline-block"
+            delete_note_btn_list_el[index].style.display = "inline-block"
+            ok_note_btn_list_el[index].style.display = "none"
+            cancel_note_btn_list_el[index].style.display = "none"
+        })
+    })
+    ok_note_btn_list_el.forEach((el,index)=>{
+        el.addEventListener('click',event=>{
+            note_list_el[index].disabled = true
+            note_list[index] = note_list_el[index].value
+            edit_note_btn_list_el[index].style.display = "inline-block"
+            delete_note_btn_list_el[index].style.display = "inline-block"
+            ok_note_btn_list_el[index].style.display = "none"
+            cancel_note_btn_list_el[index].style.display = "none"
+            $.ajax({
+                url: '/course_learn/{{course_id}}',
+                type: "POST",
+                dataType: "json",
+                data: JSON.stringify({time: cur_time,note: note_list[index]}),
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                success: (data) => {
+                },
+                error: (error) => {
+                    console.log(error);
+                }
+            });
+            // Update lại khung note
+            create_note_textarea.value = ''
+            video.currentTime = video.currentTime + 1
+            video.currentTime = video.currentTime - 1
+        })
+    })
+    delete_note_btn_list_el.forEach((el,index)=>{
+        el.addEventListener('click',event=>{
+            element = event.target.parentElement.parentElement
+            element.remove()
+            note_list_el = document.querySelectorAll('#note')
+            note_time_list_el = document.querySelectorAll('#notion_area h1')
+            note_list.splice(index,1);
+            note_time_list.splice(index,1);
+            $.ajax({
+                url: '/course_learn/{{course_id}}',
+                type: "POST",
+                dataType: "json",
+                data: JSON.stringify({time: cur_time,note: ''}),
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                success: (data) => {
+                },
+                error: (error) => {
+                    console.log(error);
+                }
+            });
+            // Update lại khung note
+            create_note_textarea.value = ''
+            video.currentTime = video.currentTime + 1
+            video.currentTime = video.currentTime - 1
+        })
+    })
 
 
+    // eveent create note ( nếu đã có hoặc chưa có)
     create_note_btn.addEventListener('click',event=>{
         if (create_note_textarea.value == ''){return;}
-      
-        row = document.createElement('div')
-        row.classList.add('row')
-        col = document.createElement('div')
-        col.classList.add('col')
-        h1 = document.createElement('h1')
-        h1.innerText = new Date(cur_time * 1000).toISOString().substr(11, 8)
-        textarea = document.createElement('textarea')
-        textarea.disabled = true
-        textarea.style.width = '100%'
-        textarea.style.height = '100px'
-        textarea.value = create_note_textarea.value
-        edit_btn = document.createElement('button')
-        edit_btn.className += 'btn'
-        edit_btn.className += ' btn-primary'
-        edit_btn.innerText = 'Edit'
-        remove_btn = document.createElement('button')
-        remove_btn.className += 'btn'
-        remove_btn.className += ' btn-primary'
-        remove_btn.innerText = 'Xóa'
+        if ( note_time_list.includes(cur_hhmmss.toString()) ){
+            index_input = note_time_list.indexOf(cur_hhmmss.toString())
+            note_list_el.forEach((note, index)=>{
+                if (index == index_input){
+                    note.value = create_note_textarea.value;
+                    note_list[index] = create_note_textarea.value;
+                }
+            });
+        }
+        else{
+            row = document.createElement('div')
+            row.classList.add('row')
+            col = document.createElement('div')
+            col.classList.add('col')
+            h1 = document.createElement('h1')
+            h1.innerText = new Date(cur_time * 1000).toISOString().substr(11, 8)
+            textarea = document.createElement('textarea')
+            textarea.setAttribute('id','note');
+            textarea.disabled = true
+            textarea.style.width = '100%'
+            textarea.style.height = '100px'
+            textarea.value = create_note_textarea.value
+            p = document.createElement('p')
+            p.setAttribute('class','temp')
+            p.style.display = 'none'
 
-        col.appendChild(h1)
-        col.appendChild(textarea)
-        col.appendChild(edit_btn)
-        col.appendChild(remove_btn)
-        row.appendChild(col)
-        notion_area.appendChild(row)
+            edit_btn = document.createElement('button')
+            edit_btn.className += 'edit'
+            edit_btn.className += ' btn'
+            edit_btn.className += ' btn-primary'
+            edit_btn.innerText = 'Edit'
+            delete_btn = document.createElement('button')
+            delete_btn.className += 'delete'
+            delete_btn.className += ' btn'
+            delete_btn.className += ' btn-primary'
+            delete_btn.innerText = 'Xóa'
+            ok_btn = document.createElement('button')
+            ok_btn.className += 'ok'
+            ok_btn.className += ' btn'
+            ok_btn.className += ' btn-primary'
+            ok_btn.innerText = 'OK'
+            ok_btn.style.display = 'none'
+            cancel_btn = document.createElement('button')
+            cancel_btn.className += 'cancel'
+            cancel_btn.className += ' btn'
+            cancel_btn.className += ' btn-primary'
+            cancel_btn.innerText = 'Hủy'
+            cancel_btn.style.display = 'none'
+
+            col.appendChild(h1)
+            col.appendChild(textarea)
+            col.appendChild(p)
+            col.appendChild(edit_btn)
+            col.appendChild(delete_btn)
+            col.appendChild(ok_btn)
+            col.appendChild(cancel_btn)
+            row.appendChild(col)
+            notion_area.appendChild(row)
+
+            edit_note_btn_list_el =  document.querySelectorAll('button.edit')
+            delete_note_btn_list_el =  document.querySelectorAll('button.delete')
+            ok_note_btn_list_el =  document.querySelectorAll('button.ok')
+            cancel_note_btn_list_el =  document.querySelectorAll('button.cancel')
+            temp_list_el = document.querySelectorAll('p.temp')
+            edit_note_btn_list_el.forEach((el,index)=>{
+            el.addEventListener('click',event=>{
+                note_list_el[index].disabled = false
+                edit_note_btn_list_el[index].style.display = "none"
+                delete_note_btn_list_el[index].style.display = "none"
+                ok_note_btn_list_el[index].style.display = "inline-block"
+                cancel_note_btn_list_el[index].style.display = "inline-block"
+                temp_list_el[index].innerText = note_list_el[index].value
+            })
+            })
+            cancel_note_btn_list_el.forEach((el,index)=>{
+                el.addEventListener('click',event=>{
+                    note_list_el[index].disabled = true
+                    note_list_el[index].value = temp_list_el[index].innerText
+                    edit_note_btn_list_el[index].style.display = "inline-block"
+                    delete_note_btn_list_el[index].style.display = "inline-block"
+                    ok_note_btn_list_el[index].style.display = "none"
+                    cancel_note_btn_list_el[index].style.display = "none"
+                })
+            })
+            ok_note_btn_list_el.forEach((el,index)=>{
+                el.addEventListener('click',event=>{
+                    note_list_el[index].disabled = true
+                    note_list[index] = note_list_el[index].value
+                    edit_note_btn_list_el[index].style.display = "inline-block"
+                    delete_note_btn_list_el[index].style.display = "inline-block"
+                    ok_note_btn_list_el[index].style.display = "none"
+                    cancel_note_btn_list_el[index].style.display = "none"
+                    $.ajax({
+                        url: '/course_learn/{{course_id}}',
+                        type: "POST",
+                        dataType: "json",
+                        data: JSON.stringify({time: cur_time,note: note_list[index]}),
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                        success: (data) => {
+                        },
+                        error: (error) => {
+                            console.log(error);
+                        }
+                    });
+                    // Update lại khung note
+                    create_note_textarea.value = ''
+                    video.currentTime = video.currentTime + 1
+                    video.currentTime = video.currentTime - 1
+                })
+            })
+            delete_note_btn_list_el.forEach((el,index)=>{
+                el.addEventListener('click',event=>{
+                    element = event.target.parentElement.parentElement
+                    element.remove()
+                    note_list_el = document.querySelectorAll('#note')
+                    note_time_list_el = document.querySelectorAll('#notion_area h1')
+                    note_list.splice(index,1);
+                    note_time_list.splice(index,1);
+                    $.ajax({
+                        url: '/course_learn/{{course_id}}',
+                        type: "POST",
+                        dataType: "json",
+                        data: JSON.stringify({time: cur_time,note: ''}),
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                        success: (data) => {
+                        },
+                        error: (error) => {
+                            console.log(error);
+                        }
+                    });
+                    // Update lại khung note
+                    create_note_textarea.value = ''
+                    video.currentTime = video.currentTime + 1
+                    video.currentTime = video.currentTime - 1
+                })
+            })
+
+
+            note_list.push(create_note_textarea.value)
+            note_time_list.push(cur_hhmmss)
+        }
+        // Bắn dữ liệu cho backend
         $.ajax({
             url: '/course_learn/{{course_id}}',
             type: "POST",
@@ -326,10 +539,11 @@
                 console.log(error);
             }
         });
+        // Update lại khung note
         create_note_textarea.value = ''
+        video.currentTime = video.currentTime + 1
+        video.currentTime = video.currentTime - 1
     })
-
-
 
 
 </script>

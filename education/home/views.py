@@ -14,6 +14,7 @@ import mywit
 import time as t
 from datetime import timedelta
 from datetime import datetime
+import math
 
 
 def chunks(lst, n):
@@ -729,8 +730,14 @@ def pay(request,code):
 def course_learn(request,id):
     if request.method == 'POST':
         data = json.load(request)
-        time = data.get('time')
+        time = math.floor(data.get('time'))
         note = data.get('note')
+        print(note)
+        print(time)
+        if note == '':
+            pass
+        else:
+            pass    
         
 
     # courseid 
