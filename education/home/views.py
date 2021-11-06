@@ -729,24 +729,58 @@ def pay(request,code):
 @csrf_exempt
 def course_learn(request,id):
     if request.method == 'POST':
+        username = request.session['username']
+        myconnect = db.neo4j("bolt://localhost","neo4j","123")
         data = json.load(request)
         time = math.floor(data.get('time'))
         note = data.get('note')
-        print(note)
+        cur_lesson = data.get('cur_lesson')
         print(time)
         if note == '':
-            pass
+            query = """
+                match (c:Course{{ id: {} }} )
+                with (c)
+                match (c)
+                optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                with p,c
+                match (p)
+                optional match (p)-[:head]-(:Lesson)-[:next*0..]->(l:Lesson)
+                with p,l,c
+                match (cur_l{{ name:'{}' }})
+                where cur_l = l
+                with p,cur_l,c
+                match (a:Account{{ username:'{}' }})-[:create_notion]-(n:notion)-[:in_lesson]->(cur_l)
+                where n.time = {}
+                detach delete n
+            """.format(id,cur_lesson,username,time)
+            myconnect.query(query)
         else:
-            pass    
+            query = """
+                match (c:Course{{ id: {} }} )
+                with (c)
+                match (c)
+                optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                with p,c
+                match (p)
+                optional match (p)-[:head]-(:Lesson)-[:next*0..]->(l:Lesson)
+                with p,l,c
+                match (cur_l{{ name:'{}'}})
+                where cur_l = l
+                with p,cur_l,c
+                merge (a:Account{{ username:'{}' }})-[:create_notion]-(n:notion{{ time:{} }})-[:in_lesson]- (cur_l)
+                on match
+                set n.content = '{}'
+                on create
+                set n.time = {},n.content='{}'
+            """.format(id,cur_lesson,username,time,note,time,note)
+            myconnect.query(query) 
+            pass
         
 
     # courseid 
     # part = ? lesson = ? excercise = ? 
 
     # Lesson nào xong thì tick
-    # Edit note
-    # Remove note
-    # add note
     if 'username' not in request.session:
         return redirect('/login')
 
@@ -829,7 +863,6 @@ def course_learn(request,id):
             lesson_index += 1
         part_index +=1
         # print()
-
     
     # nếu trang là question thì sẽ vào question 
     # không phải thì vào trang lesson
@@ -858,7 +891,7 @@ def course_learn(request,id):
                     break
             context = {
                 'auto_submit_lesson':True,
-                'lesson':cur_lesson
+                'cur_lesson':cur_lesson
             }
             template = loader.get_template('home/course_learn.html')
             return HttpResponse(template.render(context,request))
@@ -910,6 +943,7 @@ def course_learn(request,id):
         'is_finish_course': is_finish_course,
         'notion_list': notion_list,
         'watching_time': '30',
+        'cur_lesson':cur_lesson,
     }
     template = loader.get_template('home/course_learn.html')
     return HttpResponse(template.render(context,request))

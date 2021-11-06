@@ -57,7 +57,7 @@
 <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
 {% if auto_submit_lesson %}
 <form method="get" id="lesson_form" name="lesson_form">
-    <input style="display: none;" name="lesson" value="{{lesson}}" type="text">
+    <input style="display: none;" name="lesson" value="{{cur_lesson}}" type="text">
     <h1>Đang chuyển đến bài bạn đang học</h1>
 </form>
 {% else %} 
@@ -132,13 +132,13 @@
                 {% for el in notion_list %}
                 <div class="row">
                     <div class="col">
-                        <h1>{{ el.video_time }}</h1>
-                        <textarea id="note" disabled style="width: 100%;height: 100px;">{{el.note}}</textarea>
-                        <p class="temp" style="display: none;"></p>
-                        <button class="edit btn btn-primary" type="button">Edit</button>
-                        <button class="delete btn btn-primary" type="button">Xóa</button>
-                        <button style="display: none;" class="ok btn btn-primary" type="button">Ok</button>
-                        <button style="display: none;" class="cancel btn btn-primary" type="button">Hủy</button>
+                        <h1 index="{{ forloop.counter0 }}">{{ el.video_time }}</h1>
+                        <textarea index="{{ forloop.counter0 }}" id="note" disabled style="width: 100%;height: 100px;">{{el.note}}</textarea>
+                        <p index="{{ forloop.counter0 }}" class="temp" style="display: none;"></p>
+                        <button index="{{ forloop.counter0 }}" class="edit btn btn-primary" type="button">Edit</button>
+                        <button index="{{ forloop.counter0 }}" class="delete btn btn-primary" type="button">Xóa</button>
+                        <button index="{{ forloop.counter0 }}" style="display: none;" class="ok btn btn-primary" type="button">Ok</button>
+                        <button index="{{ forloop.counter0 }}" style="display: none;" class="cancel btn btn-primary" type="button">Hủy</button>
                     </div>
                 </div>
                 {% endfor %}
@@ -250,6 +250,8 @@
     }
     {% endif %}
 
+
+
     let create_note_textarea = document.querySelector('#create_note_textarea')
     let create_note_btn = document.querySelector('#create_note_btn')
     let notion_area = document.querySelector('#notion_area')
@@ -263,10 +265,9 @@
     note_list_el.forEach(el =>{
         note_list.push(el.value)
     })
+    var cur_time = {{ watching_time }}
+    var cur_lesson = "{{ cur_lesson }}"
 
-
-
-    cur_time = {{ watching_time }}
     cur_hhmmss = new Date(cur_time * 1000).toISOString().substr(11, 8)
     video = document.querySelector('#myvideo')
     video.currentTime = cur_time
@@ -277,7 +278,7 @@
     });
     function timeupdate(){
         note_list_el = document.querySelectorAll('#note')
-        note_time_list_el = document.querySelectorAll('#notion_area h1')
+        note_time_list_el = document.querySelectorAll('#notion_area h1')        
         cur_time = video.currentTime
         cur_hhmmss = new Date(cur_time * 1000).toISOString().substr(11, 8)
         if ( note_time_list.includes(cur_hhmmss.toString()) ){
@@ -326,11 +327,14 @@
             delete_note_btn_list_el[index].style.display = "inline-block"
             ok_note_btn_list_el[index].style.display = "none"
             cancel_note_btn_list_el[index].style.display = "none"
+            const [hours, minutes, seconds] =  note_time_list[index].split(':');
+            const totalSeconds = (+hours) * 60 * 60 + (+minutes) * 60 + (+seconds);
+            time = totalSeconds
             $.ajax({
                 url: '/course_learn/{{course_id}}',
                 type: "POST",
                 dataType: "json",
-                data: JSON.stringify({time: cur_time,note: note_list[index]}),
+                data: JSON.stringify({time: time,note: note_list[index],cur_lesson:cur_lesson}),
                 headers: {
                     "X-Requested-With": "XMLHttpRequest",
                 },
@@ -348,17 +352,51 @@
     })
     delete_note_btn_list_el.forEach((el,index)=>{
         el.addEventListener('click',event=>{
+            temp_list_el = document.querySelectorAll('p.temp')
             element = event.target.parentElement.parentElement
             element.remove()
+            const [hours, minutes, seconds] =  note_time_list[index].split(':');
+            const totalSeconds = (+hours) * 60 * 60 + (+minutes) * 60 + (+seconds);
+            del_time = totalSeconds
             note_list_el = document.querySelectorAll('#note')
             note_time_list_el = document.querySelectorAll('#notion_area h1')
             note_list.splice(index,1);
+            edit_note_btn_list_el =  document.querySelectorAll('button.edit')
+            delete_note_btn_list_el =  document.querySelectorAll('button.delete')
+            ok_note_btn_list_el =  document.querySelectorAll('button.ok')
+            cancel_note_btn_list_el =  document.querySelectorAll('button.cancel')
+            note_time_list_el = document.querySelectorAll('#notion_area h1')
+            note_list_el = document.querySelectorAll('#note')
+            p_list_el = document.querySelectorAll('p.temp')
+
+            edit_note_btn_list_el.forEach((el,index)=>{
+                el.setAttribute('index',index)
+            })
+            delete_note_btn_list_el.forEach((el,index)=>{
+                el.setAttribute('index',index)
+            })
+            ok_note_btn_list_el.forEach((el,index)=>{
+                el.setAttribute('index',index)
+            })
+            cancel_note_btn_list_el.forEach((el,index)=>{
+                el.setAttribute('index',index)
+            })
+            note_time_list_el.forEach((el,index)=>{
+                el.setAttribute('index',index)
+            })
+            note_list_el.forEach((el,index)=>{
+                el.setAttribute('index',index)
+            })
+            p_list_el.forEach((el,index)=>{
+                el.setAttribute('index',index)
+            })
+
             note_time_list.splice(index,1);
             $.ajax({
                 url: '/course_learn/{{course_id}}',
                 type: "POST",
                 dataType: "json",
-                data: JSON.stringify({time: cur_time,note: ''}),
+                data: JSON.stringify({time: del_time,note: '',cur_lesson:cur_lesson}),
                 headers: {
                     "X-Requested-With": "XMLHttpRequest",
                 },
@@ -389,6 +427,7 @@
             });
         }
         else{
+            index = note_list.length
             row = document.createElement('div')
             row.classList.add('row')
             col = document.createElement('div')
@@ -427,6 +466,13 @@
             cancel_btn.className += ' btn-primary'
             cancel_btn.innerText = 'Hủy'
             cancel_btn.style.display = 'none'
+            h1.setAttribute('index',index)
+            textarea.setAttribute('index',index)
+            p.setAttribute('index',index)
+            edit_btn.setAttribute('index',index)
+            delete_btn.setAttribute('index',index)
+            ok_btn.setAttribute('index',index)
+            cancel_btn.setAttribute('index',index)
 
             col.appendChild(h1)
             col.appendChild(textarea)
@@ -437,14 +483,18 @@
             col.appendChild(cancel_btn)
             row.appendChild(col)
             notion_area.appendChild(row)
+            note_list.push(create_note_textarea.value)
+            note_time_list.push(cur_hhmmss)
 
             edit_note_btn_list_el =  document.querySelectorAll('button.edit')
             delete_note_btn_list_el =  document.querySelectorAll('button.delete')
             ok_note_btn_list_el =  document.querySelectorAll('button.ok')
             cancel_note_btn_list_el =  document.querySelectorAll('button.cancel')
             temp_list_el = document.querySelectorAll('p.temp')
-            edit_note_btn_list_el.forEach((el,index)=>{
-            el.addEventListener('click',event=>{
+
+
+            edit_btn.addEventListener('click',event=>{
+                index = parseInt(event.target.getAttribute('index'))
                 note_list_el[index].disabled = false
                 edit_note_btn_list_el[index].style.display = "none"
                 delete_note_btn_list_el[index].style.display = "none"
@@ -452,84 +502,113 @@
                 cancel_note_btn_list_el[index].style.display = "inline-block"
                 temp_list_el[index].innerText = note_list_el[index].value
             })
+            cancel_btn.addEventListener('click',event=>{
+                index = parseInt(event.target.getAttribute('index'))
+                note_list_el[index].disabled = true
+                note_list_el[index].value = temp_list_el[index].innerText
+                edit_note_btn_list_el[index].style.display = "inline-block"
+                delete_note_btn_list_el[index].style.display = "inline-block"
+                ok_note_btn_list_el[index].style.display = "none"
+                cancel_note_btn_list_el[index].style.display = "none"
             })
-            cancel_note_btn_list_el.forEach((el,index)=>{
-                el.addEventListener('click',event=>{
-                    note_list_el[index].disabled = true
-                    note_list_el[index].value = temp_list_el[index].innerText
-                    edit_note_btn_list_el[index].style.display = "inline-block"
-                    delete_note_btn_list_el[index].style.display = "inline-block"
-                    ok_note_btn_list_el[index].style.display = "none"
-                    cancel_note_btn_list_el[index].style.display = "none"
+            ok_btn.addEventListener('click',event=>{
+                index = parseInt(event.target.getAttribute('index'))
+                note_list_el[index].disabled = true
+                note_list[index] = note_list_el[index].value
+                edit_note_btn_list_el[index].style.display = "inline-block"
+                delete_note_btn_list_el[index].style.display = "inline-block"
+                ok_note_btn_list_el[index].style.display = "none"
+                cancel_note_btn_list_el[index].style.display = "none"
+                const [hours, minutes, seconds] =  note_time_list[index].split(':');
+                const totalSeconds = (+hours) * 60 * 60 + (+minutes) * 60 + (+seconds);
+                time = totalSeconds
+                $.ajax({
+                    url: '/course_learn/{{course_id}}',
+                    type: "POST",
+                    dataType: "json",
+                    data: JSON.stringify({time: time,note: note_list[index],cur_lesson:cur_lesson}),
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    success: (data) => {
+                    },
+                    error: (error) => {
+                        console.log(error);
+                    }
+                });
+                // Update lại khung note
+                create_note_textarea.value = ''
+                video.currentTime = video.currentTime + 1
+                video.currentTime = video.currentTime - 1
+            })
+            delete_btn.addEventListener('click',event=>{
+                temp_list_el = document.querySelectorAll('p.temp')
+                index = parseInt(event.target.getAttribute('index'))
+                element = event.target.parentElement.parentElement
+                element.remove()
+                const [hours, minutes, seconds] =  note_time_list[index].split(':');
+                const totalSeconds = (+hours) * 60 * 60 + (+minutes) * 60 + (+seconds);
+                del_time = totalSeconds
+                note_list_el = document.querySelectorAll('#note')
+                note_time_list_el = document.querySelectorAll('#notion_area h1')
+                note_list.splice(index,1);
+                note_time_list.splice(index,1);
+                edit_note_btn_list_el =  document.querySelectorAll('button.edit')
+                delete_note_btn_list_el =  document.querySelectorAll('button.delete')
+                ok_note_btn_list_el =  document.querySelectorAll('button.ok')
+                cancel_note_btn_list_el =  document.querySelectorAll('button.cancel')
+                note_time_list_el = document.querySelectorAll('#notion_area h1')
+                note_list_el = document.querySelectorAll('#note')
+                p_list_el = document.querySelectorAll('p.temp')
+                edit_note_btn_list_el.forEach((el,index)=>{
+                    el.setAttribute('index',index)
                 })
-            })
-            ok_note_btn_list_el.forEach((el,index)=>{
-                el.addEventListener('click',event=>{
-                    note_list_el[index].disabled = true
-                    note_list[index] = note_list_el[index].value
-                    edit_note_btn_list_el[index].style.display = "inline-block"
-                    delete_note_btn_list_el[index].style.display = "inline-block"
-                    ok_note_btn_list_el[index].style.display = "none"
-                    cancel_note_btn_list_el[index].style.display = "none"
-                    $.ajax({
-                        url: '/course_learn/{{course_id}}',
-                        type: "POST",
-                        dataType: "json",
-                        data: JSON.stringify({time: cur_time,note: note_list[index]}),
-                        headers: {
-                            "X-Requested-With": "XMLHttpRequest",
-                        },
-                        success: (data) => {
-                        },
-                        error: (error) => {
-                            console.log(error);
-                        }
-                    });
-                    // Update lại khung note
-                    create_note_textarea.value = ''
-                    video.currentTime = video.currentTime + 1
-                    video.currentTime = video.currentTime - 1
+                delete_note_btn_list_el.forEach((el,index)=>{
+                    el.setAttribute('index',index)
                 })
-            })
-            delete_note_btn_list_el.forEach((el,index)=>{
-                el.addEventListener('click',event=>{
-                    element = event.target.parentElement.parentElement
-                    element.remove()
-                    note_list_el = document.querySelectorAll('#note')
-                    note_time_list_el = document.querySelectorAll('#notion_area h1')
-                    note_list.splice(index,1);
-                    note_time_list.splice(index,1);
-                    $.ajax({
-                        url: '/course_learn/{{course_id}}',
-                        type: "POST",
-                        dataType: "json",
-                        data: JSON.stringify({time: cur_time,note: ''}),
-                        headers: {
-                            "X-Requested-With": "XMLHttpRequest",
-                        },
-                        success: (data) => {
-                        },
-                        error: (error) => {
-                            console.log(error);
-                        }
-                    });
-                    // Update lại khung note
-                    create_note_textarea.value = ''
-                    video.currentTime = video.currentTime + 1
-                    video.currentTime = video.currentTime - 1
+                ok_note_btn_list_el.forEach((el,index)=>{
+                    el.setAttribute('index',index)
                 })
-            })
+                cancel_note_btn_list_el.forEach((el,index)=>{
+                    el.setAttribute('index',index)
+                })
+                note_time_list_el.forEach((el,index)=>{
+                    el.setAttribute('index',index)
+                })
+                note_list_el.forEach((el,index)=>{
+                    el.setAttribute('index',index)
+                })
+                p_list_el.forEach((el,index)=>{
+                    el.setAttribute('index',index)
+                })
 
-
-            note_list.push(create_note_textarea.value)
-            note_time_list.push(cur_hhmmss)
+                $.ajax({
+                    url: '/course_learn/{{course_id}}',
+                    type: "POST",
+                    dataType: "json",
+                    data: JSON.stringify({time: del_time,note: '',cur_lesson:cur_lesson}),
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    success: (data) => {
+                    },
+                    error: (error) => {
+                        console.log(error);
+                    }
+                });
+                // Update lại khung note
+                create_note_textarea.value = ''
+                video.currentTime = video.currentTime + 1
+                video.currentTime = video.currentTime - 1
+            })
+        
         }
         // Bắn dữ liệu cho backend
         $.ajax({
             url: '/course_learn/{{course_id}}',
             type: "POST",
             dataType: "json",
-            data: JSON.stringify({time: cur_time,note: create_note_textarea.value }),
+            data: JSON.stringify({time: cur_time,note: create_note_textarea.value,cur_lesson:cur_lesson }),
             headers: {
                 "X-Requested-With": "XMLHttpRequest",
             },
