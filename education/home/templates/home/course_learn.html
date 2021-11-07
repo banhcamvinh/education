@@ -179,14 +179,20 @@
                                     {% for lesson,lesson_detail in part_detail.items  %}
                                     <div class="accordion-item">
                                         <h2 class="accordion-header" id="headingLesson{{forloop.counter}}">
+                                            <!-- {% if forloop.counter <= finish_lesson and forloop.parentloop.counter <= finish_part and not_start == True %}
                                             <a href="/{{course_id}}?={{lesson}}" style="font-size: 10px;">Truy cập {{ lesson }}</a>
+                                            {% else %}
+                                            <a href="/{{course_id}}?={{lesson}}" style="color: red; font-size: 10px;pointer-events: none;">Truy cập {{ lesson }}</a>
+                                            {% endif %} -->
+                                            <a href="/course_learn/{{course_id}}?lesson={{lesson}}" style="font-size: 10px;">Truy cập {{ lesson }}</a>
+                                            Bài {{forloop.counter}}: {{lesson}}
                                             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLesson{{forloop.counter}}" aria-expanded="false" aria-controls="collapseLesson{{forloop.counter}}">
-                                            {% if forloop.counter <= finish_lesson and forloop.parentloop.counter <= finish_part and not_start == True %}
+                                            {% if forloop.parentloop.counter == finish_part and forloop.counter <= check_finish_lesson or forloop.parentloop.counter < finish_part   %}
                                                 <input type="checkbox" checked disabled>
                                             {% else %}
                                                 <input type="checkbox" disabled>
                                             {% endif %}
-                                            Bài {{forloop.counter}}: {{lesson}}
+                                            Bài {{forloop.counter}}: {{lesson}} 
                                             </button>
                                         </h2>
                                         <div id="collapseLesson{{forloop.counter}}" class="accordion-collapse collapse show" aria-labelledby="headingLesson{{forloop.counter}}" data-bs-parent="#accordionLesson">
@@ -204,7 +210,6 @@
                                                         <!-- <div id="collapseQuestion{{forloop.counter}}" class="accordion-collapse collapse show" aria-labelledby="headingQuestion{{forloop.counter}}" data-bs-parent="#accordionQuestion">
                                                             <div class="accordion-body">
                                                                 
-                                
                                                             </div>
                                                         </div> -->
                                                     </div>
@@ -226,6 +231,7 @@
             </div>
         </div>
     </div>
+    <a href="#"></a>
     <script src="{% static 'home/assets/bootstrap/js/bootstrap.min.js' %}"></script>
     <script src="{% static 'home/assets/js/bs-init.js' %}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.10.0/baguetteBox.min.js"></script>
@@ -265,8 +271,10 @@
     note_list_el.forEach(el =>{
         note_list.push(el.value)
     })
-    var cur_time = {{ watching_time }}
-    var cur_lesson = "{{ cur_lesson }}"
+
+    cur_time = {{ watching_time }}
+    cur_lesson = "{{ cur_lesson }}"
+    is_finish_lesson = false
 
     cur_hhmmss = new Date(cur_time * 1000).toISOString().substr(11, 8)
     video = document.querySelector('#myvideo')
@@ -276,6 +284,13 @@
         event.preventDefault();
         // Bắn vào database để ghi lại event
     });
+    video.onended = function(){videoended()};
+    function videoended(){
+        is_final_lesson = '{{is_final_lesson}}'
+        if( parseInt(is_final_lesson) ==1){
+            location.reload(true);
+        }
+    }
     function timeupdate(){
         note_list_el = document.querySelectorAll('#note')
         note_time_list_el = document.querySelectorAll('#notion_area h1')        
@@ -286,6 +301,35 @@
             create_note_textarea.value = note_list[index]
         }else{
             create_note_textarea.value = ""
+        }
+        video_duration = video.duration 
+        if (cur_time > ( video_duration / 100 * 90) & is_finish_lesson == false){
+            is_finish_lesson = true
+            // Nếu course này đã được finish rồi thì thôi
+            // Nếu chưa thì sẽ bắn thông tin để finish
+            finish_lesson = '{{ finish_lesson}}'
+            cur_lesson_index = '{{ cur_lesson_index }}'
+            finish_lesson =  parseInt(finish_lesson)
+            cur_lesson_index = parseInt(cur_lesson_index)
+            if (cur_lesson_index > finish_lesson){
+                // xóa finish cũ và update finish mới
+                // chỉnh dấu tick cho hoàn thành
+                $.ajax({
+                    url: '/course_learn/{{course_id}}',
+                    type: "POST",
+                    dataType: "json",
+                    data: JSON.stringify({ finish_lesson_video: '{{cur_lesson}}',is_final_lesson: parseInt('{{is_final_lesson}}') }),
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    success: (data) => {
+                    },
+                    error: (error) => {
+                        console.log(error);
+                    }
+                });
+            }
+      
         }
     }
     // Pasue video khi người dùng bắt tay vào note 

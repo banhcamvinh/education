@@ -732,11 +732,10 @@ def course_learn(request,id):
         username = request.session['username']
         myconnect = db.neo4j("bolt://localhost","neo4j","123")
         data = json.load(request)
-        time = math.floor(data.get('time'))
-        note = data.get('note')
-        cur_lesson = data.get('cur_lesson')
-        print(time)
-        if note == '':
+        finish_lesson_video = data.get('finish_lesson_video')
+        is_final_lesson = data.get('is_final_lesson')
+        if finish_lesson_video != None:
+            # delete finish cũ
             query = """
                 match (c:Course{{ id: {} }} )
                 with (c)
@@ -746,15 +745,12 @@ def course_learn(request,id):
                 match (p)
                 optional match (p)-[:head]-(:Lesson)-[:next*0..]->(l:Lesson)
                 with p,l,c
-                match (cur_l{{ name:'{}' }})
-                where cur_l = l
-                with p,cur_l,c
-                match (a:Account{{ username:'{}' }})-[:create_notion]-(n:notion)-[:in_lesson]->(cur_l)
-                where n.time = {}
-                detach delete n
-            """.format(id,cur_lesson,username,time)
+                match (l)<-[fl:finish_lesson]-(e:Enrollment)-[:pay]-(a:Account{{ username:'{}'}})
+                optional match (l)
+                delete fl
+            """.format(id,username)
             myconnect.query(query)
-        else:
+            # create finish mới
             query = """
                 match (c:Course{{ id: {} }} )
                 with (c)
@@ -764,21 +760,67 @@ def course_learn(request,id):
                 match (p)
                 optional match (p)-[:head]-(:Lesson)-[:next*0..]->(l:Lesson)
                 with p,l,c
-                match (cur_l{{ name:'{}'}})
-                where cur_l = l
-                with p,cur_l,c
-                merge (a:Account{{ username:'{}' }})-[:create_notion]-(n:notion{{ time:{} }})-[:in_lesson]- (cur_l)
-                on match
-                set n.content = '{}'
-                on create
-                set n.time = {},n.content='{}'
-            """.format(id,cur_lesson,username,time,note,time,note)
-            myconnect.query(query) 
-            pass
-        
+                match (l)
+                where l.name = '{}'
+                with l,c
+                match (:Account{{ username:'{}' }})-[:pay]-(e:Enrollment)-[:to_course]-(c)
+                create (e)-[:finish_lesson]->(l)
+            """.format(id,finish_lesson_video,username)
+            # tạo finish course nếu xong
+            myconnect.query(query)
+            if is_final_lesson == 1:
+                query = """
+                    match (a:Account{{username: '{}'}}),(c:Course{{ id: {} }})
+                    create (a)-[:finish_course]->(c)
+                """.format(username,id)
+                myconnect.query(query)
 
-    # courseid 
-    # part = ? lesson = ? excercise = ? 
+
+        if finish_lesson_video == None:
+            time = data.get('time')
+            if time != None:
+                time = math.floor(data.get('time'))
+            note = data.get('note')
+            cur_lesson = data.get('cur_lesson')
+            if note == '':
+                query = """
+                    match (c:Course{{ id: {} }} )
+                    with (c)
+                    match (c)
+                    optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    with p,c
+                    match (p)
+                    optional match (p)-[:head]-(:Lesson)-[:next*0..]->(l:Lesson)
+                    with p,l,c
+                    match (cur_l{{ name:'{}' }})
+                    where cur_l = l
+                    with p,cur_l,c
+                    match (a:Account{{ username:'{}' }})-[:create_notion]-(n:notion)-[:in_lesson]->(cur_l)
+                    where n.time = {}
+                    detach delete n
+                """.format(id,cur_lesson,username,time)
+                myconnect.query(query)
+            elif note != '':
+                query = """
+                    match (c:Course{{ id: {} }} )
+                    with (c)
+                    match (c)
+                    optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    with p,c
+                    match (p)
+                    optional match (p)-[:head]-(:Lesson)-[:next*0..]->(l:Lesson)
+                    with p,l,c
+                    match (cur_l{{ name:'{}'}})
+                    where cur_l = l
+                    with p,cur_l,c
+                    merge (a:Account{{ username:'{}' }})-[:create_notion]-(n:notion{{ time:{} }})-[:in_lesson]- (cur_l)
+                    on match
+                    set n.content = '{}'
+                    on create
+                    set n.time = {},n.content='{}'
+                """.format(id,cur_lesson,username,time,note,time,note)
+                myconnect.query(query) 
+               
 
     # Lesson nào xong thì tick
     if 'username' not in request.session:
@@ -845,6 +887,9 @@ def course_learn(request,id):
     part_index = 0
     lesson_index = 0
     is_not_start = False
+    check_finish_lesson_index = 0
+    check_finish_lesson = 0
+    cur_lesson_index = 0
 
     # how to get result
     for part,part_detail in part_dict.items():
@@ -859,8 +904,11 @@ def course_learn(request,id):
                 if check == 1:
                     finish_lesson = lesson_index
                     finish_part = part_index
+                    check_finish_lesson = check_finish_lesson_index
                 # print(check)
             lesson_index += 1
+            check_finish_lesson_index += 1
+        check_finish_lesson_index = 0
         part_index +=1
         # print()
     
@@ -883,6 +931,7 @@ def course_learn(request,id):
                         part_break = True
                         break
                     if lesson_temp_index == finish_lesson + 1:
+                        cur_lesson_index = lesson_temp_index
                         cur_lesson = lesson
                         part_break = True
                         break
@@ -895,6 +944,19 @@ def course_learn(request,id):
             }
             template = loader.get_template('home/course_learn.html')
             return HttpResponse(template.render(context,request))
+        else:
+            lesson_temp_index = 0
+            part_break = False
+            for part,part_detail in part_dict.items():
+                for lesson,lesson_detail in part_detail.items():
+                    if lesson == cur_lesson:
+                        cur_lesson_index = lesson_temp_index
+                        part_break = True
+                        break
+                    lesson_temp_index += 1
+                if part_break:
+                    break
+            
         
     # check xem finish course chưa -> turn on certificate button
     is_finish_course = False
@@ -905,6 +967,7 @@ def course_learn(request,id):
     rs = myconnect.query(query)
     if len(list(rs)) != 0:
         is_finish_course = True
+    
 
     # Get note từ cur_lesson
     query = """
@@ -927,10 +990,36 @@ def course_learn(request,id):
         el_dict['video_time'] = el['video_time']
         el_dict['note'] = el['note']
         notion_list.append(el_dict)
-
+    # Change note time về định dạng hh:mm:ss để hiển thị 
     for note in notion_list:
         note['video_time'] =t.strftime('%H:%M:%S', t.gmtime(note['video_time']))
 
+    # Get watching time
+    query = """
+        match (c:Course{{ id:{} }} )
+        with (c)
+        match (c)
+        optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+        with p,c
+        match (p)
+        optional match (p)-[:head]-(:Lesson)-[:next*0..]->(l:Lesson)
+        with p,l,c
+        match (cur_l{{ name:'{}' }})
+        where cur_l = l
+        with p,cur_l,c
+        match (a:Account{{ username:'{}' }})-[:pay]->(e:Enrollment)-[wc:watching_lesson]-(cur_l)
+        return wc.time as time
+    """.format(id,cur_lesson,username)
+    rs = myconnect.query(query)
+    rs_list = list(rs)
+    watching_time = 0
+    if len(rs_list) != 0:
+        watching_time = rs_list[0]['time']
+
+    is_final_lesson = 0
+    if cur_lesson_index == lesson_count - 1:
+        is_final_lesson = 1
+    # print(is_final_lesson)
 
     context = {
         'course_id': id,
@@ -942,8 +1031,11 @@ def course_learn(request,id):
         'is_not_start': is_not_start,
         'is_finish_course': is_finish_course,
         'notion_list': notion_list,
-        'watching_time': '30',
+        'watching_time': watching_time,
         'cur_lesson':cur_lesson,
+        'check_finish_lesson': check_finish_lesson + 1,
+        'cur_lesson_index':cur_lesson_index + 1,
+        'is_final_lesson':is_final_lesson,
     }
     template = loader.get_template('home/course_learn.html')
     return HttpResponse(template.render(context,request))
