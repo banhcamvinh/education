@@ -650,6 +650,7 @@ def cart(request):
                 if len(price) != 0:
                     codevalid = True
                     discount_price = price[0]['price']
+                
             # check mã code xem có trong hệ thống không
             # Nếu không thì báo lõi
             # có thì giảm giá 
@@ -676,12 +677,16 @@ def cart(request):
             """.format(username)
             rs = myconnect.query(query)
             cart_list = list(rs)
-    
+            total_price = 0
+            for el in cart_list:
+                total_price += el['price']
+
     context = {
         'cart_list':cart_list,
         'code':code,
         'codevalid':codevalid,
         'discount_price':discount_price,
+        'total_price': total_price,
     }
     template = loader.get_template('home/cart.html')
     return HttpResponse(template.render(context,request))
@@ -1219,13 +1224,13 @@ def user_course(request):
             continue_course_render_lst = list(chunks(continue_course_lst,4))
 
             query = """
-            //Course watching
-                match (a:Account{{username:"{}"}})-[:has_course_mark]-(:Course_Mark)-[:with_course]-(c:Course)
+                match (a:Account{{ username:"{}" }})-[:has_course_mark]-(:Course_Mark)-[:with_course]-(c:Course)
                 with c
                 match (c)
                 optional match (c)-[:to_course]-(rc:Rating_Course)
                 with c, coalesce(avg(rc.star),0) as star
-                match (c)-[wc:watching_course]-(:Account)
+                match (c)
+                optional match (c)-[wc:watching_course]-(:Account)
                 with c, count(wc) as num_of_view,star
                 optional match (c)-[:has_price]->(cp:Course_Price)-[:at]-(d:Day)<-[:in_day]-(m:Month)-[:in_month]-(y:Year)
                 with  c as course, cp.value as price,d.value as day,m.value as month,y.value as year,star,num_of_view
@@ -1251,6 +1256,92 @@ def user_course(request):
         template = loader.get_template('home/user_course.html')
         return HttpResponse(template.render(context,request))
 
+def user_report(request):
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+
+    # Finish course
+    query = """
+        match (a:Account{{username:'{}'}})
+        optional match (a:Account{{username:'{}'}})-[:pay]-(e:Enrollment)-[:to_course]-(pc:Course)
+        with count(pc) as total_course
+        match (a:Account{{username:'{}'}})
+        optional match (a:Account{{username:'{}'}})-[:pay]-(e:Enrollment)-[:finish_course]-(fnc:Course)
+        return count(fnc) as finish, total_course - count(fnc) as not_finish
+    """.format(username,username,username,username)
+    rs = myconnect.query(query)
+    finish_course = list(rs)
+    if len(finish_course) != 0:
+        finish_course = finish_course[0]
+    
+    # Finish lesson
+    query = """
+        match (:Account{{ username:'{}' }})-[:pay]-(e:Enrollment)-[:to_course]-(c)
+        with (c)
+        match (c)
+        optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+        with p,c
+        match (p)
+        optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+        with l,c
+        match (l)
+        optional match (:Account{{ username:'{}' }})-[:pay]-(e:Enrollment)-[:to_course]-(c),
+        (e)-[:finish_lesson]-(fnl:Lesson)
+        where (l)=(fnl)
+        with l.name as l_name,l.duration as l_duration,fnl.name as fnl_name,c.name as course_name
+        return *
+    """.format(username,username)
+    rs = myconnect.query(query)
+    finish_lesson = None
+    rs_list = list(rs)
+    if len(rs_list) != 0:
+        finish_lesson = dict()
+        finish_lesson['total'] = len(rs_list)
+        finish_lesson['finish'] = 0
+        finish_duration =dict()
+        finish_duration['finish'] = 0
+        finish_duration['not_finish'] = 0
+        finish_duration['total'] = 0
+        course_dict = dict()
+
+        for rs in rs_list:
+            if rs['course_name'] not in course_dict:
+                course_dict[rs['course_name']] = {'fnl_name':[], 'l_duration':[]}
+            course_dict[rs['course_name']]['fnl_name'].append(rs['fnl_name'])
+            course_dict[rs['course_name']]['l_duration'].append(rs['l_duration'])
+
+        # print(course_dict)
+        finish_index = 0
+        for course in course_dict:
+            count_none = 0
+            for lesson in course_dict[course]['fnl_name']:
+                count_none += 1
+                lesson_index = course_dict[course]['fnl_name'].index(lesson)
+                if lesson != None:
+                    finish_lesson['finish'] += course_dict[course]['fnl_name'].index(lesson) + 1
+                    finish_index = course_dict[course]['fnl_name'].index(lesson)
+                finish_duration['total'] += course_dict[course]['l_duration'][lesson_index]
+            if finish_index != 0:
+                index = 0
+                for lesson in course_dict[course]['l_duration']:
+                    if index == finish_index + 1:
+                        break
+                    finish_duration['finish'] += lesson
+                    index += 1
+                finish_index = 0
+            
+        finish_lesson['not_finish'] = finish_lesson['total'] - finish_lesson['finish']
+        finish_duration['not_finish'] = finish_duration['total'] - finish_duration['finish']
+
+    context = {
+        'finish_course':finish_course,
+        'finish_lesson':finish_lesson,
+        'finish_duration':finish_duration,
+    }
+    template = loader.get_template('home/user_report.html')
+    return HttpResponse(template.render(context,request))
 
 
 def test(request):

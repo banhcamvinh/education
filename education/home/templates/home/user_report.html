@@ -1,0 +1,76 @@
+<!DOCTYPE HTML>
+<html>
+<head>  
+<script>
+window.onload = function () {
+var finish_course_chart = new CanvasJS.Chart("finish_course_chartContainer", {
+	animationEnabled: true,
+	title:{
+		text: "Course Learning finish percentage",
+		horizontalAlign: "left"
+	},
+	data: [{
+		type: "doughnut",
+		startAngle: 60,
+		indexLabelFontSize: 17,
+		indexLabel: "{label} - #percent%",
+		toolTipContent: "<b>{label}:</b> {y} (#percent%)",
+		dataPoints: [
+			{ y: {{finish_course.finish}}, label: "Finish Course" },
+			{ y: {{finish_course.not_finish}}, label: "Not Finish Course" },
+		]
+	}]
+});
+finish_course_chart.render();
+
+var finish_lesson_chart = new CanvasJS.Chart("finish_lesson_chartContainer", {
+	animationEnabled: true,
+	title:{
+		text: "Lesson Learning finish percentage",
+		horizontalAlign: "left"
+	},
+	data: [{
+		type: "doughnut",
+		startAngle: 60,
+		indexLabelFontSize: 17,
+		indexLabel: "{label} - #percent%",
+		toolTipContent: "<b>{label}:</b> {y} (#percent%)",
+		dataPoints: [
+			{ y: {{finish_lesson.finish}}, label: "Finish Lesson" },
+			{ y: {{finish_lesson.not_finish}}, label: "Not Finish Lesson" },
+		]
+	}]
+});
+finish_lesson_chart.render();
+
+var finish_duration_chart = new CanvasJS.Chart("finish_duration_chartContainer", {
+	animationEnabled: true,
+	title:{
+		text: "Duration Learning finish percentage",
+		horizontalAlign: "left"
+	},
+	data: [{
+		type: "doughnut",
+		startAngle: 60,
+		indexLabelFontSize: 17,
+		indexLabel: "{label} - #percent%",
+		toolTipContent: "<b>{label}:</b> {y} (#percent%)",
+		dataPoints: [
+			{ y: {{finish_duration.finish}}, label: "Finish duration" },
+			{ y: {{finish_duration.not_finish}}, label: "Not Finish duration" },
+		]
+	}]
+});
+finish_duration_chart.render();
+
+}
+</script>
+</head>
+<body>
+<div id="finish_course_chartContainer" style="height: 370px; width: 100%;"></div>
+<div id="finish_lesson_chartContainer" style="height: 370px; width: 100%;"></div>
+<div id="finish_duration_chartContainer" style="height: 370px; width: 100%;"></div>
+
+<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+</body>
+</html>
