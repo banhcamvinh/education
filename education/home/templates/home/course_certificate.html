@@ -10,19 +10,16 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.2/jspdf.min.js"></script>
 <body>
-    <div id='dom-to-print' style="width:800px; height:600px; padding:20px; text-align:center; border: 10px solid #787878">
-        <div style="width:750px; height:550px; padding:20px; text-align:center; border: 5px solid #787878">
+    <div id='dom-to-print' style="width:800px; height:400px; padding:20px; text-align:center; border: 10px solid #787878">
+        <div style="width:750px; height:350px; padding:20px; text-align:center; border: 5px solid #787878">
                <span style="font-size:50px; font-weight:bold">Certificate of Completion</span>
                <br><br>
                <span style="font-size:25px"><i>This is to certify that</i></span>
                <br><br>
-               <span style="font-size:30px"><b>username</b></span><br/><br/>
+               <span style="font-size:30px"><b>{{ username }}</b></span><br/><br/>
                <span style="font-size:25px"><i>has completed the course</i></span> <br/><br/>
-               <span style="font-size:30px">coursename</span> <br/><br/>
-               <span style="font-size:20px">with complete  <b>100%</b></span> <br/><br/><br/><br/>
-               <span style="font-size:25px"><i>dated</i></span><br>
-              #set ($dt = $DateFormatter.getFormattedDate($grade.getAwardDate(), "MMMM dd, yyyy"))
-              <span style="font-size:30px">$dt</span>
+               <span style="font-size:30px">{{ course_name}}</span> <br/><br/>
+               <span style="font-size:20px">with complete  <b>100%</b></span>
         </div>
     </div>
     <button id='print-btn'>Start print process</button>
@@ -32,7 +29,7 @@
 $('#print-btn').click(()=>{
 var pdf = new jsPDF('p','pt','a4');
 pdf.addHTML(document.body,function() {
-    pdf.save('web.pdf');
+    pdf.save('{{course_name}}'+'_certificate.pdf');
 });
 })
 </script>

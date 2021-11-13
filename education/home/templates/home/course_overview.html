@@ -105,6 +105,11 @@
                 <p style="font-size: 30px;color: rgb(0,0,0);">&nbsp;{{course_detail.price}} VNĐ</p>
                 {% if isbought %}
                 <a href="/course_learn/{{course_detail.id}}" class="btn btn-primary">Vào học</a>
+                {% if ismarked %}
+                    <a href="javascript: void(0)" value="remove_mark" onclick="submitForms('remove_mark')" class="action btn btn-primary" style="margin-left: 10px;margin-right: 10px;">Hủy lưu</a>
+                {% else %} 
+                    <a href="javascript: void(0)" value="add_mark" onclick="submitForms('add_mark')" class="action btn btn-primary" style="margin-left: 10px;margin-right: 10px;">Lưu</a>
+                {% endif %}   
                 {% else %} 
                     {% if isadded %}
                         <a href="javascript: void(0)" value="remove_cart" onclick="submitForms('remove_cart')" class="action btn btn-primary">Bỏ thêm khỏi giỏ hàng</a>

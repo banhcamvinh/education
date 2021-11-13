@@ -16,6 +16,11 @@ urlpatterns = [
     path('pay/<str:code>', views.pay, name='pay'),
     path('course_learn/<int:id>', views.course_learn, name='course_learn'),
     path('course_certificate/<int:id>', views.course_certificate, name='course_certificate'),
+    path('course_rating/<int:id>', views.course_rating, name='course_rating'),
+    path('course_excercise/<int:id>/<str:lesson_name>', views.course_excercise, name='course_excercise'),
+    path('user', views.user, name='user'),
+    path('user_course', views.user_course, name='user_course'),
+    path('user_account', views.user_account, name='user_account'),
 
 
 

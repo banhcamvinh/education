@@ -69,7 +69,7 @@
     <div class="container">
         <div class="row">
             <div class="col">
-                <h1>Tên bài học</h1>
+                <h1>{{ cur_lesson }}</h1>
                 <div class="steps-progressbar">
                     <ul>
                         {% with ''|center:part_count as range %}
@@ -110,8 +110,10 @@
                 </div>
                 {% if is_finish_course == True%}
                 <a href="/course_certificate/{{course_id}}" class="btn btn-primary" style="width: 100%;">Hoàn thành khóa học</a>
+                <a href="/course_rating/{{course_id}}" class="btn btn-primary" style="width: 100%;">Đánh giá khóa học</a>
                 {% else %}
                 <button  disabled class="btn btn-primary" style="width: 100%;">Hoàn thành khóa học</button>
+                <button  disabled class="btn btn-primary" style="width: 100%;">Đánh giá khóa học</button>
                 {% endif %}
                 <p style="font-size: 30px; margin-top: 10px;">Thêm ghi chú cho bài học</p>
             </div>
@@ -199,7 +201,11 @@
                                             <div class="accordion-body">
                                                 
                                                 <div class="accordion" id="accordionQuestion">
-                                                    Bài tập
+                                                    {% if lesson_detail.question_list %}
+                                                    <a href="/course_excercise/{{course_id}}/{{lesson}}">Truy cập Bài tập</a>
+                                                    {% else %}
+                                                    Chưa có bài tập
+                                                    {% endif %}
                                                     {% for question in lesson_detail.question_list  %}
                                                     <div class="accordion-item">
                                                         <h2 class="accordion-header" id="headingQuestion{{forloop.counter}}">

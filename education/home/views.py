@@ -14,6 +14,7 @@ import mywit
 import time as t
 from datetime import timedelta
 from datetime import datetime
+from datetime import date
 import math
 
 
@@ -27,15 +28,16 @@ def index(request):
     myconnect = db.neo4j("bolt://localhost","neo4j","123")
     query = """
         call{
-            match  (e:Enrollment)-[:to_course]->(c:Course)
-            return c, count(*) as count
-            order by count desc
-            limit 3
+        match  (c:Course)
+        optional match (e:Enrollment)-[:to_course]->(c:Course)
+        return c, count(e) as count
+        order by count desc
+        limit 3
         }
         with c
         MATCH (c:Course)
         OPTIONAL MATCH (c:Course)<-[:to_course]-(rc:Rating_Course)
-        RETURN c.name as course_name, c.content as course_content ,coalesce(avg(rc.star),0)as course_rating
+        return c.name as course_name, c.content as course_content, coalesce(avg(rc.star),0)  as course_rating
     """
     rs = myconnect.query(query)
     course_info_lst = list(rs)
@@ -67,6 +69,7 @@ def login(request):
                 alert = "Sai tên tài khoản hoặc mật khẩu"
             # Check password
             else:
+                print("Dô else")
                 query = """
                 MATCH (a:Account {{username:'{}',password:'{}'}}),
                 (a)-[:in_role]->(r:Role),
@@ -179,12 +182,9 @@ def course(request):
 
             # Get course_lst buy most
             query = """
-                //Course enrollmost
-                //Course enrollmost
-                //Course enrollmost
                 match (c:Course)
-                optional match (c:Course)-[tc:to_course]-(:Enrollment)
-                with c, count(tc) as num_of_enrollment
+                optional match (c:Course)-[tc:to_course]-(e:Enrollment)
+                with c, count(e) as num_of_enrollment
                 order by num_of_enrollment desc
                 limit 12
                 match (c)
@@ -197,17 +197,18 @@ def course(request):
                 optional match (c)-[:has_price]->(cp:Course_Price)-[:at]-(d:Day)<-[:in_day]-(m:Month)-[:in_month]-(y:Year)
                 with  c as course, cp.value as price,d.value as day,m.value as month,y.value as year,num_of_enrollment,num_of_view,star
                 order by year desc,month desc,day desc
-                return course.id as id,course.name as name, apoc.agg.first(price)as price,num_of_enrollment,num_of_view, star
+                with course.id as id,course.name as name, apoc.agg.first(price)as price,num_of_enrollment,num_of_view, star
+                order by num_of_enrollment desc
+                return  id, name, price,num_of_enrollment,num_of_view, star
             """
             rs = myconnect.query(query)
             most_buy_course_lst = list(rs)
-            most_buy_course_range = len(most_buy_course_lst) % 4
+            most_buy_course_range = (len(most_buy_course_lst)-1) // 4 + 1
             most_buy_course_range = [*range(0,most_buy_course_range)]
             most_buy_course_render_lst = list(chunks(most_buy_course_lst,4))
 
             # Get course_lst view most
             query = """
-                //Course views most
                 match (c:Course)
                 optional match (c:Course)<-[wc:watching_course]-(:Account)
                 with c,count(wc)as num_of_view
@@ -223,7 +224,7 @@ def course(request):
             """
             rs = myconnect.query(query)
             most_view_course_lst = list(rs)
-            most_view_course_range = len(most_view_course_lst) % 4
+            most_view_course_range = (len(most_view_course_lst)-1) // 4 + 1
             most_view_course_range = [*range(0,most_view_course_range)]
             most_view_course_render_lst = list(chunks(most_view_course_lst,4))
 
@@ -252,6 +253,8 @@ def course(request):
                 continue_course_range = (len(continue_course_lst)-1) // 4 + 1
                 continue_course_range = [*range(0,continue_course_range)]
                 continue_course_render_lst = list(chunks(continue_course_lst,4))
+
+
 
             context = {
                 'category_lst':category_lst,
@@ -912,6 +915,7 @@ def course_learn(request,id):
         part_index +=1
         # print()
     
+
     # nếu trang là question thì sẽ vào question 
     # không phải thì vào trang lesson
     question = request.GET.get('question',None)
@@ -1041,16 +1045,218 @@ def course_learn(request,id):
     return HttpResponse(template.render(context,request))
 
 def course_certificate(request,id):
-    context = {
+    # Check user đăng nhập hay chưa
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+    # Check user hoàn thành khóa học hay chưa
+    query = """
+        match (a:Account{{username:'{}'}})-[:finish_course]-(c:Course{{id:{}}})
+        return c.name as course_name
+    """.format(username,id)
+    rs = myconnect.query(query)
+    rs_list = list(rs)
+    if len(rs_list) == 0:
+        return redirect('/course_learn/'+str(id))
+    # Nếu đã hoàn thàn khóa học 
+    course_name = rs_list[0]['course_name']
 
+    context = {
+        'username':username,
+        'course_name': course_name,
     }
     template = loader.get_template('home/course_certificate.html')
     return HttpResponse(template.render(context,request))
+
+def course_rating(request,id):
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+    star = request.GET.get('star','')
+    content = request.GET.get('content','')
+    is_success = False
+    if star != '':
+        query = """
+            merge (a:Account{{username:'{}'}})-[:make_rating]-(rc:Rating_Course)-[:to_course]-(c:Course{{id:{} }})
+            set rc.content = "{}"
+            set rc.star = {}
+        """.format(username,id,content,star)
+        myconnect.query(query)
+        is_success = True
+    
+    star = 0
+    content = ''
+    # Đã đánh giá hay chưa đánh giá rồi thì cho phép chỉnh sửa
+    query = """
+        match (a:Account{{username:'{}'}})-[:make_rating]-(rc:Rating_Course)-[:to_course]-(c:Course{{id:{}}})
+        return rc.star as star, rc.content as content
+    """.format(username,id)
+    rs = myconnect.query(query)
+    rs_list = list(rs)
+    if rs_list != 0:
+        star = rs_list[0]['star']
+        content = rs_list[0]['content']
+
+    context = {
+        'star':star,
+        'content':content,
+        'star_loop':[1,2,3,4,5],
+        'course_id':id,
+        'is_success': is_success,
+    }
+    template = loader.get_template('home/course_rating.html')
+    return HttpResponse(template.render(context,request))
+
+def course_excercise(request,id,lesson_name):
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+    query = """
+        match (c:Course{{ id: {} }} )
+        with (c)
+        match (c)
+        optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+        with p,c
+        match (p)
+        optional match (p)-[:head]-(:Lesson)-[:next*0..]->(l:Lesson)
+        with p,l,c
+        match (l)
+        where l.name = '{}'
+        with l
+        match (l)
+        optional match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
+        return e.question as question, e.answer as answer
+    """.format(id,lesson_name)
+    rs = myconnect.query(query)
+    excercise_list = list(rs)
+
+    context = {
+        'excercise_list': excercise_list,
+        'course_id':id,
+    }
+    template = loader.get_template('home/course_excercise.html')
+    return HttpResponse(template.render(context,request))
+
+def user(request):
+    context = {
+    }
+    template = loader.get_template('home/user.html')
+    return HttpResponse(template.render(context,request))
+
+def user_account(request):
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+    form_rs = None
+    alert = ''
+    if request.method == 'POST':
+        name = request.POST.get("name","")
+        phone = request.POST.get("phone","")
+        email = request.POST.get("email","")
+        rs_dict = dict()
+        if name == "" or phone == "" or email == "":
+            alert = "Bạn chưa điền đủ thông tin"
+            form_rs = rs_dict
+        else:
+            alert = "Cập nhật thông tin thành công"
+            query = """
+                MATCH (a:Account {{username:'{}'}})<-[:has_account]-(u:User)
+                set u.name = '{}' , u.phone = '{}' , u.email = '{}'
+                return u.name as name, u.phone as phone, u.email as email
+            """.format(username,name,phone,email)
+            rs = myconnect.query(query)
+            rs = list(rs)
+            form_rs = rs[0]
+                    
+    if request.method == 'GET':
+        query = """
+            MATCH (a:Account {{username:'{}'}})<-[:has_account]-(u:User)
+            return u.name as name, u.phone as phone, u.email as email
+        """.format(username)
+        rs = myconnect.query(query)
+        rs = list(rs)
+        form_rs = rs[0]
+        print(type(form_rs))
+
+    context = {
+        'form_rs': form_rs,
+        'alert':alert
+    }
+    template = loader.get_template('home/user_account.html')
+    return HttpResponse(template.render(context,request))
+
+def user_course(request):
+    if request.method == 'GET':
+        myconnect = db.neo4j("bolt://localhost","neo4j","123")
+
+        continue_course_lst = []
+        continue_course_render_lst=[]
+        continue_course_range=[]
+        # check if logged in -> return continue list and recommend list
+        if 'username' in request.session :
+            query = """
+            //Course watching
+                match (c:Course)<-[:watching_course]-(:Account{{username:"{}"}})
+                with c
+                match (c)
+                optional match (c)-[:to_course]-(rc:Rating_Course)
+                with c, coalesce(avg(rc.star),0) as star
+                match (c)-[wc:watching_course]-(:Account)
+                with c, count(wc) as num_of_view,star
+                optional match (c)-[:has_price]->(cp:Course_Price)-[:at]-(d:Day)<-[:in_day]-(m:Month)-[:in_month]-(y:Year)
+                with  c as course, cp.value as price,d.value as day,m.value as month,y.value as year,star,num_of_view
+                order by year desc,month desc,day desc
+                return course.id as id,course.name as name, apoc.agg.first(price)as price, star,num_of_view
+            """.format(request.session['username'])
+            rs = myconnect.query(query)
+            continue_course_lst = list(rs)
+            continue_course_range = (len(continue_course_lst)-1) // 4 + 1
+            continue_course_range = [*range(0,continue_course_range)]
+            continue_course_render_lst = list(chunks(continue_course_lst,4))
+
+            query = """
+            //Course watching
+                match (a:Account{{username:"{}"}})-[:has_course_mark]-(:Course_Mark)-[:with_course]-(c:Course)
+                with c
+                match (c)
+                optional match (c)-[:to_course]-(rc:Rating_Course)
+                with c, coalesce(avg(rc.star),0) as star
+                match (c)-[wc:watching_course]-(:Account)
+                with c, count(wc) as num_of_view,star
+                optional match (c)-[:has_price]->(cp:Course_Price)-[:at]-(d:Day)<-[:in_day]-(m:Month)-[:in_month]-(y:Year)
+                with  c as course, cp.value as price,d.value as day,m.value as month,y.value as year,star,num_of_view
+                order by year desc,month desc,day desc
+                return course.id as id,course.name as name, apoc.agg.first(price)as price, star,num_of_view
+            """.format(request.session['username'])
+            rs = myconnect.query(query)
+            mark_course_lst = list(rs)
+            mark_course_range = (len(mark_course_lst)-1) // 4 + 1
+            mark_course_range = [*range(0,mark_course_range)]
+            mark_course_render_lst = list(chunks(mark_course_lst,4))
+
+
+
+        context = {
+            'continue_course_lst':continue_course_lst,
+            'continue_course_render_lst':continue_course_render_lst,
+            'continue_course_range':continue_course_range,
+            'mark_course_lst':mark_course_lst,
+            'mark_course_render_lst':mark_course_render_lst,
+            'mark_course_range':mark_course_range,
+        }
+        template = loader.get_template('home/user_course.html')
+        return HttpResponse(template.render(context,request))
 
 
 
 def test(request):
     return render(request,'home/test.html',)
+
+
 
 @csrf_exempt
 def ajax(request):
