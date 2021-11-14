@@ -1,0 +1,176 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<script>
+window.onload = function () {
+
+var rating_chart = new CanvasJS.Chart("rating_chartContainer", {
+	animationEnabled: true,
+	exportEnabled: true,
+	theme: "light1", // "light1", "light2", "dark1", "dark2"
+	title:{
+		text: "Rating report"
+	},
+  	axisY: {
+      includeZero: true
+    },
+	data: [
+        {
+            type: "column", //change type to bar, line, area, pie, etc
+            //indexLabel: "{y}", //Shows y value on all Data Points
+            indexLabelFontColor: "#5A5757",
+            indexLabelFontSize: 20,
+            indexLabelPlacement: "outside",
+            dataPoints: [
+                { label: "Một" , y: {{star_dict.1}} },
+                { label: "Hai" , y: {{star_dict.2}} },
+                { label: "Ba", y: {{star_dict.3}} },
+                { label: "Bốn", y: {{star_dict.4}} },
+                { label: "Năm", y: {{star_dict.5}} },]
+	    },
+        {        
+		type: "line",
+      	indexLabelFontSize: 20,
+		dataPoints: [
+			{ y: {{star_dict.mean}} },
+			{ y: {{star_dict.mean}} },
+			{ y: {{star_dict.mean}} , indexLabel: "\u2191 Mean: {{star_dict.mean}}",markerColor: "red", markerType: "triangle" },
+			{ y: {{star_dict.mean}} },
+			{ y: {{star_dict.mean}} },
+		]
+	    },
+        {        
+		type: "line",
+      	indexLabelFontSize: 20,
+		dataPoints: [
+			{ y: {{star_dict.p95}} },
+			{ y: {{star_dict.p95}} },
+			{ y: {{star_dict.p95}} , indexLabel: "\u2191 P95: {{star_dict.p95}}",markerColor: "red", markerType: "triangle" },
+			{ y: {{star_dict.p95}} },
+			{ y: {{star_dict.p95}} },
+		]
+	    }
+    ]   
+});
+rating_chart.render();
+
+var view_chart = new CanvasJS.Chart("view_chartContainer", {
+	animationEnabled: true,
+	title:{
+		text: "Course Views",
+		horizontalAlign: "left"
+	},
+	data: [{
+		type: "doughnut",
+		startAngle: 60,
+		//innerRadius: 60,
+		indexLabelFontSize: 17,
+		indexLabel: "{label} - #percent%",
+		toolTipContent: "<b>{label}:</b> {y} (#percent%)",
+		dataPoints: [
+            {% for el in view_list %}
+			{ y: {{el.views}}, label: "{{el.course_name}}" },
+            {% endfor %}
+		]
+	}]
+});
+view_chart.render();
+
+var enrollment_chart = new CanvasJS.Chart("enrollment_chartContainer", {
+	animationEnabled: true,
+	title:{
+		text: "Course enrollments",
+		horizontalAlign: "left"
+	},
+	data: [{
+		type: "doughnut",
+		startAngle: 60,
+		//innerRadius: 60,
+		indexLabelFontSize: 17,
+		indexLabel: "{label} - #percent%",
+		toolTipContent: "<b>{label}:</b> {y} (#percent%)",
+		dataPoints: [
+            {% for el in enrollment_list %}
+			{ y: {{el.enrollments}}, label: "{{el.course_name}}" },
+            {% endfor %}
+		]
+	}]
+});
+enrollment_chart.render();
+
+var role_chart = new CanvasJS.Chart("role_chartContainer", {
+	animationEnabled: true,
+	title:{
+		text: "User and Teacher count by time"
+	},
+	axisX: {
+		interval: 1,
+		intervalType: "day",
+		valueFormatString: "DD MM YYYY"
+	},
+	axisY: {
+		suffix: "%"
+	},
+	toolTip: {
+		shared: true
+	},
+	legend: {
+		reversed: true,
+		verticalAlign: "center",
+		horizontalAlign: "right"
+	},
+	data: [{
+		type: "stackedColumn100",
+		name: "User",
+		showInLegend: true,
+		xValueFormatString: "YYYY",
+		yValueFormatString: "#,##0\"%\"",
+		dataPoints: [
+            {% for el in role_list%}
+			{ x: new Date({{el.year}},{{el.month}},{{el.day}}), y: {{el.user}} },
+            {% endfor %}
+			// { x: new Date(2010,0,1), y: 40 },
+			// { x: new Date(2010,0,2), y: 50 },
+			// { x: new Date(2010,0,3), y: 60 },
+			// { x: new Date(2010,0,5), y: 63 },
+			// { x: new Date(2010,0,6), y: 65 },
+			// { x: new Date(2010,0,7), y: 67 }
+		]
+	}, 
+	{
+		type: "stackedColumn100",
+		name: "Teacher",
+		showInLegend: true,
+		xValueFormatString: "YYYY",
+		yValueFormatString: "#,##0\"%\"",
+		dataPoints: [
+            {% for el in role_list%}
+			{ x: new Date({{el.year}},{{el.month}},{{el.day}}), y: {{el.teacher}} },
+            {% endfor %}
+			// { x: new Date(2010,0,1), y: 28 },
+			// { x: new Date(2010,0,2), y: 18 },
+			// { x: new Date(2010,0,3), y: 12 },
+			// { x: new Date(2010,0,5), y: 10 },
+			// { x: new Date(2010,0,6), y: 7 },
+			// { x: new Date(2010,0,7), y: 5 }
+		]
+	}, 
+	
+	]
+});
+role_chart.render();
+
+
+}
+</script>
+</head>
+<body>
+<div id="rating_chartContainer" style="height: 370px; width: 100%;"></div>
+<div id="view_chartContainer" style="height: 370px; width: 100%;"></div>
+<div id="enrollment_chartContainer" style="height: 370px; width: 100%;"></div>
+<div id="role_chartContainer" style="height: 370px; width: 100%;"></div>
+
+
+<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+</body>
+</html>

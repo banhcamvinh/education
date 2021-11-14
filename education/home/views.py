@@ -16,6 +16,7 @@ from datetime import timedelta
 from datetime import datetime
 from datetime import date
 import math
+import numpy as np
 
 
 def chunks(lst, n):
@@ -1342,6 +1343,95 @@ def user_report(request):
     }
     template = loader.get_template('home/user_report.html')
     return HttpResponse(template.render(context,request))
+
+def admin(request):
+    context = {
+    }
+    template = loader.get_template('home/admin.html')
+    return HttpResponse(template.render(context,request))
+
+def admin_report(request):
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+    # Get count rating
+    star_dict = {
+        '1':0,
+        '2':0,
+        '3':0,
+        '4':0,
+        '5':0,
+        'mean':0,
+        'p95':0,
+    }
+    query = """
+        match (rc:Rating_Center)-[:at]-(d:Day)-[:in_day]-(m:Month)-[:in_month]-(y:Year)
+        with rc.star as star, d.value as day, m.value as month, y.value as year
+        return star
+        order by year,month,day
+    """.format()
+    rs = myconnect.query(query)
+    rs_list = list(rs)
+    star_list = []
+    for rs in rs_list:
+        star_dict[str(rs['star'])] += 1
+        star_list.append(rs['star'])
+    star_dict['mean'] = ( star_dict['1'] + star_dict['2'] + star_dict['3'] + star_dict['4'] + star_dict['5'] ) / 5.0 
+    star_dict['p95'] = np.quantile(star_list, 0.95)
+
+    # Get view of all course
+    query = """
+        match (c:Course)
+        optional match (c:Course)<-[wc:watching_course]-(a)
+        return c.name as course_name, count(wc) as views 
+    """.format()
+    rs = myconnect.query(query)
+    view_list = list(rs)
+
+    # Get enroll of all course
+    query = """
+        match (c:Course)
+    optional match (c:Course)<-[:to_course]-(e:Enrollment)
+    return c.name as course_name, count(e) as enrollments
+    """.format()
+    rs = myconnect.query(query)
+    enrollment_list = list(rs)
+
+    # Get accout role by date
+    query = """
+        match (a:Account)-[:in_role]-(r:Role)
+        where r.value <> "admin"
+        with a,r.value as role
+        match (a)-[:create_at]-(d:Day)-[:in_day]-(m:Month)-[:in_month]-(y:Year)
+        return 
+        sum(case role when "user" then 1 else 0 end) as user,
+        sum(case role when "teacher" then 1 else 0 end) as teacher
+        ,d.value as day, m.value - 1 as month, y.value as year
+
+        match (a:Account)-[:in_role]-(r:Role)
+        where r.value <> "admin"
+        with a,r.value as role
+        match (a)-[:create_at]-(d:Day)-[:in_day]-(m:Month)-[:in_month]-(y:Year)
+        return 
+        sum(case role when "user" then 1 else 0 end) as user,
+        sum(case role when "teacher" then 1 else 0 end) as teacher
+        , m.value-1 as month, y.value as year
+
+    """.format()
+    rs = myconnect.query(query)
+    role_list = list(rs)
+    print(role_list)
+
+    context = {
+        'star_dict':star_dict,
+        'view_list': view_list,
+        'enrollment_list': enrollment_list,
+        'role_list':role_list
+    }
+    template = loader.get_template('home/admin_report.html')
+    return HttpResponse(template.render(context,request))
+
 
 
 def test(request):

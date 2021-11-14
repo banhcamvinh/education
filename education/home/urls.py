@@ -22,6 +22,10 @@ urlpatterns = [
     path('user_course', views.user_course, name='user_course'),
     path('user_account', views.user_account, name='user_account'),
     path('user_report', views.user_report, name='user_report'),
+    path('admin', views.admin, name='admin'),
+    path('admin_report', views.admin_report, name='admin_report'),
+
+
 
 
 
