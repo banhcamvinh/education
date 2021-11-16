@@ -123,8 +123,8 @@ var role_chart = new CanvasJS.Chart("role_chartContainer", {
 		type: "stackedColumn100",
 		name: "User",
 		showInLegend: true,
-		xValueFormatString: "YYYY",
-		yValueFormatString: "#,##0\"%\"",
+		// xValueFormatString: "YYYY",
+		// yValueFormatString: "#,##0\"%\"",
 		dataPoints: [
             {% for el in role_list%}
 			{ x: new Date({{el.year}},{{el.month}},{{el.day}}), y: {{el.user}} },
@@ -141,8 +141,8 @@ var role_chart = new CanvasJS.Chart("role_chartContainer", {
 		type: "stackedColumn100",
 		name: "Teacher",
 		showInLegend: true,
-		xValueFormatString: "YYYY",
-		yValueFormatString: "#,##0\"%\"",
+		// xValueFormatString: "YYYY",
+		// yValueFormatString: "#,##0\"%\"",
 		dataPoints: [
             {% for el in role_list%}
 			{ x: new Date({{el.year}},{{el.month}},{{el.day}}), y: {{el.teacher}} },
@@ -160,6 +160,35 @@ var role_chart = new CanvasJS.Chart("role_chartContainer", {
 });
 role_chart.render();
 
+var sentiment_chart = new CanvasJS.Chart("sentiment_chartContainer", {
+	animationEnabled: true,  
+	title:{
+		text: "Rating sentiment point"
+	},
+	axisY: {
+		maximum:100,
+		minimum:0,
+		interval:25,
+		title: "Positive rating percentage",
+		// valueFormatString: "#0,,.",
+		// suffix: "mn",
+		// stripLines: [{
+		// 	value: 3366500,
+		// 	label: "Average"
+		// }]
+	},
+	data: [{
+		// yValueFormatString: "#%",
+		// xValueFormatString: "YYYY",
+		type: "spline",
+		dataPoints: [
+			{% for el in sentiment_list %}
+				{x: new Date( {{el.year}}, {{el.month}},{{el.day}} ), y: {{el.point}}},
+			{% endfor %}
+		]
+	}]
+});
+sentiment_chart.render();
 
 }
 </script>
@@ -169,6 +198,7 @@ role_chart.render();
 <div id="view_chartContainer" style="height: 370px; width: 100%;"></div>
 <div id="enrollment_chartContainer" style="height: 370px; width: 100%;"></div>
 <div id="role_chartContainer" style="height: 370px; width: 100%;"></div>
+<div id="sentiment_chartContainer" style="height: 370px; width: 100%;"></div>
 
 
 <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>

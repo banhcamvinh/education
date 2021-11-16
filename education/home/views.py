@@ -17,6 +17,12 @@ from datetime import datetime
 from datetime import date
 import math
 import numpy as np
+import pandas as pd
+from underthesea import sentiment
+
+def get_sentiment(input):
+    result = sentiment(str(input))
+    return result
 
 
 def chunks(lst, n):
@@ -1408,26 +1414,60 @@ def admin_report(request):
         sum(case role when "user" then 1 else 0 end) as user,
         sum(case role when "teacher" then 1 else 0 end) as teacher
         ,d.value as day, m.value - 1 as month, y.value as year
-
-        match (a:Account)-[:in_role]-(r:Role)
-        where r.value <> "admin"
-        with a,r.value as role
-        match (a)-[:create_at]-(d:Day)-[:in_day]-(m:Month)-[:in_month]-(y:Year)
-        return 
-        sum(case role when "user" then 1 else 0 end) as user,
-        sum(case role when "teacher" then 1 else 0 end) as teacher
-        , m.value-1 as month, y.value as year
-
     """.format()
     rs = myconnect.query(query)
     role_list = list(rs)
-    print(role_list)
+
+    # Get rating content
+    query = """
+        match (rc:Rating_Center)-[:at]-(d:Day)-[:in_day]-(m:Month)-[:in_month]-(y:Year)
+        return d.value as day, m.value as month, y.value as year, rc.content
+        order by year,month,day
+    """.format()
+    rs = myconnect.query(query)
+    rating_list = list(rs)
+    rating_df = pd.DataFrame(rating_list,columns=['day','month','year','content'])
+    rating_df['month'] = rating_df['month'].apply(lambda x:x-1)
+    cols = ['year','month','day']
+    rating_df['date'] = rating_df[cols].apply(lambda x: '-'.join(x.values.astype(str)), axis="columns")
+    rating_df['date']= pd.to_datetime(rating_df['date'])
+    rating_df['sentiment'] = rating_df['content'].apply(lambda x: get_sentiment(x))
+    point_df = rating_df[['date','sentiment']]
+
+
+    point_df = point_df.groupby('date')['sentiment'].apply(list).reset_index(name='sentiment')
+    point_list = []
+    date_list = point_df['date'].tolist()
+    count_value_sentiment = 0
+    count_positive = 0
+    for index, row in point_df.iterrows():
+        for sentiment in row['sentiment']:
+            if sentiment != None:
+                count_value_sentiment += 1
+            if sentiment == 'positive':
+                count_positive += 1
+        point = count_positive / count_value_sentiment * 1.0 
+        point *= 100
+        point_list.append(point)
+    
+    sentiment_list = []
+    for index,el in enumerate(date_list):
+        sentiment_dict = dict()
+        date_str = str(el)
+        date_list = date_str.split(' ')
+        date_list = date_list[0].split('-')
+        sentiment_dict['day'] = date_list[2]
+        sentiment_dict['month'] = date_list[1]
+        sentiment_dict['year'] = date_list[0] 
+        sentiment_dict['point'] = point_list[index]
+        sentiment_list.append(sentiment_dict)
 
     context = {
         'star_dict':star_dict,
         'view_list': view_list,
         'enrollment_list': enrollment_list,
-        'role_list':role_list
+        'role_list':role_list,
+        'sentiment_list':sentiment_list
     }
     template = loader.get_template('home/admin_report.html')
     return HttpResponse(template.render(context,request))
