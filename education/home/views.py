@@ -1427,7 +1427,7 @@ def admin_report(request):
     rs = myconnect.query(query)
     rating_list = list(rs)
     rating_df = pd.DataFrame(rating_list,columns=['day','month','year','content'])
-    rating_df['month'] = rating_df['month'].apply(lambda x:x-1)
+    rating_df['month'] = rating_df['month'].apply(lambda x:x)
     cols = ['year','month','day']
     rating_df['date'] = rating_df[cols].apply(lambda x: '-'.join(x.values.astype(str)), axis="columns")
     rating_df['date']= pd.to_datetime(rating_df['date'])
@@ -1470,6 +1470,103 @@ def admin_report(request):
         'sentiment_list':sentiment_list
     }
     template = loader.get_template('home/admin_report.html')
+    return HttpResponse(template.render(context,request))
+
+
+def teacher(request):
+    context = {
+    }
+    template = loader.get_template('home/teacher.html')
+    return HttpResponse(template.render(context,request))
+
+def admin_report(request):
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+    # Get count rating
+    query = """
+        match (a:Account{{username:'{}'}})-[:create]-(:Course_Creation)-[:with_course]-(c:Course) 
+        with c
+        match (c)
+        optional match (c)-[:to_course]-(rc:Rating_Course)
+        with c.name as course_name,rc.star as star
+        return course_name,collect(star) as star_list,sum(star) as point
+        order by point desc
+        limit 5
+    """.format(username)
+    rs = myconnect.query(query)
+    rs_list = list(rs)
+    course_list = []
+    for rs in rs_list:
+        course_dict = dict()
+        course_dict['name'] = rs['course_name']
+        star_list = rs['star_list']
+        star_dict = {
+            '1':0,'2':0,'3':0,'4':0,'5':0
+        }
+        for star in star_list:
+            star_dict[str(star)] += 1
+        course_dict['star_dict'] = star_dict
+        course_list.append(course_dict)
+
+    query = """
+        match (a:Account{{username:'{}'}})-[:create]-(:Course_Creation)-[:with_course]-(c:Course) 
+        with c
+        match (c)
+        optional match (c)-[wc:watching_course]-(:Account)
+        with c.name as course_name,count(wc) as views
+        return *
+        order by views desc
+    """.format(username)
+    rs = myconnect.query(query)
+    view_list = list(rs)
+
+    query = """
+        match (a:Account{{username:'{}'}})-[:create]-(:Course_Creation)-[:with_course]-(c:Course) 
+        with c
+        match (c)
+        optional match (c)-[:to_course]-(e:Enrollment)
+        with c.name as course_name,count(e) as enrollments
+        return *
+        order by enrollments desc
+    """.format(username)
+    rs = myconnect.query(query)
+    enrollment_list = list(rs)
+
+
+    # Get rating content
+    query = """
+        match (a:Account{{username:'{}'}})-[:create]-(:Course_Creation)-[:with_course]-(c:Course) 
+        with c
+        match (c)
+        optional match (c)-[:to_course]-(rc:Rating_Course)-[:at]-(d:Day)-[:in_day]-(m:Month)-[:in_month]-(y:Year)
+        with c.name as course_name,rc.content as content,d.value as day, m.value as month, y.value as year
+        return day,month,year,course_name,collect(content) as content
+    """.format(username)
+    rs = myconnect.query(query)
+    rating_list = list(rs)
+    rating_df = pd.DataFrame(rating_list,columns=['day','month','year','course_name','content'])
+    rating_df['sentiment'] = rating_df['content'].apply(lambda x: get_sentiment(x))
+    rating_df = rating_df[['sentiment','course_name']]
+    rating_df = rating_df.groupby('course_name')['sentiment'].apply(list).reset_index(name='sentiment')
+    sentiment_percentage_dict = dict()
+    for index, row in rating_df.iterrows():
+        value_sentiment_count = len(row['sentiment'])
+        positive_sentiment_count = 0
+        for el in row['sentiment']:
+            if el == 'positive':
+                positive_sentiment_count +=1
+        sentiment_percentage = positive_sentiment_count / value_sentiment_count * 1.0
+        sentiment_percentage_dict[row['course_name']] = sentiment_percentage
+
+    context = {
+        'course_list':course_list,
+        'view_list':view_list,
+        'enrollment_list':enrollment_list,
+        'sentiment_percentage_dict':sentiment_percentage_dict,
+    }
+    template = loader.get_template('home/teacher_report.html')
     return HttpResponse(template.render(context,request))
 
 
