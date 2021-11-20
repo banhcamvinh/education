@@ -24,7 +24,6 @@ def get_sentiment(input):
     result = sentiment(str(input))
     return result
 
-
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
@@ -1158,6 +1157,35 @@ def user(request):
     template = loader.get_template('home/user.html')
     return HttpResponse(template.render(context,request))
 
+def user_register_teacher(request):
+    alert = ""
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+    is_registed = False
+    if request.method == 'POST':
+        query = """
+            match (a:Account{{ username: '{}' }})
+            merge (a)-[:has_teacher_register]-(:Teacher_Register)
+        """.format(username)
+        myconnect.query(query)
+        is_registed = True
+        alert = "Đăng kí thành công"
+    else:
+        query = """
+            match (a:Account{{username:'{}'}})-[:has_teacher_register]-(:Teacher_Register)
+            return *
+        """.format(username)
+        rs = myconnect.query(query)
+        if len(list(rs)) != 0:
+            is_registed = True
+
+    context = {
+        'alert':alert,
+        'is_registed':is_registed,
+    }
+    template = loader.get_template('home/user_register_teacher.html')
+    return HttpResponse(template.render(context,request))
+
 def user_account(request):
     if 'username' not in request.session:
         return redirect('/login')
@@ -1303,11 +1331,12 @@ def user_report(request):
     rs = myconnect.query(query)
     finish_lesson = None
     rs_list = list(rs)
+    finish_duration =dict()
+    finish_lesson = dict()
+
     if len(rs_list) != 0:
-        finish_lesson = dict()
         finish_lesson['total'] = len(rs_list)
         finish_lesson['finish'] = 0
-        finish_duration =dict()
         finish_duration['finish'] = 0
         finish_duration['not_finish'] = 0
         finish_duration['total'] = 0
@@ -1462,6 +1491,7 @@ def admin_report(request):
         sentiment_dict['point'] = point_list[index]
         sentiment_list.append(sentiment_dict)
 
+    print(star_dict)
     context = {
         'star_dict':star_dict,
         'view_list': view_list,
@@ -1472,6 +1502,193 @@ def admin_report(request):
     template = loader.get_template('home/admin_report.html')
     return HttpResponse(template.render(context,request))
 
+def admin_teacher(request):
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+    register_list = list()
+    teacher_list = list()
+    if request.method == 'POST':
+        approve_username = request.POST.get('approve','')
+        remove_username = request.POST.get('remove','')
+        if approve_username != '':
+            query = """
+                match (a:Account{{ username:'{}' }})-[hs:has_teacher_register]-(tr:Teacher_Register)
+                delete hs, tr
+                with a
+                match (a)-[ir:in_role]-(r:Role)
+                where r.value = 'user'
+                delete ir
+                with a
+                match (r:Role)
+                where r.value = 'teacher'
+                with a,r
+                create (a)-[:in_role]->(r)
+            """.format(approve_username)
+            myconnect.query(query)
+        if remove_username != '':
+            query = """
+                match (a:Account{{ username:'{}' }})-[ir:in_role]-(r:Role)
+                where r.value = 'teacher'
+                delete ir
+                with a
+                match (r:Role)
+                where r.value = 'user'
+                with a, r
+                create (a)-[:in_role]->(r)
+            """.format(remove_username)
+            myconnect.query(query)
+            
+    query = """
+        match (a:Account)-[:has_teacher_register]-(:Teacher_Register),
+        (a)-[:in_status]-(st:Status)
+        where st.value = 'active'
+        return a.username as username
+    """.format()
+    rs = myconnect.query(query)
+    register_list = list(rs)
+    # get teacher list
+    query = """
+        match (a:Account)-[:in_role]-(r:Role),
+        (a)-[:in_status]-(s:Status)
+        where r.value = 'teacher' and s.value = 'active'
+        with a
+        match (a)
+        optional match (a)-[:create]-(cc:Course_Creation)
+        return a.username as username,count(cc) as course
+    """.format()
+    rs = myconnect.query(query)
+    teacher_list = list(rs)    
+
+    context = {
+        'teacher_list':teacher_list,
+        'register_list':register_list,
+    }
+    template = loader.get_template('home/admin_teacher.html')
+    return HttpResponse(template.render(context,request))
+
+def admin_user(request):
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+    active_list = list()
+    inactive_list = list()
+    if request.method == 'POST':
+        active_username = request.POST.get('active','')
+        inactive_username = request.POST.get('inactive','')
+        if active_username != '':
+            query = """
+                match (a:Account{{username:'{}'}})-[ir:in_role]-(r:Role),
+                (a)-[is:in_status]-(s:Status)
+                where r.value = 'user'
+                delete is
+                with a
+                match (s:Status)
+                where s.value = 'active'
+                with a,s
+                create (a)-[:in_status]->(s)
+            """.format(active_username)
+            myconnect.query(query)
+        if inactive_username != '':
+            print(inactive_username)
+            query = """
+                match (a:Account{{username:'{}'}})-[ir:in_role]-(r:Role),
+                (a)-[is:in_status]-(s:Status)
+                where r.value = 'user'
+                delete is
+                with a
+                match (s:Status)
+                where s.value = 'inactive'
+                with a,s
+                create (a)-[:in_status]->(s)
+            """.format(inactive_username)
+            myconnect.query(query)
+            
+    query = """
+        match (a:Account)-[:in_role]-(r:Role),
+        (a)-[:in_status]-(s:Status)
+        where r.value = 'user' and s.value = 'active'
+        return a.username as username
+    """.format()
+    rs = myconnect.query(query)
+    active_list = list(rs)
+
+    query = """
+        match (a:Account)-[:in_role]-(r:Role),
+        (a)-[:in_status]-(s:Status)
+        where r.value = 'user' and s.value = 'inactive'
+        return a.username as username
+    """.format()
+    rs = myconnect.query(query)
+    inactive_list = list(rs)    
+
+    context = {
+        'active_list':active_list,
+        'inactive_list':inactive_list,
+    }
+    template = loader.get_template('home/admin_user.html')
+    return HttpResponse(template.render(context,request))
+
+def admin_course(request):
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+    active_list = list()
+    inactive_list = list()
+    if request.method == 'POST':
+        active_id = request.POST.get('active','')
+        inactive_id = request.POST.get('inactive','')
+        if active_id != '':
+            query = """
+                match (c:Course)-[in:in_status]-(s:Status)
+                where s.value = 'inactive' and c.id = {}
+                delete in
+                with c
+                match (s:Status)
+                where s.value = 'active'
+                with c,s
+                create (c)-[:in_status]->(s)
+            """.format(active_id)
+            myconnect.query(query)
+        if inactive_id != '':
+            query = """
+                match (c:Course)-[in:in_status]-(s:Status)
+                where s.value = 'active' and c.id = {}
+                delete in
+                with c
+                match (s:Status)
+                where s.value = 'inactive'
+                with c,s
+                create (c)-[:in_status]->(s)
+            """.format(inactive_id)
+            myconnect.query(query)
+            
+    query = """
+        match (c:Course)-[:in_status]-(s:Status)
+        where s.value = 'active'
+        return c.name as course_name, c.id as course_id
+    """.format()
+    rs = myconnect.query(query)
+    active_list = list(rs)
+
+    query = """
+        match (c:Course)-[:in_status]-(s:Status)
+        where s.value = 'inactive'
+        return c.name as course_name, c.id as course_id
+    """.format()
+    rs = myconnect.query(query)
+    inactive_list = list(rs)    
+
+    context = {
+        'active_list':active_list,
+        'inactive_list':inactive_list,
+    }
+    template = loader.get_template('home/admin_course.html')
+    return HttpResponse(template.render(context,request))
+
 
 def teacher(request):
     context = {
@@ -1479,7 +1696,7 @@ def teacher(request):
     template = loader.get_template('home/teacher.html')
     return HttpResponse(template.render(context,request))
 
-def admin_report(request):
+def teacher_report(request):
     if 'username' not in request.session:
         return redirect('/login')
     username = request.session['username']

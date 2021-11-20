@@ -22,10 +22,15 @@ urlpatterns = [
     path('user_course', views.user_course, name='user_course'),
     path('user_account', views.user_account, name='user_account'),
     path('user_report', views.user_report, name='user_report'),
+    path('user_register_teacher', views.user_register_teacher, name='user_register_teacher'),
     path('admin', views.admin, name='admin'),
     path('admin_report', views.admin_report, name='admin_report'),
+    path('admin_teacher', views.admin_teacher, name='admin_teacher'),
+    path('admin_user', views.admin_user, name='admin_user'),
+    path('admin_course', views.admin_course, name='admin_course'),
+
     path('teacher', views.teacher, name='teacher'),
-    path('teacher_report', views.admin_report, name='teacher_report'),
+    path('teacher_report', views.teacher_report, name='teacher_report'),
 
 
 
