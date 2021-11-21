@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="{% static 'home/assets/bootstrap/css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface&amp;display=swap">
     <link rel="stylesheet" href="{% static 'home/assets/css/FontAwesome.css' %}">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:400,600,800">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,700&amp;display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Condensed:400,400i,700,700i">
@@ -25,7 +24,6 @@
     <link rel="stylesheet" href="{% static 'home/assets/css/Accordion-3338arvorept-1.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Accordion-3338arvorept.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Accordion.css' %}">
-    <link rel="stylesheet" href="{% static 'home/assets/css/Apps-Menu-Google.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/best-carousel-slide-1.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/best-carousel-slide.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Brands.css' %}">
@@ -46,6 +44,7 @@
     <link rel="stylesheet" href="{% static 'home/assets/css/Navigation-with-Button.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Newsletter-Subscription-Form.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Pretty-Product-List.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Reviews.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Search-Input-Responsive-with-Icon.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Steps-Progressbar.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/sticky-dark-top-nav.css' %}">
@@ -60,20 +59,32 @@
 
 <body>
     <div class="container">
-        <div class="row" style="margin-top: 50px;margin-bottom: 50px;">
-            <div class="col-md-6"><a href="/user_account" style="color: black;font-size: 20px;text-decoration: none;text-align: center;text-transform: uppercase;font-weight: bold;"><img src="{% static 'home/assets/img/desk.jpg' %}">
-                    <p>Quản lí tài khoản</p>
-                </a></div>
-            <div class="col-md-6"><a href="/teacher_course" style="color: black;font-size: 20px;text-decoration: none;text-align: center;text-transform: uppercase;font-weight: bold;"><img src="{% static 'home/assets/img/desk.jpg' %}">
-                    <p>Quản lí khóa học</p>
-                </a></div>
-            <div class="col-md-6"><a href="/teacher_report" style="color: black;font-size: 20px;text-decoration: none;text-align: center;text-transform: uppercase;font-weight: bold;"><img src="{% static 'home/assets/img/desk.jpg' %}">
-                <p>Trình báo cáo teacher</p>
-            </a></div>
-            <div class="col-md-6"><a href="/user_report" style="color: black;font-size: 20px;text-decoration: none;text-align: center;text-transform: uppercase;font-weight: bold;"><img src="{% static 'home/assets/img/desk.jpg' %}">
-                <p>Trình báo cáo học</p>
-            </a></div>
-        </div>
+        {% if course_id == 0 %}
+        <h1>Tạo khóa học</h1>
+        {% else %}
+        <h1>Chỉnh sửa khóa học</h1>
+        {% endif %}
+
+        <form id="course_creation_form" method="post" action="/course_creation/{{course_id}}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <span>Chọn video giới thiệu:&nbsp;</span>
+            <input class="course_introduce_video" name="course_introduce_video" type="file">
+            <p style="margin-bottom: 0px;">Nhập tên khóa học:</p>
+            <input name="course_name" type="text" placeholder="Nhập tên khóa học của bạn" style="width: 100%;padding-top: 5px;padding-bottom: 5px;padding-right: 10px;padding-left: 20px;" value="">
+            <p style="margin-bottom: 0px;">Nhập nội dung khóa học:</p>
+            <textarea name="course_content" style="width: 100%;height: 100px;padding-left: 20px;" placeholder="Nhập nội dung khóa học"></textarea>
+            <p style="margin-bottom: 0px;">Nhập nội Mục tiêu khóa học:</p>
+            <textarea name="course_goal" style="width: 100%;height: 100px;padding-left: 20px;" placeholder="Nhập mục tiêu khóa học"></textarea>
+        </form>
+         
+        {% if course_id == 0 %}
+        <button onclick="submitForm()" class="btn btn-primary" type="button">Thêm khóa học</button>
+        {% else %}
+        <button onclick="submitForm()" class="btn btn-primary" type="button">Chỉnh sửa</button>
+        <button class="btn btn-primary" type="button">Quản lí bài học</button>
+        {% endif %}
+        <a class="btn btn-primary" href="/teacher_course">Trở về</a>
+        <p style="color: red;">{{alert}}</p>
     </div>
     <script src="{% static 'home/assets/bootstrap/js/bootstrap.min.js' %}"></script>
     <script src="{% static 'home/assets/js/bs-init.js' %}"></script>
@@ -84,10 +95,15 @@
     <script src="{% static 'home/assets/js/Counting.js' %}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick.js"></script>
     <script src="https://code.jquery.com/jquery-2.2.0.min.js&quot; type=&quot;text/javascript"></script>
-    <script src="{% static 'home/assets/js/Lightbox-Gallery.js' %}"></script>
-    <script src="{% static 'home/assets/js/Media-Slider-Bootstrap-3.js' %}"></script>
-    <script src="{% static 'home/assets/js/Swipe-Slider-7.js' %}"></script>
-    <script src="{% static 'home/assets/js/Ultimate-Testimonial-Slider-BS5.js' %}"></script>
+    <script src="{% static 'home/assets/js/Lightbox-Gallery.js' %} "></script>
+    <script src="{% static 'home/assets/js/Media-Slider-Bootstrap-3.js' %} "></script>
+    <script src="{% static 'home/assets/js/Swipe-Slider-7.js' %} "></script>
+    <script src="{% static 'home/assets/js/Ultimate-Testimonial-Slider-BS5.js' %} "></script>
 </body>
-
+<script>
+    video = document.querySelector('input.course_introduce_video')
+    function submitForm(){
+        document.forms['course_creation_form'].submit();
+    }
+</script>
 </html>

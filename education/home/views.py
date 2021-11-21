@@ -19,6 +19,26 @@ import math
 import numpy as np
 import pandas as pd
 from underthesea import sentiment
+import os
+import uuid
+import urllib
+import pyrebase
+import requests
+
+firebaseConfig={
+    "apiKey": "AIzaSyBOHxmgm-uhY4tQbK8YLLdNpP4IJYcHMrs",
+    "authDomain": "education-5dcf4.firebaseapp.com",
+    "databaseURL": "https://console.firebase.google.com/project/education-5dcf4/storage/education-5dcf4.appspot.com/files",
+    "projectId": "education-5dcf4",
+    "storageBucket": "education-5dcf4.appspot.com",
+    "messagingSenderId": "398241938841",
+    "appId": "1:398241938841:web:a88f98d2225e6a502d2708",
+    "measurementId": "G-TBTMG79H88"
+}
+firebase=pyrebase.initialize_app(firebaseConfig)
+#define storage
+storage=firebase.storage()
+
 
 def get_sentiment(input):
     result = sentiment(str(input))
@@ -1784,6 +1804,144 @@ def teacher_report(request):
         'sentiment_percentage_dict':sentiment_percentage_dict,
     }
     template = loader.get_template('home/teacher_report.html')
+    return HttpResponse(template.render(context,request))
+
+def teacher_course(request):
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+    active_list = list()
+    inactive_list = list()
+    if request.method == 'POST':
+        active_id = request.POST.get('active','')
+        inactive_id = request.POST.get('inactive','')
+        if active_id != '':
+            query = """
+                match (c:Course)-[in:in_status]-(s:Status)
+                where s.value = 'inactive' and c.id = {}
+                delete in
+                with c
+                match (s:Status)
+                where s.value = 'active'
+                with c,s
+                create (c)-[:in_status]->(s)
+            """.format(active_id)
+            myconnect.query(query)
+        if inactive_id != '':
+            query = """
+                match (c:Course)-[in:in_status]-(s:Status)
+                where s.value = 'active' and c.id = {}
+                delete in
+                with c
+                match (s:Status)
+                where s.value = 'inactive'
+                with c,s
+                create (c)-[:in_status]->(s)
+            """.format(inactive_id)
+            myconnect.query(query)
+            
+    query = """
+        match (a:Account{{ username: '{}' }})-[:create]-(:Course_Creation)-[:with_course]-(c:Course)
+        with c
+        match (c)-[:in_status]-(s:Status)
+        return c.name as course_name, c.id as course_id, s.value as status
+    """.format(username)
+    rs = myconnect.query(query)
+    course_list = list(rs)
+
+    context = {
+        'course_list':course_list,
+    }
+    template = loader.get_template('home/teacher_course.html')
+    return HttpResponse(template.render(context,request))
+
+
+def course_creation(request,id):
+    alert = ""
+    if 'username' not in request.session:
+            return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+
+    if request.method == 'POST':
+        course_name = request.POST.get('course_name','')
+        course_content = request.POST.get('course_content','')
+        course_goal = request.POST.get('course_goal','')
+        if course_name == '' or course_content == '' or course_goal == '' or len(request.FILES) == 0:
+            alert = "Chưa nhập đầy đủ thông tin"
+        else:
+            course_uuid = 0
+            # Get lastest course id
+            query = """
+                match (c:Course)
+                return c.id as id
+                order by id desc
+                limit 1
+            """
+            rs = myconnect.query(query)
+            rs_list = list(rs)
+            if len(rs_list) == 0:
+                course_uuid = 1
+            else:
+                course_uuid = rs_list[0]['id'] + 1
+
+            # Create course
+            # course_uuid = uuid.uuid1().int
+            video_bytes = request.FILES['course_introduce_video'].read()
+            FILE_OUTPUT = '{}.mp4'.format(course_uuid)
+            with open(FILE_OUTPUT, "wb") as out_file: 
+                out_file.write(video_bytes)
+            storage.child(str(course_uuid)).put(FILE_OUTPUT)
+            if os.path.isfile(FILE_OUTPUT):
+                os.remove(FILE_OUTPUT)
+            url = storage.child(FILE_OUTPUT).get_url(None)
+            url = url.replace('.mp4?alt=media','')
+            response = requests.get(url)
+            data = response.json()
+            token = data['downloadTokens']
+            url += '?alt=media&token={}'.format(token)
+
+            now = datetime.now()
+            year = now.year
+            month = now.month
+            day = now.day
+
+            # query = """
+            #     merge (y:Year{{value:{} }})
+            #     merge (y)-[:in_month]-(m:Month{{value:{} }})
+            #     merge (m)-[:in_day]-(d:Day{{ value:{} }})
+            #     with d
+            #     match (a:Account{{ username:'{}' }})
+            #     create (a)-[:create]->(cc:Course_Creattion)-[:at]->(d)
+            #     with cc
+            #     create (c:Course)
+            #     set c.id = {},c.name = '{}', c.content = '{}', c.course_goal = '{}'
+            #     create (cc)-[:with_course]->(c)
+            #     create (iv:`Introduce Video`)
+            #     set iv.url = '{}'
+            #     create (c)-[:has_introduce_video]->(iv)
+            # """.format(year,month,day,username,course_uuid,course_name,course_content,course_goal,url)
+            # myconnect.query(query)
+
+        
+ 
+
+        
+    if request.method == 'GET':
+        # return create view
+        if id == 0:
+            print("create new")
+        # return edit view
+        else:
+            print("edit")
+
+
+    context = {
+        'course_id':id,
+        'alert':alert,
+    }
+    template = loader.get_template('home/course_creation.html')
     return HttpResponse(template.render(context,request))
 
 

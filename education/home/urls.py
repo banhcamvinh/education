@@ -31,6 +31,11 @@ urlpatterns = [
 
     path('teacher', views.teacher, name='teacher'),
     path('teacher_report', views.teacher_report, name='teacher_report'),
+    path('teacher_course', views.teacher_course, name='teacher_course'),
+
+    path('course_creation/<int:id>', views.course_creation, name='course_creation'),
+
+
 
 
 

@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="{% static 'home/assets/bootstrap/css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface&amp;display=swap">
     <link rel="stylesheet" href="{% static 'home/assets/css/FontAwesome.css' %}">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:400,600,800">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,700&amp;display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Condensed:400,400i,700,700i">
@@ -25,7 +24,6 @@
     <link rel="stylesheet" href="{% static 'home/assets/css/Accordion-3338arvorept-1.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Accordion-3338arvorept.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Accordion.css' %}">
-    <link rel="stylesheet" href="{% static 'home/assets/css/Apps-Menu-Google.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/best-carousel-slide-1.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/best-carousel-slide.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Brands.css' %}">
@@ -46,6 +44,7 @@
     <link rel="stylesheet" href="{% static 'home/assets/css/Navigation-with-Button.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Newsletter-Subscription-Form.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Pretty-Product-List.css' %}">
+    <link rel="stylesheet" href="{% static 'home/assets/css/Reviews.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Search-Input-Responsive-with-Icon.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Steps-Progressbar.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/sticky-dark-top-nav.css' %}">
@@ -60,20 +59,33 @@
 
 <body>
     <div class="container">
-        <div class="row" style="margin-top: 50px;margin-bottom: 50px;">
-            <div class="col-md-6"><a href="/user_account" style="color: black;font-size: 20px;text-decoration: none;text-align: center;text-transform: uppercase;font-weight: bold;"><img src="{% static 'home/assets/img/desk.jpg' %}">
-                    <p>Quản lí tài khoản</p>
-                </a></div>
-            <div class="col-md-6"><a href="/teacher_course" style="color: black;font-size: 20px;text-decoration: none;text-align: center;text-transform: uppercase;font-weight: bold;"><img src="{% static 'home/assets/img/desk.jpg' %}">
-                    <p>Quản lí khóa học</p>
-                </a></div>
-            <div class="col-md-6"><a href="/teacher_report" style="color: black;font-size: 20px;text-decoration: none;text-align: center;text-transform: uppercase;font-weight: bold;"><img src="{% static 'home/assets/img/desk.jpg' %}">
-                <p>Trình báo cáo teacher</p>
-            </a></div>
-            <div class="col-md-6"><a href="/user_report" style="color: black;font-size: 20px;text-decoration: none;text-align: center;text-transform: uppercase;font-weight: bold;"><img src="{% static 'home/assets/img/desk.jpg' %}">
-                <p>Trình báo cáo học</p>
-            </a></div>
-        </div>
+        <form id="teacher_course_form" method="post" style="margin-top: 40px;" action="{% url 'home:teacher_course' %}">
+            {% csrf_token %}
+            <input style="display: none;" type="text" value="" name="active" class="active">
+            <input style="display: none;" type="text" value="" name="inactive" class="inactive">
+        </form>
+        <h1>Danh Sách Khóa học của bạn</h1>
+        <a class="btn btn-primary" href="/course_creation/0">Tạo khóa học mới</a>
+        {% for el in course_list %}
+        <div class="row d-md-flex">
+            <div class="col-md-8 d-flex d-md-flex justify-content-start align-items-center">
+                <a href="{{ el.course_id }}" style="margin-bottom: 0px;">{{el.course_name}}</a>
+            </div>
+            {% if el.status == 'active' %}
+            <div class="col"><a class="inactive btn btn-primary" value="{{ el.course_id }}">Inactive</a></div>
+            {% else %}
+            <div class="col"><button disabled class="inactive btn btn-primary" value="{{ el.course_id }}">Inactive</button></div>
+            {% endif %}
+            {% if el.status == 'inactive' %}
+            <div class="col"><a class="active btn btn-primary" value="{{ el.course_id }}">Active</a></div>
+            {% else %}
+            <div class="col"><button disabled class="active btn btn-primary" value="{{ el.course_id }}">Active</button></div>
+            {% endif %}
+            <div class="col"><a href="/course_creation/{{el.course_id}}" class="edit btn btn-primary" value="{{ el.course_id }}">Edit</a></div>
+        </div> 
+        {% endfor %}
+
+
     </div>
     <script src="{% static 'home/assets/bootstrap/js/bootstrap.min.js' %}"></script>
     <script src="{% static 'home/assets/js/bs-init.js' %}"></script>
@@ -89,5 +101,29 @@
     <script src="{% static 'home/assets/js/Swipe-Slider-7.js' %}"></script>
     <script src="{% static 'home/assets/js/Ultimate-Testimonial-Slider-BS5.js' %}"></script>
 </body>
-
+<script>
+    let active_btn = document.querySelectorAll('a.active')
+    let active_input = document.querySelector('input.active')
+    let inactive_btn = document.querySelectorAll('a.inactive')
+    let inactive_input = document.querySelector('input.inactive')
+    active_btn.forEach(function(btn){
+        btn.addEventListener("click", function() {
+            course_id = btn.getAttribute('value')
+            inactive_input.value = ''
+            active_input.value = course_id
+            submitForm()
+        });
+    });  
+    inactive_btn.forEach(function(btn){
+        btn.addEventListener("click", function() {
+            course_id = btn.getAttribute('value')
+            active_input.value = ''
+            inactive_input.value = course_id
+            submitForm() 
+        });
+    });  
+    function submitForm(){
+        document.forms['teacher_course_form'].submit();
+    }
+</script>
 </html>
