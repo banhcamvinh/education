@@ -59,33 +59,22 @@
 
 <body>
     <div class="container">
-        <form id="teacher_course_form" method="post" style="margin-top: 40px;" action="{% url 'home:teacher_course' %}">
+        <form id="teacher_part_form" method="post" style="margin-top: 40px;" action="/teacher_part/{{course_id}}">
             {% csrf_token %}
-            <input style="display: none;" type="text" value="" name="active" class="active">
-            <input style="display: none;" type="text" value="" name="inactive" class="inactive">
+            <input style="display: none;" type="text" value="" name="delete" class="delete">
         </form>
-        <h1>Danh Sách Khóa học của bạn</h1>
-        <a class="btn btn-primary" href="/course_creation/0">Tạo khóa học mới</a>
-        {% for el in course_list %}
+        <h1>Danh Sách các chương học</h1>
+        <a class="btn btn-primary" href="/part_creation/0">Tạo Chương mới</a>
+        {% for el in part_list %}
         <div class="row d-md-flex">
             <div class="col-md-8 d-flex d-md-flex justify-content-start align-items-center">
-                <a href="{{ el.course_id }}" style="margin-bottom: 0px;">{{el.course_name}}</a>
+                <a href="{{ el.part_name }}" style="margin-bottom: 0px;">{{el.part_name}}</a>
             </div>
-            {% if el.status == 'active' %}
-            <div class="col"><a class="inactive btn btn-primary" value="{{ el.course_id }}">Inactive</a></div>
+            <div class="col"><a href="/part_creation/{{el.part_name}}" class="edit btn btn-primary" value="{{ el.part_name }}">Edit</a></div>
+            {% if el.count_lesson == 0 or can_del == False %}
+            <div class="col"><button style="background-color: red !important;" disabled href="/part_creation/{{el.part_name}}" class="del btn btn-primary" value="{{ el.part_name }}">Delete</button></div>
             {% else %}
-            <div class="col"><button disabled class="inactive btn btn-primary" value="{{ el.course_id }}">Inactive</button></div>
-            {% endif %}
-            {% if el.status == 'inactive' %}
-            <div class="col"><a class="active btn btn-primary" value="{{ el.course_id }}">Active</a></div>
-            {% else %}
-            <div class="col"><button disabled class="active btn btn-primary" value="{{ el.course_id }}">Active</button></div>
-            {% endif %}
-            <div class="col"><a href="/course_creation/{{el.course_id}}" class="edit btn btn-primary" value="{{ el.course_id }}">Edit</a></div>
-            {% if el.status == 'waiting' %}
-            <div class="col"><button disabled class="active btn btn-primary" style="background-color: red !important;" value="{{ el.course_id }}">Waiting</button></div>
-            {% else %}
-            <div class="col"><button disabled class="active btn btn-primary" style="background-color: green !important;" value="{{ el.course_id }}">Finished</button></div>
+            <div class="col"><button style="background-color: red !important;" class="del btn btn-primary" value="{{ el.part_name }}">Delete</button></div>
             {% endif %}
         </div> 
         {% endfor %}
@@ -107,28 +96,17 @@
     <script src="{% static 'home/assets/js/Ultimate-Testimonial-Slider-BS5.js' %}"></script>
 </body>
 <script>
-    let active_btn = document.querySelectorAll('a.active')
-    let active_input = document.querySelector('input.active')
-    let inactive_btn = document.querySelectorAll('a.inactive')
-    let inactive_input = document.querySelector('input.inactive')
-    active_btn.forEach(function(btn){
+    let del_btn = document.querySelectorAll('button.del')
+    let del_form = document.querySelector('input.delete')
+    del_btn.forEach((btn, index)=>{
         btn.addEventListener("click", function() {
-            course_id = btn.getAttribute('value')
-            inactive_input.value = ''
-            active_input.value = course_id
+            course_name = btn.getAttribute('value')
+            del_form.setAttribute('value',course_name)
             submitForm()
         });
-    });  
-    inactive_btn.forEach(function(btn){
-        btn.addEventListener("click", function() {
-            course_id = btn.getAttribute('value')
-            active_input.value = ''
-            inactive_input.value = course_id
-            submitForm() 
-        });
-    });  
+    })
     function submitForm(){
-        document.forms['teacher_course_form'].submit();
+        document.forms['teacher_part_form'].submit();
     }
 </script>
 </html>

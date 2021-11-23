@@ -69,19 +69,27 @@
             {% csrf_token %}
             <span>Chọn video giới thiệu:&nbsp;</span>
             <input class="course_introduce_video" name="course_introduce_video" type="file">
+            <br>File cũ
+            <p href="{{course_info.url}}">{{course_info.url}}</p>
             <p style="margin-bottom: 0px;">Nhập tên khóa học:</p>
-            <input name="course_name" type="text" placeholder="Nhập tên khóa học của bạn" style="width: 100%;padding-top: 5px;padding-bottom: 5px;padding-right: 10px;padding-left: 20px;" value="">
+            <input value="{{course_info.course_name}}"  name="course_name" type="text" placeholder="Nhập tên khóa học của bạn" style="width: 100%;padding-top: 5px;padding-bottom: 5px;padding-right: 10px;padding-left: 20px;" value="">
             <p style="margin-bottom: 0px;">Nhập nội dung khóa học:</p>
-            <textarea name="course_content" style="width: 100%;height: 100px;padding-left: 20px;" placeholder="Nhập nội dung khóa học"></textarea>
+            <textarea name="course_content" style="width: 100%;height: 100px;padding-left: 20px;" placeholder="Nhập nội dung khóa học">{{course_info.course_content}}</textarea>
             <p style="margin-bottom: 0px;">Nhập nội Mục tiêu khóa học:</p>
-            <textarea name="course_goal" style="width: 100%;height: 100px;padding-left: 20px;" placeholder="Nhập mục tiêu khóa học"></textarea>
+            <textarea name="course_goal" style="width: 100%;height: 100px;padding-left: 20px;" placeholder="Nhập mục tiêu khóa học">{{course_info.course_goal}}</textarea>
+            
+            {% if course_id == 0 %}
+            <input style="display: none;" name="action" value="create">
+            {% else %}
+            <input style="display: none;" name="action" value="edit">
+            {% endif %}
         </form>
          
         {% if course_id == 0 %}
         <button onclick="submitForm()" class="btn btn-primary" type="button">Thêm khóa học</button>
         {% else %}
         <button onclick="submitForm()" class="btn btn-primary" type="button">Chỉnh sửa</button>
-        <button class="btn btn-primary" type="button">Quản lí bài học</button>
+        <a class="btn btn-primary" href="/teacher_part/{{course_id}}">Quản lí bài học</a>
         {% endif %}
         <a class="btn btn-primary" href="/teacher_course">Trở về</a>
         <p style="color: red;">{{alert}}</p>

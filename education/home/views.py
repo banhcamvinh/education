@@ -1856,6 +1856,118 @@ def teacher_course(request):
     template = loader.get_template('home/teacher_course.html')
     return HttpResponse(template.render(context,request))
 
+def teacher_part(request,course_id):
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+
+    if request.method == 'POST':
+        # Delete part - part ko có lesson
+        # part đầu và cuối là 1 ( chỉ có 1 part)
+        del_part_name = request.POST.get('delete','')
+        count_part = 0
+        query = """
+            match (c:Course{{ id:{} }})
+            with (c)
+            match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+            return count(p) as count_part
+        """.format(course_id)
+        rs = myconnect.query(query)
+        rs = list(rs)
+        if len(rs) != 0:
+            count_part = rs[0]['count_part']
+        if count_part == 1:
+            # Xóa part đó & update status waitting % delete status hiện tại
+            query = """
+                match (c:Course{{ id:{} }})
+                with (c)
+                match (c)-[h:head]-(p:Part),(c)-[t:tail]-(p)
+                delete h,t,p
+                with c
+                match (s:Status)
+                where s.value = 'waiting'
+                create (c)-[:in_status]->(s)
+                with c
+                match (c)-[is:in_status]-(s:Status)
+                where s.value = 'active' or s.value = 'inactive'
+                delete is
+            """.format(course_id)
+            rs = myconnect.query(query)
+        else:
+            pass
+            # Get all ds part_name + dùng tên part chỉ định đã xóa (px)
+            query = """
+                match (c:Course{{ id:{} }})
+                with (c)
+                match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                return collect(p.name) as part_list
+            """.format(course_id)
+            rs = myconnect.query(query)
+            part_list = list(rs)
+            del_index = part_list.index(del_part_name)
+            if del_index == 0:
+                pass
+            elif del_index == len(part_list)-1:     
+                # Xóa head , xóa next , xóa del_part -> tạo head cho thằng kế 
+                pass
+                next_index = del_index + 1
+                next_part_name = part_list[next_index]
+                query = """                                                        
+                    match (c:Course{{ id:{} }})
+                    with (c)
+                    match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    with c,p
+                    where p.name = '{}'
+                    match (c)-[h:head]-(p),(p)-[n:next]-(:Part)
+                    delete h,n,p
+                    with (c)
+                    match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    with c,p
+                    where p.name = '{}'
+                    create (c)-[:head]->(p)
+                """.format(course_id,del_part_name,next_part_name)
+                rs = myconnect.query(query)
+            else:
+                pass
+
+            # part cuối thì chuyển tail cho part kế cuối -> delete nó
+            # lấy previous của px -> xóa px -> xóa tail -> chuyển tail về previous px
+            # nếu là part bất kì thì lấy part trước next part sau + xóa hai cái next hai bên
+
+
+    can_del = True
+    query = """
+        match (c:Course{{ id: {} }})
+        optional match (c)-[:to_course]-(e:Enrollment)
+        return count(e) as count_enrollment
+    """.format(course_id)
+    rs = myconnect.query(query)
+    rs = list(rs)
+    if len(rs) != 0:
+        can_del = False
+
+    query = """
+        match (c:Course{{ id:{} }})
+        with (c)
+        match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+        with p,c
+        match (p)
+        optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+        return p.name as part_name,count(l.name) as count_lesson
+    """.format(course_id)
+    rs = myconnect.query(query)
+    part_list = list(rs)
+
+    context = {
+        'part_list': part_list,
+        'course_id': course_id,
+        'can_del':can_del,
+    }
+    template = loader.get_template('home/teacher_part.html')
+    return HttpResponse(template.render(context,request))
+
+
 
 def course_creation(request,id):
     alert = ""
@@ -1865,79 +1977,130 @@ def course_creation(request,id):
     myconnect = db.neo4j("bolt://localhost","neo4j","123")
 
     if request.method == 'POST':
+        action = request.POST.get('action','')
         course_name = request.POST.get('course_name','')
         course_content = request.POST.get('course_content','')
         course_goal = request.POST.get('course_goal','')
-        if course_name == '' or course_content == '' or course_goal == '' or len(request.FILES) == 0:
-            alert = "Chưa nhập đầy đủ thông tin"
-        else:
-            course_uuid = 0
-            # Get lastest course id
-            query = """
-                match (c:Course)
-                return c.id as id
-                order by id desc
-                limit 1
-            """
-            rs = myconnect.query(query)
-            rs_list = list(rs)
-            if len(rs_list) == 0:
-                course_uuid = 1
+        if action == 'create':
+            if course_name == '' or course_content == '' or course_goal == '' or len(request.FILES) == 0:
+                alert = "Chưa nhập đầy đủ thông tin"
             else:
-                course_uuid = rs_list[0]['id'] + 1
+                course_uuid = 0
+                # Get lastest course id
+                query = """
+                    match (c:Course)
+                    return c.id as id
+                    order by id desc
+                    limit 1
+                """
+                rs = myconnect.query(query)
+                rs_list = list(rs)
+                if len(rs_list) == 0:
+                    course_uuid = 1
+                else:
+                    course_uuid = rs_list[0]['id'] + 1
 
-            # Create course
-            # course_uuid = uuid.uuid1().int
-            video_bytes = request.FILES['course_introduce_video'].read()
-            FILE_OUTPUT = '{}.mp4'.format(course_uuid)
-            with open(FILE_OUTPUT, "wb") as out_file: 
-                out_file.write(video_bytes)
-            storage.child(str(course_uuid)).put(FILE_OUTPUT)
-            if os.path.isfile(FILE_OUTPUT):
-                os.remove(FILE_OUTPUT)
-            url = storage.child(FILE_OUTPUT).get_url(None)
-            url = url.replace('.mp4?alt=media','')
-            response = requests.get(url)
-            data = response.json()
-            token = data['downloadTokens']
-            url += '?alt=media&token={}'.format(token)
+                # Create course
+                # course_uuid = uuid.uuid1().int
+                video_bytes = request.FILES['course_introduce_video'].read()
+                FILE_OUTPUT = '{}.mp4'.format(course_uuid)
+                with open(FILE_OUTPUT, "wb") as out_file: 
+                    out_file.write(video_bytes)
+                storage.child(str(course_uuid)).put(FILE_OUTPUT)
+                if os.path.isfile(FILE_OUTPUT):
+                    os.remove(FILE_OUTPUT)
+                url = storage.child(FILE_OUTPUT).get_url(None)
+                url = url.replace('.mp4?alt=media','')
+                response = requests.get(url)
+                data = response.json()
+                token = data['downloadTokens']
+                url += '?alt=media&token={}'.format(token)
 
-            now = datetime.now()
-            year = now.year
-            month = now.month
-            day = now.day
+                now = datetime.now()
+                year = now.year
+                month = now.month
+                day = now.day
 
-            # query = """
-            #     merge (y:Year{{value:{} }})
-            #     merge (y)-[:in_month]-(m:Month{{value:{} }})
-            #     merge (m)-[:in_day]-(d:Day{{ value:{} }})
-            #     with d
-            #     match (a:Account{{ username:'{}' }})
-            #     create (a)-[:create]->(cc:Course_Creattion)-[:at]->(d)
-            #     with cc
-            #     create (c:Course)
-            #     set c.id = {},c.name = '{}', c.content = '{}', c.course_goal = '{}'
-            #     create (cc)-[:with_course]->(c)
-            #     create (iv:`Introduce Video`)
-            #     set iv.url = '{}'
-            #     create (c)-[:has_introduce_video]->(iv)
-            # """.format(year,month,day,username,course_uuid,course_name,course_content,course_goal,url)
-            # myconnect.query(query)
+                query = """
+                    merge (y:Year{{value:{} }})
+                    merge (y)-[:in_month]-(m:Month{{value:{} }})
+                    merge (m)-[:in_day]-(d:Day{{ value:{} }})
+                    with d
+                    match (a:Account{{ username:'{}' }})
+                    create (a)-[:create]->(cc:Course_Creation)-[:at]->(d)
+                    with cc
+                    create (c:Course)
+                    set c.id = {},c.name = '{}', c.content = '{}', c.course_goal = '{}'
+                    create (cc)-[:with_course]->(c)
+                    create (iv:`Introduce Video`)
+                    set iv.url = '{}'
+                    create (c)-[:has_introduce_video]->(iv)
+                    with c
+                    match (st:Status)
+                    where st.value = 'waiting'
+                    create (c)-[:in_status]->(st)
+                """.format(year,month,day,username,course_uuid,course_name,course_content,course_goal,url)
+                myconnect.query(query)
+                id = course_uuid
+        elif action == 'edit':
+            course_uuid = id
+            if course_name == '' or course_content == '' or course_goal == '':
+                alert = "Chưa nhập đầy đủ thông tin"
+            # Bắt đầu edit
+            if len(request.FILES) == 0:
+                # Không cần cập nhật lại video
+                pass
+            else:
+                video_bytes = request.FILES['course_introduce_video'].read()
+                FILE_OUTPUT = '{}.mp4'.format(course_uuid)
+                with open(FILE_OUTPUT, "wb") as out_file: 
+                    out_file.write(video_bytes)
+                storage.child(str(course_uuid)).put(FILE_OUTPUT)
+                if os.path.isfile(FILE_OUTPUT):
+                    os.remove(FILE_OUTPUT)
+                url = storage.child(FILE_OUTPUT).get_url(None)
+                url = url.replace('.mp4?alt=media','')
+                response = requests.get(url)
+                data = response.json()
+                token = data['downloadTokens']
+                url += '?alt=media&token={}'.format(token)
 
-        
- 
-
-        
+            query = """
+                match (c:Course{{ id:{} }})-[:has_introduce_video]-(intro:`Introduce Video`)
+                set c.name = '{}', c.content = '{}', c.course_goal = '{}'
+            """.format(course_uuid,course_name,course_content,course_goal)
+            if len(request.FILES) != 0:
+                query += """
+                    , intro.url = '{}'
+                """.format(url)
+            myconnect.query(query)
+       
     if request.method == 'GET':
         # return create view
         if id == 0:
-            print("create new")
+            context = {
+                'course_id':id,
+                'alert':alert,
+            }
+            template = loader.get_template('home/course_creation.html')
+            return HttpResponse(template.render(context,request))
         # return edit view
         else:
-            print("edit")
+            pass
 
+    query = """
+        match (c:Course{{ id:{} }}),
+        (c)-[:has_introduce_video]->(intr:`Introduce Video`)
+        return c.name as course_name,c.content as course_content,c.course_goal as course_goal,intr.url as url
+    """.format(id)
+    rs = myconnect.query(query)
+    course_info = list(rs)
+    if len(course_info) != 0:
+        course_info = course_info[0]
+    else: course_info = None
 
     context = {
+        'course_info':course_info,
         'course_id':id,
         'alert':alert,
     }
