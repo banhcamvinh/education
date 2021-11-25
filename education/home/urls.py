@@ -36,7 +36,7 @@ urlpatterns = [
 
 
     path('course_creation/<int:id>', views.course_creation, name='course_creation'),
-    # path('part_creation/<str:id>', views.part_creation, name='part_creation'),
+    path('course_creation/<int:course_id>/part_creation/<str:part_name>', views.part_creation, name='part_creation'),
 
 
 

@@ -59,39 +59,33 @@
 
 <body>
     <div class="container">
-        {% if course_id == 0 %}
-        <h1>Tạo khóa học</h1>
+        {% if part_name == 'new' %}
+        <h1>Tạo chương</h1>
         {% else %}
-        <h1>Chỉnh sửa khóa học</h1>
+        <h1>Chỉnh sửa chương</h1>
         {% endif %}
 
-        <form id="course_creation_form" method="post" action="/course_creation/{{course_id}}" enctype="multipart/form-data">
+        <form id="part_creation_form" method="post" action="/course_creation/{{course_id}}/part_creation/{{part_name}}" enctype="multipart/form-data">
             {% csrf_token %}
-            <span>Chọn video giới thiệu:&nbsp;</span>
-            <input class="course_introduce_video" name="course_introduce_video" type="file">
-            <br>File cũ
-            <p href="{{course_info.url}}">{{course_info.url}}</p>
-            <p style="margin-bottom: 0px;">Nhập tên khóa học:</p>
-            <input value="{{course_info.course_name}}"  name="course_name" type="text" placeholder="Nhập tên khóa học của bạn" style="width: 100%;padding-top: 5px;padding-bottom: 5px;padding-right: 10px;padding-left: 20px;" value="">
-            <p style="margin-bottom: 0px;">Nhập nội dung khóa học:</p>
-            <textarea name="course_content" style="width: 100%;height: 100px;padding-left: 20px;" placeholder="Nhập nội dung khóa học">{{course_info.course_content}}</textarea>
-            <p style="margin-bottom: 0px;">Nhập nội Mục tiêu khóa học:</p>
-            <textarea name="course_goal" style="width: 100%;height: 100px;padding-left: 20px;" placeholder="Nhập mục tiêu khóa học">{{course_info.course_goal}}</textarea>
-            
-            {% if course_id == 0 %}
+            <p style="margin-bottom: 0px;">Nhập tên chương:</p>
+            <input value="{{part_info.part_name}}"  name="part_name" type="text" placeholder="Nhập tên phần của bạn" style="width: 100%;padding-top: 5px;padding-bottom: 5px;padding-right: 10px;padding-left: 20px;" value="">
+            <p style="margin-bottom: 0px;">Nhập mô tả chương:</p>
+            <textarea name="part_description" style="width: 100%;height: 100px;padding-left: 20px;" placeholder="Nhập mô tả phần học">{{part_info.part_description}}</textarea>
+           
+            {% if part_name == 'new' %}
             <input style="display: none;" name="action" value="create">
             {% else %}
             <input style="display: none;" name="action" value="edit">
             {% endif %}
         </form>
          
-        {% if course_id == 0 %}
-        <button onclick="submitForm()" class="btn btn-primary" type="button">Thêm khóa học</button>
+        {% if part_name == 'new' %}
+        <button onclick="submitForm()" class="btn btn-primary" type="button">Thêm chương học</button>
         {% else %}
         <button onclick="submitForm()" class="btn btn-primary" type="button">Chỉnh sửa</button>
-        <a class="btn btn-primary" href="/teacher_part/{{course_id}}">Quản lí chương học</a>
+        <a class="btn btn-primary" href="/teacher_part/{{course_id}}">Quản lí bài học</a>
         {% endif %}
-        <a class="btn btn-primary" href="/teacher_course">Trở về</a>
+        <a class="btn btn-primary" href="/teacher_part/{{course_id}}">Trở về</a>
         <p style="color: red;">{{alert}}</p>
     </div>
     <script src="{% static 'home/assets/bootstrap/js/bootstrap.min.js' %}"></script>
@@ -109,9 +103,8 @@
     <script src="{% static 'home/assets/js/Ultimate-Testimonial-Slider-BS5.js' %} "></script>
 </body>
 <script>
-    video = document.querySelector('input.course_introduce_video')
     function submitForm(){
-        document.forms['course_creation_form'].submit();
+        document.forms['part_creation_form'].submit();
     }
 </script>
 </html>

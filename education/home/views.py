@@ -1895,7 +1895,6 @@ def teacher_part(request,course_id):
             """.format(course_id)
             rs = myconnect.query(query)
         else:
-            pass
             # Get all ds part_name + dùng tên part chỉ định đã xóa (px)
             query = """
                 match (c:Course{{ id:{} }})
@@ -1907,10 +1906,8 @@ def teacher_part(request,course_id):
             part_list = list(rs)
             del_index = part_list.index(del_part_name)
             if del_index == 0:
-                pass
-            elif del_index == len(part_list)-1:     
+                # Nếu là part đầu
                 # Xóa head , xóa next , xóa del_part -> tạo head cho thằng kế 
-                pass
                 next_index = del_index + 1
                 next_part_name = part_list[next_index]
                 query = """                                                        
@@ -1928,12 +1925,53 @@ def teacher_part(request,course_id):
                     create (c)-[:head]->(p)
                 """.format(course_id,del_part_name,next_part_name)
                 rs = myconnect.query(query)
+            elif del_index == len(part_list)-1:     
+                # Nếu là part cuối
+                # Xóa cuối, xóa next của prev, xóa tail -> chuyển tail
+                prev_index = del_index - 1
+                prev_part_name = part_list[prev_index]
+                del_part_name = part_list[del_index]
+                query = """                                                        
+                    match (c:Course{{ id:{} }})
+                    with (c)
+                    match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    with c,p
+                    where p.name = '{}'
+                    with c, p as del_p
+                    match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    where p.name = '{}'
+                    with c, del_p,p as prev_p
+                    match (prev_p)-[n:next]-(:Part),(c)-[t:tail]-(del_p)
+                    delete n, del_p, t
+                    with c, prev_p
+                    create (c)-[:tail]->(prev_p)
+                """.format(course_id,del_part_name,prev_part_name)
+                rs = myconnect.query(query)
             else:
-                pass
-
-            # part cuối thì chuyển tail cho part kế cuối -> delete nó
-            # lấy previous của px -> xóa px -> xóa tail -> chuyển tail về previous px
-            # nếu là part bất kì thì lấy part trước next part sau + xóa hai cái next hai bên
+                # nếu là part bất kì thì lấy part trước next part sau + xóa hai cái next hai bên
+                prev_index = del_index - 1
+                next_index = del_index + 1
+                prev_part_name = part_list[prev_index]
+                next_part_name = part_list[next_index]
+                del_part_name = part_list[del_index]
+                query = """                                                        
+                    match (c:Course{{ id:{} }})
+                    with (c)
+                    match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    with c,p
+                    where p.name = '{}'
+                    with c, p as del_p
+                    match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    where p.name = '{}'
+                    with c, del_p,p as prev_p
+                    match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    where p.name = '{}'
+                    with c, del_p,prev_p,p as next_p
+                    match (prev_p)-[n1:next]-(del_p),(del_p)-[n2:next]-(next_p)
+                    delete n1,n2
+                    with prev_p, next_p
+                    create (prev_p)-[:next]->(next_p)
+                """.format(course_id,del_part_name,prev_part_name,next_part_name)
 
 
     can_del = True
@@ -2106,6 +2144,113 @@ def course_creation(request,id):
     }
     template = loader.get_template('home/course_creation.html')
     return HttpResponse(template.render(context,request))
+
+def part_creation(request,course_id, part_name):
+    alert = ""
+    if 'username' not in request.session:
+            return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+
+    if request.method == 'POST':
+        action = request.POST.get('action','')
+        edit_part_name = request.POST.get('part_name','')
+        edit_part_description = request.POST.get('part_description','')
+        if action == 'create':
+            if edit_part_name == '' or edit_part_description == '' :
+                alert = "Chưa nhập đầy đủ thông tin"
+            else:
+                query = """
+                    match (c:Course{{ id: {} }} )
+                    with (c)
+                    match (c)
+                    optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    return count(p) as count_part
+                """.format(course_id)
+                rs = myconnect.query(query)
+                rs = list(rs)
+                count_part = 0
+                if len(rs) != 0:
+                    count_part = rs[0]['count_part']
+                # Trường hợp chưa tồn tại part nào - ad head, tai
+
+                if count_part == 0:
+                    query = """
+                        match (c:Course{{ id:{} }})
+                        create (p:Part{{ name:'{}',description:'{}' }})
+                        create (c)-[:head]->(p)
+                        create (c)-[:tail]->(p)
+                    """.format(course_id,edit_part_name,edit_part_description)
+                    myconnect.query(query)
+                else:
+                    # trường hợp đã tồn tại part - ad next, tail xóa tail cũ
+                    query = """
+                        match (c:Course{{ id: {} }} )
+                        with (c)
+                        match (c)-[ot:tail]-(pt:Part)
+                        with pt,c,ot
+                        create (p:Part{{name:'{}',description:'{}'}})
+                        create (c)-[:tail]->(p)
+                        create (pt)-[:next]->(p)
+                        delete ot
+                    """.format(course_id,edit_part_name,edit_part_description)
+                    myconnect.query(query)
+                alert = "success"
+                part_name = edit_part_name
+
+        elif action == 'edit':
+            if edit_part_name == '' or edit_part_description == '':
+                alert = "Chưa nhập đầy đủ thông tin"
+            # Bắt đầu edit
+            query = """
+                match (c:Course{{ id: {} }} )
+                with (c)
+                match (c)
+                optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                where p.name = '{}'
+                set p.name = '{}',p.description = '{}'
+            """.format(course_id,part_name,edit_part_name,edit_part_description)
+            myconnect.query(query)
+            alert = "Chỉnh sửa thành công"
+            part_name = edit_part_name
+       
+    if request.method == 'GET':
+        # return create view
+        if part_name == 'new':
+            context = {
+                'part_name':part_name,
+                'course_id': course_id,
+                'alert':alert,
+            }
+            template = loader.get_template('home/part_creation.html')
+            return HttpResponse(template.render(context,request))
+        # return edit view
+        else:
+            pass
+
+    query = """
+        match (c:Course{{ id: {} }} )
+        with (c)
+        match (c)
+        optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+        where p.name = '{}'
+        return p.name as part_name, p.description as part_description
+    """.format(course_id,part_name)
+    rs = myconnect.query(query)
+    part_info = list(rs)
+    if len(part_info) != 0:
+        part_info = part_info[0]
+    else: part_info = None
+
+    context = {
+        'part_info':part_info,
+        'course_id': course_id,
+        'part_name': part_name,
+        'alert':alert,
+    }
+    template = loader.get_template('home/part_creation.html')
+    return HttpResponse(template.render(context,request))
+
 
 
 

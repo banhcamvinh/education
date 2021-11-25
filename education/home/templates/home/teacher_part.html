@@ -64,15 +64,16 @@
             <input style="display: none;" type="text" value="" name="delete" class="delete">
         </form>
         <h1>Danh Sách các chương học</h1>
-        <a class="btn btn-primary" href="/part_creation/0">Tạo Chương mới</a>
+        <a class="btn btn-primary" href="/course_creation/{{course_id}}/part_creation/new">Tạo Chương mới</a>
+        <a class="btn btn-primary" href="/course_creation/{{course_id}}">Trở về</a>
         {% for el in part_list %}
         <div class="row d-md-flex">
             <div class="col-md-8 d-flex d-md-flex justify-content-start align-items-center">
                 <a href="{{ el.part_name }}" style="margin-bottom: 0px;">{{el.part_name}}</a>
             </div>
-            <div class="col"><a href="/part_creation/{{el.part_name}}" class="edit btn btn-primary" value="{{ el.part_name }}">Edit</a></div>
+            <div class="col"><a href="/course_creation/{{course_id}}/part_creation/{{el.part_name}}" class="edit btn btn-primary" value="{{ el.part_name }}">Edit</a></div>
             {% if el.count_lesson == 0 or can_del == False %}
-            <div class="col"><button style="background-color: red !important;" disabled href="/part_creation/{{el.part_name}}" class="del btn btn-primary" value="{{ el.part_name }}">Delete</button></div>
+            <div class="col"><button style="background-color: red !important;" disabled href="/course_creation/{{course_id}}/part_creation/{{el.part_name}}" class="del btn btn-primary" value="{{ el.part_name }}">Delete</button></div>
             {% else %}
             <div class="col"><button style="background-color: red !important;" class="del btn btn-primary" value="{{ el.part_name }}">Delete</button></div>
             {% endif %}
