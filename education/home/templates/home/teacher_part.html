@@ -72,8 +72,8 @@
                 <a href="{{ el.part_name }}" style="margin-bottom: 0px;">{{el.part_name}}</a>
             </div>
             <div class="col"><a href="/course_creation/{{course_id}}/part_creation/{{el.part_name}}" class="edit btn btn-primary" value="{{ el.part_name }}">Edit</a></div>
-            {% if el.count_lesson == 0 or can_del == False %}
-            <div class="col"><button style="background-color: red !important;" disabled href="/course_creation/{{course_id}}/part_creation/{{el.part_name}}" class="del btn btn-primary" value="{{ el.part_name }}">Delete</button></div>
+            {% if el.count_lesson != 0 or can_del == False %}
+            <div class="col"><button style="background-color: red !important;" disabled href="" class="del btn btn-primary" value="{{ el.part_name }}">Delete</button></div>
             {% else %}
             <div class="col"><button style="background-color: red !important;" class="del btn btn-primary" value="{{ el.part_name }}">Delete</button></div>
             {% endif %}

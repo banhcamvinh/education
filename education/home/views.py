@@ -1900,30 +1900,34 @@ def teacher_part(request,course_id):
                 match (c:Course{{ id:{} }})
                 with (c)
                 match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
-                return collect(p.name) as part_list
+                return p.name as part
             """.format(course_id)
             rs = myconnect.query(query)
-            part_list = list(rs)
+            rs = list(rs)
+            part_list = []
+            for el in rs:
+                part_list.append(el['part'])            
             del_index = part_list.index(del_part_name)
             if del_index == 0:
                 # Nếu là part đầu
                 # Xóa head , xóa next , xóa del_part -> tạo head cho thằng kế 
+                # Tạo head cho thằng kế, xóa head thằng đầu, xóa next thằng đầu , xóa thằng đầu
                 next_index = del_index + 1
                 next_part_name = part_list[next_index]
                 query = """                                                        
                     match (c:Course{{ id:{} }})
                     with (c)
-                    match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
-                    with c,p
-                    where p.name = '{}'
-                    match (c)-[h:head]-(p),(p)-[n:next]-(:Part)
-                    delete h,n,p
-                    with (c)
-                    match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
-                    with c,p
-                    where p.name = '{}'
-                    create (c)-[:head]->(p)
-                """.format(course_id,del_part_name,next_part_name)
+                    match (c)-[:head]-(:Part)-[:next*0..]->(next_p:Part)
+                    with c,next_p
+                    where next_p.name = '{}'
+                    create (c)-[:head]->(next_p)
+                    with c,next_p         
+                    match (c)-[:head]-(:Part)-[:next*0..]->(del_p:Part)
+                    with c,del_p,next_p
+                    where del_p.name = '{}'
+                    match (c)-[h:head]-(del_p),(del_p)-[n:next]-(next_p)
+                    delete h,n,del_p
+                """.format(course_id,next_part_name,del_part_name)
                 rs = myconnect.query(query)
             elif del_index == len(part_list)-1:     
                 # Nếu là part cuối
@@ -1941,8 +1945,8 @@ def teacher_part(request,course_id):
                     match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
                     where p.name = '{}'
                     with c, del_p,p as prev_p
-                    match (prev_p)-[n:next]-(:Part),(c)-[t:tail]-(del_p)
-                    delete n, del_p, t
+                    match (prev_p)-[n:next]-(del_p),(c)-[t:tail]-(del_p)
+                    delete n,t, del_p
                     with c, prev_p
                     create (c)-[:tail]->(prev_p)
                 """.format(course_id,del_part_name,prev_part_name)
@@ -1972,7 +1976,7 @@ def teacher_part(request,course_id):
                     with prev_p, next_p
                     create (prev_p)-[:next]->(next_p)
                 """.format(course_id,del_part_name,prev_part_name,next_part_name)
-
+                myconnect.query(query)
 
     can_del = True
     query = """
@@ -1983,7 +1987,8 @@ def teacher_part(request,course_id):
     rs = myconnect.query(query)
     rs = list(rs)
     if len(rs) != 0:
-        can_del = False
+        if rs[0]['count_enrollment'] != 0:
+            can_del = False
 
     query = """
         match (c:Course{{ id:{} }})
@@ -2172,8 +2177,7 @@ def part_creation(request,course_id, part_name):
                 count_part = 0
                 if len(rs) != 0:
                     count_part = rs[0]['count_part']
-                # Trường hợp chưa tồn tại part nào - ad head, tai
-
+                # Trường hợp chưa tồn tại part nào - ad head, tail
                 if count_part == 0:
                     query = """
                         match (c:Course{{ id:{} }})
@@ -2185,15 +2189,16 @@ def part_creation(request,course_id, part_name):
                 else:
                     # trường hợp đã tồn tại part - ad next, tail xóa tail cũ
                     query = """
+                        create (addp:Part{{name:'{}',description:'{}'}})
+                        with addp
                         match (c:Course{{ id: {} }} )
-                        with (c)
-                        match (c)-[ot:tail]-(pt:Part)
-                        with pt,c,ot
-                        create (p:Part{{name:'{}',description:'{}'}})
-                        create (c)-[:tail]->(p)
-                        create (pt)-[:next]->(p)
-                        delete ot
-                    """.format(course_id,edit_part_name,edit_part_description)
+                        with c,addp
+                        match (c)-[oldtail:tail]-(oldtailpart:Part)
+                        with c,addp,oldtail,oldtailpart
+                        create (c)-[:tail]->(addp)
+                        create (oldtailpart)-[:next]->(addp)
+                        delete oldtail
+                    """.format(edit_part_name,edit_part_description,course_id)
                     myconnect.query(query)
                 alert = "success"
                 part_name = edit_part_name
