@@ -75,9 +75,9 @@
             
             {% if el.count_exercise != 0 or can_del == False %}
             <!-- Không được xóa khi đã có lesson hoặc can_del bằng False-->
-            <div class="col"><button style="background-color: red !important;" disabled href="" class="del btn btn-primary" value="{{ el.part_name }}">Delete</button></div>
+            <div class="col"><button style="background-color: red !important;" disabled href="" class="del btn btn-primary" value="{{ el.lesson_name }}">Delete</button></div>
             {% else %}
-            <div class="col"><button style="background-color: red !important;" class="del btn btn-primary" value="{{ el.part_name }}">Delete</button></div>
+            <div class="col"><button style="background-color: red !important;" class="del btn btn-primary" value="{{ el.lesson_name }}">Delete</button></div>
             {% endif %}
         </div> 
         {% endfor %}

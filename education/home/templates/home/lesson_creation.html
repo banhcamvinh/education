@@ -67,6 +67,10 @@
 
         <form id="lesson_creation_form" method="post" action="/course_creation/{{course_id}}/part_creation/{{part_name}}/lesson_creation/{{lesson_name}}" enctype="multipart/form-data">
             {% csrf_token %}
+            <span>Chọn video giới thiệu:&nbsp;</span>
+            <input name="lesson_url" type="file">
+            <br>File cũ
+            <p href="{{lesson_info.lesson_url}}">{{lesson_info.lesson_url}}</p>
             <p style="margin-bottom: 0px;">Nhập tên bài:</p>
             <input value="{{lesson_info.lesson_name}}"  name="lesson_name" type="text" placeholder="Nhập tên bài của bạn" style="width: 100%;padding-top: 5px;padding-bottom: 5px;padding-right: 10px;padding-left: 20px;" value="">
             <p style="margin-bottom: 0px;">Nhập mô tả bài học:</p>

@@ -24,6 +24,7 @@ import uuid
 import urllib
 import pyrebase
 import requests
+from moviepy.editor import VideoFileClip
 
 firebaseConfig={
     "apiKey": "AIzaSyBOHxmgm-uhY4tQbK8YLLdNpP4IJYcHMrs",
@@ -2036,104 +2037,115 @@ def teacher_lesson(request,course_id,part_name):
         if len(rs) != 0:
             count_lesson = rs[0]['count_lesson']
         if count_lesson == 1:
-            # Xóa part đó & update status waitting % delete status hiện tại
+            # Xóa Lesson đó + head tail
             query = """
-                match (c:Course{{ id:{} }})
+                match (c:Course{{ id: {} }} )
                 with (c)
-                match (c)-[h:head]-(p:Part),(c)-[t:tail]-(p)
-                delete h,t,p
-                with c
-                match (s:Status)
-                where s.value = 'waiting'
-                create (c)-[:in_status]->(s)
-                with c
-                match (c)-[is:in_status]-(s:Status)
-                where s.value = 'active' or s.value = 'inactive'
-                delete is
-            """.format(course_id)
+                match (c)
+                optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                with p,c
+                where p.name = '{}'
+                match (p)-[h:head]-(l:Lesson),(p)-[t:tail]-(l)
+                delete h,t,l
+            """.format(course_id,part_name)
             rs = myconnect.query(query)
         else:
             # Get all ds part_name + dùng tên part chỉ định đã xóa (px)
             query = """
-                match (c:Course{{ id:{} }})
+                match (c:Course{{ id: {} }} )
                 with (c)
-                match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
-                return p.name as part
-            """.format(course_id)
+                match (c)
+                optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                with p,c
+                where p.name = '{}'
+                match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                return l.name as lesson
+            """.format(course_id,part_name)
             rs = myconnect.query(query)
             rs = list(rs)
-            part_list = []
+            lesson_list = []
             for el in rs:
-                part_list.append(el['part'])            
-            del_index = part_list.index(del_lesson_name)
+                lesson_list.append(el['lesson'])            
+            del_index = lesson_list.index(del_lesson_name)
+
             if del_index == 0:
                 # Nếu là part đầu
                 # Xóa head , xóa next , xóa del_part -> tạo head cho thằng kế 
                 # Tạo head cho thằng kế, xóa head thằng đầu, xóa next thằng đầu , xóa thằng đầu
                 next_index = del_index + 1
-                next_part_name = part_list[next_index]
+                next_lesson_name = lesson_list[next_index]
                 query = """                                                        
-                    match (c:Course{{ id:{} }})
+                    match (c:Course{{ id: {} }} )
                     with (c)
-                    match (c)-[:head]-(:Part)-[:next*0..]->(next_p:Part)
-                    with c,next_p
-                    where next_p.name = '{}'
-                    create (c)-[:head]->(next_p)
-                    with c,next_p         
-                    match (c)-[:head]-(:Part)-[:next*0..]->(del_p:Part)
-                    with c,del_p,next_p
-                    where del_p.name = '{}'
-                    match (c)-[h:head]-(del_p),(del_p)-[n:next]-(next_p)
-                    delete h,n,del_p
-                """.format(course_id,next_part_name,del_lesson_name)
+                    match (c)
+                    optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    with p,c
+                    where p.name = '{}'
+                    match (p)-[:head]-(:Lesson)-[:next*0..]->(del_l:Lesson)
+                    where del_l.name = '{}'
+                    with p,del_l
+                    match (p)-[:head]-(:Lesson)-[:next*0..]->(next_l:Lesson)
+                    where next_l.name = '{}'
+                    with p,del_l,next_l
+                    create (p)-[:head]->(next_l)
+                    with p,del_l,next_l
+                    match (p)-[h:head]-(del_l),(del_l)-[n:next]-(next_l)
+                    delete h,n,del_l
+                """.format(course_id,part_name,del_lesson_name ,next_lesson_name)
                 rs = myconnect.query(query)
-            elif del_index == len(part_list)-1:     
+            elif del_index == len(lesson_list)-1:     
                 # Nếu là part cuối
                 # Xóa cuối, xóa next của prev, xóa tail -> chuyển tail
                 prev_index = del_index - 1
-                prev_part_name = part_list[prev_index]
-                del_part_name = part_list[del_index]
+                prev_lesson_name = lesson_list[prev_index]
+                del_lesson_name = lesson_list[del_index]
                 query = """                                                        
-                    match (c:Course{{ id:{} }})
+                    match (c:Course{{ id: {} }} )
                     with (c)
-                    match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
-                    with c,p
+                    match (c)
+                    optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    with p,c
                     where p.name = '{}'
-                    with c, p as del_p
-                    match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
-                    where p.name = '{}'
-                    with c, del_p,p as prev_p
-                    match (prev_p)-[n:next]-(del_p),(c)-[t:tail]-(del_p)
-                    delete n,t, del_p
-                    with c, prev_p
-                    create (c)-[:tail]->(prev_p)
-                """.format(course_id,del_part_name,prev_part_name)
+                    match (p)-[:head]-(:Lesson)-[:next*0..]->(del_l:Lesson)
+                    where del_l.name = '{}'
+                    with p,del_l
+                    match (p)-[:head]-(:Lesson)-[:next*0..]->(prev_l:Lesson)
+                    where prev_l.name = '{}'
+                    with p,del_l,prev_l
+                    match (prev_l)-[n:next]-(del_l),(p)-[t:tail]-(del_l)
+                    delete n,t, del_l
+                    with p, prev_l
+                    create (p)-[:tail]->(prev_l)
+                """.format(course_id,part_name,del_lesson_name,prev_lesson_name)
                 rs = myconnect.query(query)
             else:
                 # nếu là part bất kì thì lấy part trước next part sau + xóa hai cái next hai bên
                 prev_index = del_index - 1
                 next_index = del_index + 1
-                prev_part_name = part_list[prev_index]
-                next_part_name = part_list[next_index]
-                del_part_name = part_list[del_index]
+                prev_lesson_name = lesson_list[prev_index]
+                next_lesson_name = lesson_list[next_index]
+                del_lesson_name = lesson_list[del_index]
                 query = """                                                        
-                    match (c:Course{{ id:{} }})
+                    match (c:Course{{ id: {} }} )
                     with (c)
-                    match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
-                    with c,p
+                    match (c)
+                    optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    with p,c
                     where p.name = '{}'
-                    with c, p as del_p
-                    match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
-                    where p.name = '{}'
-                    with c, del_p,p as prev_p
-                    match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
-                    where p.name = '{}'
-                    with c, del_p,prev_p,p as next_p
-                    match (prev_p)-[n1:next]-(del_p),(del_p)-[n2:next]-(next_p)
+                    match (p)-[:head]-(:Lesson)-[:next*0..]->(del_l:Lesson)
+                    where del_l.name = '{}'
+                    with p,del_l
+                    match (p)-[:head]-(:Lesson)-[:next*0..]->(prev_l:Lesson)
+                    where prev_l.name = '{}'
+                    with p,del_l,prev_l
+                    match (p)-[:head]-(:Lesson)-[:next*0..]->(next_l:Lesson)
+                    where next_l.name = '{}'
+                    with p,del_l,prev_l,next_l
+                    match (prev_l)-[n1:next]-(del_l),(del_l)-[n2:next]-(next_l)
                     delete n1,n2
-                    with prev_p, next_p
-                    create (prev_p)-[:next]->(next_p)
-                """.format(course_id,del_part_name,prev_part_name,next_part_name)
+                    with prev_l, next_l
+                    create (prev_l)-[:next]->(next_l)
+                """.format(course_id,part_name,del_lesson_name,prev_lesson_name,next_lesson_name)
                 myconnect.query(query)
 
     can_del = True
@@ -2155,8 +2167,7 @@ def teacher_lesson(request,course_id,part_name):
         optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
         with p,c
         where p.name = '{}'
-        match (p)
-        optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+        match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
         with p,l,c
         match (l)
         optional match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
@@ -2282,6 +2293,7 @@ def course_creation(request,id):
                     , intro.url = '{}'
                 """.format(url)
             myconnect.query(query)
+            alert = 'success'
        
     if request.method == 'GET':
         # return create view
@@ -2430,65 +2442,130 @@ def lesson_creation(request,course_id, part_name, lesson_name):
 
     if request.method == 'POST':
         action = request.POST.get('action','')
-        edit_part_name = request.POST.get('part_name','')
-        edit_part_description = request.POST.get('part_description','')
+        edit_lesson_name = request.POST.get('lesson_name','')
+        edit_lesson_description = request.POST.get('lesson_description','')
         if action == 'create':
-            if edit_part_name == '' or edit_part_description == '' :
+            if edit_lesson_name == '' or edit_lesson_description == '' or len(request.FILES) == 0:
                 alert = "Chưa nhập đầy đủ thông tin"
             else:
+                video_bytes = request.FILES['lesson_url'].read()
+                FILE_OUTPUT = '{}.mp4'.format(str(course_id)+'_'+part_name+'_'+edit_lesson_name)
+                with open(FILE_OUTPUT, "wb") as out_file: 
+                    out_file.write(video_bytes)
+                
+                clip = VideoFileClip("{}.mp4".format(str(course_id)+'_'+part_name+'_'+edit_lesson_name))
+                duration =  round(clip.duration)
+                clip.close()
+
+                storage.child(str(str(course_id)+'_'+part_name+'_'+edit_lesson_name)).put(FILE_OUTPUT)
+                if os.path.isfile(FILE_OUTPUT):
+                    os.remove(FILE_OUTPUT)
+                url = storage.child(FILE_OUTPUT).get_url(None)
+                url = url.replace('.mp4?alt=media','')
+                response = requests.get(url)
+                data = response.json()
+                token = data['downloadTokens']
+                url += '?alt=media&token={}'.format(token)
+
+                # Get số lượng lesson để đưa ra cách add
                 query = """
                     match (c:Course{{ id: {} }} )
                     with (c)
                     match (c)
                     optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
-                    return count(p) as count_part
-                """.format(course_id)
+                    with p,c
+                    where p.name = '{}'
+                    match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                    return count(l) as count_lesson
+                """.format(course_id,part_name)
                 rs = myconnect.query(query)
                 rs = list(rs)
-                count_part = 0
+                count_lesson = 0
                 if len(rs) != 0:
-                    count_part = rs[0]['count_part']
+                    count_lesson = rs[0]['count_lesson']
+
                 # Trường hợp chưa tồn tại part nào - ad head, tail
-                if count_part == 0:
+                if count_lesson == 0:
                     query = """
-                        match (c:Course{{ id:{} }})
-                        create (p:Part{{ name:'{}',description:'{}' }})
-                        create (c)-[:head]->(p)
-                        create (c)-[:tail]->(p)
-                    """.format(course_id,edit_part_name,edit_part_description)
+                        match (c:Course{{ id: {} }} )
+                        with (c)
+                        match (c)
+                        optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                        with p,c
+                        where p.name = '{}'
+                        with p
+                        create (l:Lesson{{ name:'{}',description:'{}',url:'{}',duration:{} }})
+                        create (p)-[:head]->(l)
+                        create (p)-[:tail]->(l)
+                    """.format(course_id,part_name,edit_lesson_name,edit_lesson_description,url,duration)
                     myconnect.query(query)
                 else:
                     # trường hợp đã tồn tại part - ad next, tail xóa tail cũ
                     query = """
-                        create (addp:Part{{name:'{}',description:'{}'}})
-                        with addp
-                        match (c:Course{{ id: {} }} )
-                        with c,addp
-                        match (c)-[oldtail:tail]-(oldtailpart:Part)
-                        with c,addp,oldtail,oldtailpart
-                        create (c)-[:tail]->(addp)
-                        create (oldtailpart)-[:next]->(addp)
-                        delete oldtail
-                    """.format(edit_part_name,edit_part_description,course_id)
+                        match (c:Course{{ id: {} }})
+                        with (c)
+                        match (c)
+                        optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                        with p,c
+                        where p.name = '{}'
+                        match (p)
+                        match (p)-[old_tail:tail]-(old_lesson:Lesson)
+                        with p,old_tail,old_lesson
+                        create (new_lesson:Lesson{{ name:'{}',description:'{}',url:'{}',duration:{} }})
+                        create (p)-[:tail]->(new_lesson)
+                        create (old_lesson)-[:next]->(new_lesson)
+                        delete old_tail
+                    """.format(course_id,part_name,edit_lesson_name,edit_lesson_description,url,duration)
                     myconnect.query(query)
                 alert = "success"
-                part_name = edit_part_name
+                lesson_name = edit_lesson_name
 
         elif action == 'edit':
-            if edit_part_name == '' or edit_part_description == '':
+            if edit_lesson_name == '' or edit_lesson_description == '':
                 alert = "Chưa nhập đầy đủ thông tin"
+            if len(request.FILES) == 0:
+                # Không cần cập nhật lại video
+                pass
+            else:
+                video_bytes = request.FILES['lesson_url'].read()
+                FILE_OUTPUT = '{}.mp4'.format(str(course_id)+'_'+part_name+'_'+edit_lesson_name)
+                with open(FILE_OUTPUT, "wb") as out_file: 
+                    out_file.write(video_bytes)
+                
+                clip = VideoFileClip("{}.mp4".format(str(course_id)+'_'+part_name+'_'+edit_lesson_name))
+                duration =  round(clip.duration)
+                clip.close()
+
+                storage.child(str(str(course_id)+'_'+part_name+'_'+edit_lesson_name)).put(FILE_OUTPUT)
+                if os.path.isfile(FILE_OUTPUT):
+                    os.remove(FILE_OUTPUT)
+                url = storage.child(FILE_OUTPUT).get_url(None)
+                url = url.replace('.mp4?alt=media','')
+                response = requests.get(url)
+                data = response.json()
+                token = data['downloadTokens']
+                url += '?alt=media&token={}'.format(token)
+
             # Bắt đầu edit
             query = """
                 match (c:Course{{ id: {} }} )
                 with (c)
                 match (c)
                 optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                with p,c
                 where p.name = '{}'
-                set p.name = '{}',p.description = '{}'
-            """.format(course_id,part_name,edit_part_name,edit_part_description)
+                match (p)
+                optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                where l.name = '{}'
+                set l.name = '{}',l.description = '{}'
+            """.format(course_id,part_name,lesson_name,edit_lesson_name,edit_lesson_description)
+            if len(request.FILES) != 0:
+                query += """
+                    , l.url = '{}', l.duration = {}
+                """.format(url,duration)
             myconnect.query(query)
             alert = "Chỉnh sửa thành công"
-            part_name = edit_part_name
+            lesson_name = edit_lesson_name
        
     if request.method == 'GET':
         # return create view
@@ -2512,10 +2589,10 @@ def lesson_creation(request,course_id, part_name, lesson_name):
         optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
         with p,c
         where p.name = '{}'
-        match (p)
-        optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+        match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+        where l.name = '{}'
         return l.name as lesson_name, l.description as lesson_description, l.url as lesson_url
-    """.format(course_id,part_name)
+    """.format(course_id,part_name,lesson_name)
     rs = myconnect.query(query)
     lesson_info = list(rs)
     if len(lesson_info) != 0:
@@ -2523,6 +2600,7 @@ def lesson_creation(request,course_id, part_name, lesson_name):
     else: lesson_info = None
 
     context = {
+        'lesson_name':lesson_name,
         'lesson_info': lesson_info,
         'part_name': part_name,
         'course_id': course_id,
