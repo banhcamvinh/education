@@ -33,10 +33,13 @@ urlpatterns = [
     path('teacher_report', views.teacher_report, name='teacher_report'),
     path('teacher_course', views.teacher_course, name='teacher_course'),
     path('teacher_part/<int:course_id>', views.teacher_part, name='teacher_part'),
+    path('teacher_lesson/<int:course_id>/<str:part_name>', views.teacher_lesson, name='teacher_lesson'),
 
 
     path('course_creation/<int:id>', views.course_creation, name='course_creation'),
     path('course_creation/<int:course_id>/part_creation/<str:part_name>', views.part_creation, name='part_creation'),
+    path('course_creation/<int:course_id>/part_creation/<str:part_name>/lesson_creation/<str:lesson_name>', views.lesson_creation, name='lesson_creation'),
+
 
 
 

@@ -83,7 +83,7 @@
         <button onclick="submitForm()" class="btn btn-primary" type="button">Thêm chương học</button>
         {% else %}
         <button onclick="submitForm()" class="btn btn-primary" type="button">Chỉnh sửa</button>
-        <a class="btn btn-primary" href="/teacher_part/{{course_id}}">Quản lí bài học</a>
+        <a class="btn btn-primary" href="/teacher_lesson/{{course_id}}/{{part_info.part_name}}">Quản lí bài học</a>
         {% endif %}
         <a class="btn btn-primary" href="/teacher_part/{{course_id}}">Trở về</a>
         <p style="color: red;">{{alert}}</p>

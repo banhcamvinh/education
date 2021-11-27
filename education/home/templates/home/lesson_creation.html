@@ -59,35 +59,34 @@
 
 <body>
     <div class="container">
-        <form id="teacher_part_form" method="post" style="margin-top: 40px;" action="/teacher_part/{{course_id}}">
+        {% if lesson_name == 'new' %}
+        <h1>Tạo bài học</h1>
+        {% else %}
+        <h1>Chỉnh sửa bài học</h1>
+        {% endif %}
+
+        <form id="lesson_creation_form" method="post" action="/course_creation/{{course_id}}/part_creation/{{part_name}}/lesson_creation/{{lesson_name}}" enctype="multipart/form-data">
             {% csrf_token %}
-            <input style="display: none;" type="text" value="" name="delete" class="delete">
+            <p style="margin-bottom: 0px;">Nhập tên bài:</p>
+            <input value="{{lesson_info.lesson_name}}"  name="lesson_name" type="text" placeholder="Nhập tên bài của bạn" style="width: 100%;padding-top: 5px;padding-bottom: 5px;padding-right: 10px;padding-left: 20px;" value="">
+            <p style="margin-bottom: 0px;">Nhập mô tả bài học:</p>
+            <textarea name="lesson_description" style="width: 100%;height: 100px;padding-left: 20px;" placeholder="Nhập mô tả bài học">{{lesson_info.lesson_description}}</textarea>
+           
+            {% if lesson_name == 'new' %}
+            <input style="display: none;" name="action" value="create">
+            {% else %}
+            <input style="display: none;" name="action" value="edit">
+            {% endif %}
         </form>
-        <h1>Danh Sách các chương học</h1>
-        <a class="btn btn-primary" href="/course_creation/{{course_id}}/part_creation/new">Tạo Chương mới</a>
-        <a class="btn btn-primary" href="/course_creation/{{course_id}}">Trở về</a>
-        {% for el in part_list %}
-        <div class="row d-md-flex">
-            <div class="col-md-8 d-flex d-md-flex justify-content-start align-items-center">
-                <a href="{{ el.part_name }}" style="margin-bottom: 0px;">{{el.part_name}}</a>
-            </div>
-            <div class="col"><a href="/course_creation/{{course_id}}/part_creation/{{el.part_name}}" class="edit btn btn-primary" value="{{ el.part_name }}">Edit</a></div>
-            {% if el.count_lesson == 0 %}
-            <div class="col"><button style="background-color: red !important;" disabled href="" class="del btn btn-primary" value="{{ el.part_name }}">Not finished</button></div>
-            {% else %}
-            <div class="col"><button style="background-color: green !important;" disabled href="" class="del btn btn-primary" value="{{ el.part_name }}">Ok</button></div>
-            {% endif %}
-            
-            {% if el.count_lesson != 0 or can_del == False %}
-            <!-- Không được xóa khi đã có lesson hoặc can_del bằng False-->
-            <div class="col"><button style="background-color: red !important;" disabled href="" class="del btn btn-primary" value="{{ el.part_name }}">Delete</button></div>
-            {% else %}
-            <div class="col"><button style="background-color: red !important;" class="del btn btn-primary" value="{{ el.part_name }}">Delete</button></div>
-            {% endif %}
-        </div> 
-        {% endfor %}
-
-
+         
+        {% if lesson_name == 'new' %}
+        <button onclick="submitForm()" class="btn btn-primary" type="button">Thêm bài học</button>
+        {% else %}
+        <button onclick="submitForm()" class="btn btn-primary" type="button">Chỉnh sửa</button>
+        <a class="btn btn-primary" href="/teacher_lesson/{{course_id}}/{{part_info.part_name}}">Quản lí bài tập</a>
+        {% endif %}
+        <a class="btn btn-primary" href="/teacher_lesson/{{course_id}}/{{part_name}}">Trở về</a>
+        <p style="color: red;">{{alert}}</p>
     </div>
     <script src="{% static 'home/assets/bootstrap/js/bootstrap.min.js' %}"></script>
     <script src="{% static 'home/assets/js/bs-init.js' %}"></script>
@@ -98,23 +97,14 @@
     <script src="{% static 'home/assets/js/Counting.js' %}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick.js"></script>
     <script src="https://code.jquery.com/jquery-2.2.0.min.js&quot; type=&quot;text/javascript"></script>
-    <script src="{% static 'home/assets/js/Lightbox-Gallery.js' %}"></script>
-    <script src="{% static 'home/assets/js/Media-Slider-Bootstrap-3.js' %}"></script>
-    <script src="{% static 'home/assets/js/Swipe-Slider-7.js' %}"></script>
-    <script src="{% static 'home/assets/js/Ultimate-Testimonial-Slider-BS5.js' %}"></script>
+    <script src="{% static 'home/assets/js/Lightbox-Gallery.js' %} "></script>
+    <script src="{% static 'home/assets/js/Media-Slider-Bootstrap-3.js' %} "></script>
+    <script src="{% static 'home/assets/js/Swipe-Slider-7.js' %} "></script>
+    <script src="{% static 'home/assets/js/Ultimate-Testimonial-Slider-BS5.js' %} "></script>
 </body>
 <script>
-    let del_btn = document.querySelectorAll('button.del')
-    let del_form = document.querySelector('input.delete')
-    del_btn.forEach((btn, index)=>{
-        btn.addEventListener("click", function() {
-            course_name = btn.getAttribute('value')
-            del_form.setAttribute('value',course_name)
-            submitForm()
-        });
-    })
     function submitForm(){
-        document.forms['teacher_part_form'].submit();
+        document.forms['lesson_creation_form'].submit();
     }
 </script>
 </html>

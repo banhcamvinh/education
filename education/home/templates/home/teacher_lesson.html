@@ -59,26 +59,21 @@
 
 <body>
     <div class="container">
-        <form id="teacher_part_form" method="post" style="margin-top: 40px;" action="/teacher_part/{{course_id}}">
+        <form id="teacher_lesson_form" method="post" style="margin-top: 40px;" action="/teacher_lesson/{{course_id}}/{{part_name}}">
             {% csrf_token %}
             <input style="display: none;" type="text" value="" name="delete" class="delete">
         </form>
-        <h1>Danh Sách các chương học</h1>
-        <a class="btn btn-primary" href="/course_creation/{{course_id}}/part_creation/new">Tạo Chương mới</a>
-        <a class="btn btn-primary" href="/course_creation/{{course_id}}">Trở về</a>
-        {% for el in part_list %}
+        <h1>Danh Sách các bài học</h1>
+        <a class="btn btn-primary" href="/course_creation/{{course_id}}/part_creation/{{part_name}}/lesson_creation/new">Tạo bài học mới </a>
+        <a class="btn btn-primary" href="/course_creation/{{course_id}}/part_creation/{{part_name}}">Trở về</a>
+        {% for el in lesson_list %}
         <div class="row d-md-flex">
             <div class="col-md-8 d-flex d-md-flex justify-content-start align-items-center">
-                <a href="{{ el.part_name }}" style="margin-bottom: 0px;">{{el.part_name}}</a>
+                <a href="{{ el.part_name }}" style="margin-bottom: 0px;">{{el.lesson_name}}</a>
             </div>
-            <div class="col"><a href="/course_creation/{{course_id}}/part_creation/{{el.part_name}}" class="edit btn btn-primary" value="{{ el.part_name }}">Edit</a></div>
-            {% if el.count_lesson == 0 %}
-            <div class="col"><button style="background-color: red !important;" disabled href="" class="del btn btn-primary" value="{{ el.part_name }}">Not finished</button></div>
-            {% else %}
-            <div class="col"><button style="background-color: green !important;" disabled href="" class="del btn btn-primary" value="{{ el.part_name }}">Ok</button></div>
-            {% endif %}
+            <div class="col"><a href="/course_creation/{{course_id}}/part_creation/{{part_name}}/lesson_creation/{{el.lesson_name}}" class="edit btn btn-primary" value="{{ el.part_name }}">Edit</a></div>
             
-            {% if el.count_lesson != 0 or can_del == False %}
+            {% if el.count_exercise != 0 or can_del == False %}
             <!-- Không được xóa khi đã có lesson hoặc can_del bằng False-->
             <div class="col"><button style="background-color: red !important;" disabled href="" class="del btn btn-primary" value="{{ el.part_name }}">Delete</button></div>
             {% else %}
@@ -108,13 +103,13 @@
     let del_form = document.querySelector('input.delete')
     del_btn.forEach((btn, index)=>{
         btn.addEventListener("click", function() {
-            course_name = btn.getAttribute('value')
-            del_form.setAttribute('value',course_name)
+            lesson_name = btn.getAttribute('value')
+            del_form.setAttribute('value',lesson_name)
             submitForm()
         });
     })
     function submitForm(){
-        document.forms['teacher_part_form'].submit();
+        document.forms['teacher_lesson_form'].submit();
     }
 </script>
 </html>
