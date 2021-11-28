@@ -59,34 +59,28 @@
 
 <body>
     <div class="container">
-        <form id="teacher_lesson_form" method="post" style="margin-top: 40px;" action="/teacher_lesson/{{course_id}}/{{part_name}}">
+        <form id="teacher_exercise_form" method="post" style="margin-top: 40px;" action="/teacher_exercise/{{course_id}}/{{part_name}}/{{lesson_name}}">
             {% csrf_token %}
             <input style="display: none;" type="text" value="" name="delete" class="delete">
         </form>
-        <h1>Danh Sách các bài học</h1>
-        <a class="btn btn-primary" href="/course_creation/{{course_id}}/part_creation/{{part_name}}/lesson_creation/new">Tạo bài học mới </a>
+        <h1>Danh Sách các bài tập</h1>
+        <a class="btn btn-primary" href="/course_creation/{{course_id}}/part_creation/{{part_name}}/lesson_creation/{{lesson_name}}/exercise_creation/new">Tạo bài tập </a>
         <a class="btn btn-primary" href="/course_creation/{{course_id}}/part_creation/{{part_name}}">Trở về</a>
         <a class="btn btn-primary" href="/teacher_course">Trở về danh sách khóa học</a>
         <a class="btn btn-primary" href="/teacher_part/{{course_id}}">Trở về danh sách chương</a>
-        {% for el in lesson_list %}
+        <a class="btn btn-primary" href="/teacher_lesson/{{course_id}}/{{part_name}}">Trở về danh sách bài học</a>
+        {% for el in exercise_list %}
         <div class="row d-md-flex">
             <div class="col-md-8 d-flex d-md-flex justify-content-start align-items-center">
-                <a href="/course_creation/{{course_id}}/part_creation/{{part_name}}/lesson_creation/{{el.lesson_name}}" style="margin-bottom: 0px;">{{el.lesson_name}}</a>
+                <a href="/course_creation/{{course_id}}/part_creation/{{part_name}}/lesson_creation/{{lesson_name}}/exercise_creation/{{el.exercise_question}}" style="margin-bottom: 0px;">{{el.exercise_question}}</a>
             </div>
-            <div class="col"><a href="/course_creation/{{course_id}}/part_creation/{{part_name}}/lesson_creation/{{el.lesson_name}}" class="edit btn btn-primary" value="{{ el.part_name }}">Edit</a></div>
+            <div class="col"><a href="/course_creation/{{course_id}}/part_creation/{{part_name}}/lesson_creation/{{lesson_name}}/exercise_creation/{{el.exercise_question}}" class="edit btn btn-primary" value="{{ el.exercise_question }}">Edit</a></div>
             
-            {% if el.count_exercise == 0 %}
-            <div class="col"><button style="background-color: red !important;" disabled href="" class="del btn btn-primary"">Thiếu bài tập</button></div>
-            {% else %}
-            <div class="col"><button style="background-color: green !important;" disabled href="" class="del btn btn-primary"">Đã có bài tập</button></div>
-            {% endif %}
-
-
-            {% if el.count_exercise != 0 or can_del == False %}
+            {% if can_del == False %}
             <!-- Không được xóa khi đã có lesson hoặc can_del bằng False-->
-            <div class="col"><button style="background-color: red !important;" disabled href="" class="del btn btn-primary" value="{{ el.lesson_name }}">Delete</button></div>
+            <div class="col"><button style="background-color: red !important;" disabled href="" class="del btn btn-primary" value="{{ el.exercise_question }}">Delete</button></div>
             {% else %}
-            <div class="col"><button style="background-color: red !important;" class="del btn btn-primary" value="{{ el.lesson_name }}">Delete</button></div>
+            <div class="col"><button style="background-color: red !important;" class="del btn btn-primary" value="{{ el.exercise_question }}">Delete</button></div>
             {% endif %}
         </div> 
         {% endfor %}
@@ -112,13 +106,13 @@
     let del_form = document.querySelector('input.delete')
     del_btn.forEach((btn, index)=>{
         btn.addEventListener("click", function() {
-            lesson_name = btn.getAttribute('value')
-            del_form.setAttribute('value',lesson_name)
+            exercise_name = btn.getAttribute('value')
+            del_form.setAttribute('value',exercise_name)
             submitForm()
         });
     })
     function submitForm(){
-        document.forms['teacher_lesson_form'].submit();
+        document.forms['teacher_exercise_form'].submit();
     }
 </script>
 </html>

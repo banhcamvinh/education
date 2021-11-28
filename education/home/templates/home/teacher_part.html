@@ -66,16 +66,17 @@
         <h1>Danh Sách các chương học</h1>
         <a class="btn btn-primary" href="/course_creation/{{course_id}}/part_creation/new">Tạo Chương mới</a>
         <a class="btn btn-primary" href="/course_creation/{{course_id}}">Trở về</a>
+        <a class="btn btn-primary" href="/teacher_course">Trở về danh sách các khóa học</a>
         {% for el in part_list %}
         <div class="row d-md-flex">
             <div class="col-md-8 d-flex d-md-flex justify-content-start align-items-center">
-                <a href="{{ el.part_name }}" style="margin-bottom: 0px;">{{el.part_name}}</a>
+                <a href="/course_creation/{{course_id}}/part_creation/{{el.part_name}}" style="margin-bottom: 0px;">{{el.part_name}}</a>
             </div>
             <div class="col"><a href="/course_creation/{{course_id}}/part_creation/{{el.part_name}}" class="edit btn btn-primary" value="{{ el.part_name }}">Edit</a></div>
             {% if el.count_lesson == 0 %}
-            <div class="col"><button style="background-color: red !important;" disabled href="" class="del btn btn-primary" value="{{ el.part_name }}">Not finished</button></div>
+            <div class="col"><button style="background-color: red !important;" disabled href="" class="del btn btn-primary" value="{{ el.part_name }}">Chưa có bài</button></div>
             {% else %}
-            <div class="col"><button style="background-color: green !important;" disabled href="" class="del btn btn-primary" value="{{ el.part_name }}">Ok</button></div>
+            <div class="col"><button style="background-color: green !important;" disabled href="" class="del btn btn-primary" value="{{ el.part_name }}">Đã có bài</button></div>
             {% endif %}
             
             {% if el.count_lesson != 0 or can_del == False %}

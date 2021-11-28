@@ -69,7 +69,7 @@
         {% for el in course_list %}
         <div class="row d-md-flex">
             <div class="col-md-8 d-flex d-md-flex justify-content-start align-items-center">
-                <a href="{{ el.course_id }}" style="margin-bottom: 0px;">{{el.course_name}}</a>
+                <a href="/course_creation/{{el.course_id}}" style="margin-bottom: 0px;">{{el.course_name}}</a>
             </div>
             {% if el.status == 'active' %}
             <div class="col"><a class="inactive btn btn-primary" value="{{ el.course_id }}">Inactive</a></div>

@@ -2148,6 +2148,41 @@ def teacher_lesson(request,course_id,part_name):
                 """.format(course_id,part_name,del_lesson_name,prev_lesson_name,next_lesson_name)
                 myconnect.query(query)
 
+        # Sau khi delete thì check lại các part đã có lesson hết chưa nếu chưa thì update lại trạng thái waiting
+        query = """
+            match (c:Course{{  id: {} }} )
+            with (c)
+            match (c)
+            optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+            with p,c
+            match (p)
+            optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+            with p.name as part_name, count(l) as count_lesson
+            order by count_lesson asc
+            return *
+        """.format(course_id)
+        rs = myconnect.query(query)
+        rs = list(rs)
+        is_course_finish = True
+        for rc in rs:
+            count = rc['count_lesson']
+            if count == 0:
+                is_course_finish = False
+                break
+        if is_course_finish == False:
+            query = """
+                match (ws:Status),(at:Status)
+                where ws.value = 'waiting' and at.value = 'active'
+                with ws,at
+                match (c:Course{{ id: {} }})
+                with c,ws,at
+                match (c)-[st:in_status]-(at)
+                delete st
+                with c,ws
+                create (c)-[:in_status]->(ws)
+            """.format(course_id)
+            myconnect.query(query)
+
     can_del = True
     query = """
         match (c:Course{{ id: {} }})
@@ -2185,6 +2220,209 @@ def teacher_lesson(request,course_id,part_name):
     template = loader.get_template('home/teacher_lesson.html')
     return HttpResponse(template.render(context,request))
 
+def teacher_exercise(request,course_id,part_name,lesson_name):
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+
+    if request.method == 'POST':
+        # lesson đầu và cuối là 1 ( chỉ có 1 lesson)
+        del_exercise_question = request.POST.get('delete','')
+        count_exercise = 0
+        query = """
+            match (c:Course{{ id: {} }} )
+            with (c)
+            match (c)
+            optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+            with p,c
+            where p.name = '{}'
+            match (p)
+            optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+            return count(l) as count_exercise
+        """.format(course_id,part_name)
+        rs = myconnect.query(query)
+        rs = list(rs)
+        if len(rs) != 0:
+            count_exercise = rs[0]['count_exercise']
+        if count_exercise == 1:
+            # Xóa Lesson đó + head tail
+            query = """
+                match (c:Course{{ id: {} }} )
+                with (c)
+                match (c)
+                optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                with p,c
+                where p.name = '{}'
+                match (p)
+                optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                with p,l,c
+                where l.name = '{}'
+                match (l)-[h:head]-(e:Exercise),(l)-[t:tail]-(e)
+                delete h,t,e
+            """.format(course_id,part_name,lesson_name)
+            rs = myconnect.query(query)
+        else:
+            # Get all ds part_name + dùng tên part chỉ định đã xóa (px)
+            query = """
+                match (c:Course{{  id: {} }} )
+                with (c)
+                match (c)
+                optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                with p,c
+                where p.name = '{}'
+                match (p)
+                optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                with p,l,c
+                where l.name = '{}'
+                match (l)
+                optional match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
+                return e.question as question
+            """.format(course_id,part_name,lesson_name)
+            rs = myconnect.query(query)
+            rs = list(rs)
+            exercise_list = []
+            for el in rs:
+                exercise_list.append(el['question'])            
+            del_index = exercise_list.index(del_exercise_question)
+
+            if del_index == 0:
+                # Nếu là part đầu
+                # Xóa head , xóa next , xóa del_part -> tạo head cho thằng kế 
+                # Tạo head cho thằng kế, xóa head thằng đầu, xóa next thằng đầu , xóa thằng đầu
+                next_index = del_index + 1
+                next_exercise_question = exercise_list[next_index]
+                query = """                                                        
+                    match (c:Course{{  id: {} }} )
+                    with (c)
+                    match (c)
+                    optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    with p,c
+                    where p.name = '{}'
+                    match (p)
+                    optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                    with p,l,c
+                    where l.name = '{}'
+                    match (l)
+                    optional match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
+                    where e.question = '{}'
+                    with l,e as del_e
+                    match (l)
+                    optional match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
+                    where e.question = '{}'
+                    with l,del_e, e as next_e
+                    create (l)-[:head]->(next_e)
+                    with l,del_e,next_e
+                    match (l)-[h:head]-(del_e),(del_e)-[n:next]-(next_e)
+                    delete h,n,del_e
+                """.format(course_id,part_name,lesson_name,del_exercise_question ,next_exercise_question)
+                rs = myconnect.query(query)
+            elif del_index == len(exercise_list)-1:     
+                # Nếu là part cuối
+                # Xóa cuối, xóa next của prev, xóa tail -> chuyển tail
+                prev_index = del_index - 1
+                prev_exercise_question = exercise_list[prev_index]
+                del_exercise_question = exercise_list[del_index]
+                query = """                                                        
+                    match (c:Course{{  id: {} }} )
+                    with (c)
+                    match (c)
+                    optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    with p,c
+                    where p.name = '{}'
+                    match (p)
+                    optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                    with p,l,c
+                    where l.name = '{}'
+                    match (l)
+                    optional match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
+                    where e.question = '{}'
+                    with l,e as del_e
+                    match (l)
+                    optional match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
+                    where e.question = '{}'
+                    with l,del_e, e as prev_e
+                    match (prev_e)-[n:next]-(del_e),(l)-[t:tail]-(del_e)
+                    delete n,t, del_e
+                    with l, prev_e
+                    create (l)-[:tail]->(prev_e)
+                """.format(course_id,part_name,lesson_name,del_exercise_question,prev_exercise_question)
+                rs = myconnect.query(query)
+            else:
+                # nếu là part bất kì thì lấy part trước next part sau + xóa hai cái next hai bên
+                prev_index = del_index - 1
+                next_index = del_index + 1
+                prev_exercise_question = exercise_list[prev_index]
+                next_exercise_question = exercise_list[next_index]
+                query = """                                                        
+                    match (c:Course{{  id: {} }} )
+                    with (c)
+                    match (c)
+                    optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    with p,c
+                    where p.name = '{}'
+                    match (p)
+                    optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                    with p,l,c
+                    where l.name = '{}'
+                    match (l)
+                    optional match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
+                    where e.question = '{}'
+                    with l,e as del_e
+                    match (l)
+                    optional match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
+                    where e.question = '{}'
+                    with l,del_e, e as prev_e
+                    match (l)
+                    optional match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
+                    where e.question = '{}'
+                    with l,del_e,prev_e,e as next_e
+                    match (prev_e)-[n1:next]-(del_e),(del_e)-[n2:next]-(next_e)
+                    delete n1,n2
+                    with prev_e, next_e
+                    create (prev_e)-[:next]->(next_e)
+                """.format(course_id,part_name,lesson_name,del_exercise_question,prev_exercise_question,next_exercise_question)
+                myconnect.query(query)
+
+        
+
+    can_del = True
+    query = """
+        match (c:Course{{ id: {} }})
+        optional match (c)-[:to_course]-(e:Enrollment)
+        return count(e) as count_enrollment
+    """.format(course_id)
+    rs = myconnect.query(query)
+    rs = list(rs)
+    if len(rs) != 0:
+        if rs[0]['count_enrollment'] != 0:
+            can_del = False
+
+    query = """
+        match (c:Course{{ id: {} }})
+        with (c)
+        match (c)
+        optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+        with p,c
+        where p.name = '{}'
+        match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+        with p,l,c
+        where l.name = '{}'
+        match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
+        return e.question as exercise_question, e.answer as exercise_answer 
+    """.format(course_id,part_name,lesson_name)
+    rs = myconnect.query(query)
+    exercise_list = list(rs)
+
+    context = {
+        'exercise_list': exercise_list,
+        'course_id': course_id,
+        'part_name': part_name,
+        'lesson_name':lesson_name,
+        'can_del':can_del,
+    }
+    template = loader.get_template('home/teacher_exercise.html')
+    return HttpResponse(template.render(context,request))
 
 
 
@@ -2342,43 +2580,60 @@ def part_creation(request,course_id, part_name):
             if edit_part_name == '' or edit_part_description == '' :
                 alert = "Chưa nhập đầy đủ thông tin"
             else:
+                is_unique = True
                 query = """
                     match (c:Course{{ id: {} }} )
                     with (c)
-                    match (c)
-                    optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
-                    return count(p) as count_part
-                """.format(course_id)
+                    match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    where p.name = '{}'
+                    return p
+                """.format(course_id,edit_part_name)
                 rs = myconnect.query(query)
                 rs = list(rs)
-                count_part = 0
                 if len(rs) != 0:
-                    count_part = rs[0]['count_part']
-                # Trường hợp chưa tồn tại part nào - ad head, tail
-                if count_part == 0:
-                    query = """
-                        match (c:Course{{ id:{} }})
-                        create (p:Part{{ name:'{}',description:'{}' }})
-                        create (c)-[:head]->(p)
-                        create (c)-[:tail]->(p)
-                    """.format(course_id,edit_part_name,edit_part_description)
-                    myconnect.query(query)
+                    is_unique = False
+                if is_unique == False:
+                    alert = "Tên bị trùng hãy đặt tên khác"
                 else:
-                    # trường hợp đã tồn tại part - ad next, tail xóa tail cũ
+                    # check xem tên part có trùng ko vì tên phải unique
                     query = """
-                        create (addp:Part{{name:'{}',description:'{}'}})
-                        with addp
                         match (c:Course{{ id: {} }} )
-                        with c,addp
-                        match (c)-[oldtail:tail]-(oldtailpart:Part)
-                        with c,addp,oldtail,oldtailpart
-                        create (c)-[:tail]->(addp)
-                        create (oldtailpart)-[:next]->(addp)
-                        delete oldtail
-                    """.format(edit_part_name,edit_part_description,course_id)
-                    myconnect.query(query)
-                alert = "success"
-                part_name = edit_part_name
+                        with (c)
+                        match (c)
+                        optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                        return count(p) as count_part
+                    """.format(course_id)
+                    rs = myconnect.query(query)
+                    rs = list(rs)
+                    count_part = 0
+                    if len(rs) != 0:
+                        count_part = rs[0]['count_part']
+                    # Trường hợp chưa tồn tại part nào - ad head, tail
+                    if count_part == 0:
+                        query = """
+                            match (c:Course{{ id:{} }})
+                            create (p:Part{{ name:'{}',description:'{}' }})
+                            create (c)-[:head]->(p)
+                            create (c)-[:tail]->(p)
+                        """.format(course_id,edit_part_name,edit_part_description)
+                        myconnect.query(query)
+                    else:
+                    # trường hợp đã tồn tại part - ad next, tail xóa tail cũ
+                        query = """
+                            create (addp:Part{{name:'{}',description:'{}'}})
+                            with addp
+                            match (c:Course{{ id: {} }} )
+                            with c,addp
+                            match (c)-[oldtail:tail]-(oldtailpart:Part)
+                            with c,addp,oldtail,oldtailpart
+                            create (c)-[:tail]->(addp)
+                            create (oldtailpart)-[:next]->(addp)
+                            delete oldtail
+                        """.format(edit_part_name,edit_part_description,course_id)
+                        myconnect.query(query)
+                    alert = "success"
+                    part_name = edit_part_name
+
 
         elif action == 'edit':
             if edit_part_name == '' or edit_part_description == '':
@@ -2448,44 +2703,45 @@ def lesson_creation(request,course_id, part_name, lesson_name):
             if edit_lesson_name == '' or edit_lesson_description == '' or len(request.FILES) == 0:
                 alert = "Chưa nhập đầy đủ thông tin"
             else:
-                video_bytes = request.FILES['lesson_url'].read()
-                FILE_OUTPUT = '{}.mp4'.format(str(course_id)+'_'+part_name+'_'+edit_lesson_name)
-                with open(FILE_OUTPUT, "wb") as out_file: 
-                    out_file.write(video_bytes)
-                
-                clip = VideoFileClip("{}.mp4".format(str(course_id)+'_'+part_name+'_'+edit_lesson_name))
-                duration =  round(clip.duration)
-                clip.close()
-
-                storage.child(str(str(course_id)+'_'+part_name+'_'+edit_lesson_name)).put(FILE_OUTPUT)
-                if os.path.isfile(FILE_OUTPUT):
-                    os.remove(FILE_OUTPUT)
-                url = storage.child(FILE_OUTPUT).get_url(None)
-                url = url.replace('.mp4?alt=media','')
-                response = requests.get(url)
-                data = response.json()
-                token = data['downloadTokens']
-                url += '?alt=media&token={}'.format(token)
-
-                # Get số lượng lesson để đưa ra cách add
+                is_unique = True
                 query = """
-                    match (c:Course{{ id: {} }} )
+                    match (c:Course{{  id: {} }} )
                     with (c)
                     match (c)
                     optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
-                    with p,c
                     where p.name = '{}'
+                    with p,c
                     match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
-                    return count(l) as count_lesson
-                """.format(course_id,part_name)
+                    where l.name = '{}'
+                    return l
+                """.format(course_id,part_name,edit_lesson_name)
                 rs = myconnect.query(query)
                 rs = list(rs)
-                count_lesson = 0
                 if len(rs) != 0:
-                    count_lesson = rs[0]['count_lesson']
+                    is_unique = False
+                if is_unique == False:
+                    alert = "Tên bị trùng hãy đặt tên khác"                
+                else:
+                    video_bytes = request.FILES['lesson_url'].read()
+                    FILE_OUTPUT = '{}.mp4'.format(str(course_id)+'_'+part_name+'_'+edit_lesson_name)
+                    with open(FILE_OUTPUT, "wb") as out_file: 
+                        out_file.write(video_bytes)
+                    
+                    clip = VideoFileClip("{}.mp4".format(str(course_id)+'_'+part_name+'_'+edit_lesson_name))
+                    duration =  round(clip.duration)
+                    clip.close()
 
-                # Trường hợp chưa tồn tại part nào - ad head, tail
-                if count_lesson == 0:
+                    storage.child(str(str(course_id)+'_'+part_name+'_'+edit_lesson_name)).put(FILE_OUTPUT)
+                    if os.path.isfile(FILE_OUTPUT):
+                        os.remove(FILE_OUTPUT)
+                    url = storage.child(FILE_OUTPUT).get_url(None)
+                    url = url.replace('.mp4?alt=media','')
+                    response = requests.get(url)
+                    data = response.json()
+                    token = data['downloadTokens']
+                    url += '?alt=media&token={}'.format(token)
+
+                    # Get số lượng lesson để đưa ra cách add
                     query = """
                         match (c:Course{{ id: {} }} )
                         with (c)
@@ -2493,32 +2749,86 @@ def lesson_creation(request,course_id, part_name, lesson_name):
                         optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
                         with p,c
                         where p.name = '{}'
-                        with p
-                        create (l:Lesson{{ name:'{}',description:'{}',url:'{}',duration:{} }})
-                        create (p)-[:head]->(l)
-                        create (p)-[:tail]->(l)
-                    """.format(course_id,part_name,edit_lesson_name,edit_lesson_description,url,duration)
-                    myconnect.query(query)
-                else:
-                    # trường hợp đã tồn tại part - ad next, tail xóa tail cũ
+                        match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                        return count(l) as count_lesson
+                    """.format(course_id,part_name)
+                    rs = myconnect.query(query)
+                    rs = list(rs)
+                    count_lesson = 0
+                    if len(rs) != 0:
+                        count_lesson = rs[0]['count_lesson']
+
+                    # Trường hợp chưa tồn tại part nào - ad head, tail
+                    if count_lesson == 0:
+                        query = """
+                            match (c:Course{{ id: {} }} )
+                            with (c)
+                            match (c)
+                            optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                            with p,c
+                            where p.name = '{}'
+                            with p
+                            create (l:Lesson{{ name:'{}',description:'{}',url:'{}',duration:{} }})
+                            create (p)-[:head]->(l)
+                            create (p)-[:tail]->(l)
+                        """.format(course_id,part_name,edit_lesson_name,edit_lesson_description,url,duration)
+                        myconnect.query(query)
+                    else:
+                        # trường hợp đã tồn tại part - ad next, tail xóa tail cũ
+                        query = """
+                            match (c:Course{{ id: {} }})
+                            with (c)
+                            match (c)
+                            optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                            with p,c
+                            where p.name = '{}'
+                            match (p)
+                            match (p)-[old_tail:tail]-(old_lesson:Lesson)
+                            with p,old_tail,old_lesson
+                            create (new_lesson:Lesson{{ name:'{}',description:'{}',url:'{}',duration:{} }})
+                            create (p)-[:tail]->(new_lesson)
+                            create (old_lesson)-[:next]->(new_lesson)
+                            delete old_tail
+                        """.format(course_id,part_name,edit_lesson_name,edit_lesson_description,url,duration)
+                        myconnect.query(query)
+                    alert = "success"
+                    lesson_name = edit_lesson_name
+
+                    # Sau khi add thêm lesson thì check toàn bộ part đã có lesson hết chưa nếu rồi -> course đã ổn
                     query = """
-                        match (c:Course{{ id: {} }})
+                        match (c:Course{{  id: {} }} )
                         with (c)
                         match (c)
                         optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
                         with p,c
-                        where p.name = '{}'
                         match (p)
-                        match (p)-[old_tail:tail]-(old_lesson:Lesson)
-                        with p,old_tail,old_lesson
-                        create (new_lesson:Lesson{{ name:'{}',description:'{}',url:'{}',duration:{} }})
-                        create (p)-[:tail]->(new_lesson)
-                        create (old_lesson)-[:next]->(new_lesson)
-                        delete old_tail
-                    """.format(course_id,part_name,edit_lesson_name,edit_lesson_description,url,duration)
-                    myconnect.query(query)
-                alert = "success"
-                lesson_name = edit_lesson_name
+                        optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                        with p.name as part_name, count(l) as count_lesson
+                        order by count_lesson asc
+                        return *
+                    """.format(course_id)
+                    rs = myconnect.query(query)
+                    rs = list(rs)
+                    is_course_finish = True
+                    for rc in rs:
+                        count = rc['count_lesson']
+                        if count == 0:
+                            is_course_finish = False
+                            break
+                    if is_course_finish:
+                        # Nếu tất cả các part đã có lesson thì updatae status cho course lại thành active
+                        query = """
+                            match (ws:Status),(at:Status)
+                            where ws.value = 'waiting' and at.value = 'active'
+                            with ws,at
+                            match (c:Course{{ id: {} }})
+                            with c,ws,at
+                            match (c)-[st:in_status]-(ws)
+                            delete st
+                            with c,at
+                            create (c)-[:in_status]->(at)
+                        """.format(course_id)
+                        myconnect.query(query)
 
         elif action == 'edit':
             if edit_lesson_name == '' or edit_lesson_description == '':
@@ -2609,6 +2919,180 @@ def lesson_creation(request,course_id, part_name, lesson_name):
     template = loader.get_template('home/lesson_creation.html')
     return HttpResponse(template.render(context,request))
 
+def exercise_creation(request,course_id, part_name, lesson_name, exercise_question):
+    alert = ""
+    if 'username' not in request.session:
+            return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+
+    if request.method == 'POST':
+        action = request.POST.get('action','')
+        edit_exercise_question = request.POST.get('exercise_question','')
+        edit_exercise_answer = request.POST.get('exercise_answer','')
+        if action == 'create':
+            if edit_exercise_question == '' or edit_exercise_answer == '':
+                alert = "Chưa nhập đầy đủ thông tin"
+            else:
+                is_unique = True
+                query = """
+                    match (c:Course{{  id: {} }} )
+                    with (c)
+                    match (c)
+                    optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                    where p.name = '{}'
+                    with p,c
+                    match (p)
+                    optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                    where l.name = '{}'
+                    with p,l,c
+                    match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
+                    where e.question = '{}'
+                    return e
+                """.format(course_id,part_name,lesson_name,edit_exercise_question)
+                rs = myconnect.query(query)
+                rs = list(rs)
+                if len(rs) != 0:
+                    is_unique = False
+                if is_unique == False:
+                    alert = "Câu hỏi bị trùng"
+                else:
+                # Get số lượng exercise để đưa ra cách add
+                    query = """
+                        match (c:Course{{  id: {} }} )
+                        with (c)
+                        match (c)
+                        optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                        with p,c
+                        where p.name = '{}'
+                        match (p)
+                        optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                        with p,l,c
+                        where l.name = '{}'
+                        match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
+                        return count(e) as count_exercise
+                    """.format(course_id,part_name,lesson_name)
+                    rs = myconnect.query(query)
+                    rs = list(rs)
+                    count_exercise = 0
+                    if len(rs) != 0:
+                        count_exercise = rs[0]['count_exercise']
+
+                    # Trường hợp chưa tồn tại part nào - ad head, tail
+                    if count_exercise == 0:
+                        query = """
+                            match (c:Course{{  id: {} }} )
+                            with (c)
+                            match (c)
+                            optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                            with p,c
+                            where p.name = '{}'
+                            match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                            with p,l
+                            where l.name = '{}'
+                            match (l)
+                            create (e:Exercise{{ question:'{}',answer:'{}' }})
+                            create (l)-[:head]->(e)
+                            create (l)-[:tail]->(e)
+                        """.format(course_id, part_name, lesson_name,edit_exercise_question, edit_exercise_answer )
+                        myconnect.query(query)
+                    else:
+                        # trường hợp đã tồn tại exercise - ad next, tail xóa tail cũ
+                        query = """
+                            match (c:Course{{  id: {} }} )
+                            with (c)
+                            match (c)
+                            optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                            with p,c
+                            where p.name = '{}'
+                            match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                            with p,l
+                            where l.name = '{}'
+                            match (l)
+                            match (l)-[old_tail:tail]-(old_exercise:Exercise)
+                            with l,old_tail,old_exercise
+                            create (new_exercise:Exercise{{ question:'{}',answer:'{}' }})
+                            create (l)-[:tail]->(new_exercise)
+                            create (old_exercise)-[:next]->(new_exercise)
+                            delete old_tail
+                        """.format(course_id,part_name,lesson_name,edit_exercise_question,edit_exercise_answer)
+                        myconnect.query(query)
+                    alert = "success"
+                    exercise_question = edit_exercise_question
+
+        elif action == 'edit':
+            if edit_exercise_question == '' or edit_exercise_answer == '':
+                alert = "Chưa nhập đầy đủ thông tin"
+            
+            # Bắt đầu edit
+            query = """
+                match (c:Course{{  id: {} }} )
+                with (c)
+                match (c)
+                optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                with p,c
+                where p.name = '{}'
+                match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                with p,l
+                where l.name = '{}'
+                match (l)
+                optional match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
+                with e
+                where e.question = '{}'
+                set e.question = '{}', e.answer = '{}'
+            """.format(course_id, part_name, lesson_name, exercise_question, edit_exercise_question, edit_exercise_answer)
+            myconnect.query(query)
+            alert = "Chỉnh sửa thành công"
+            exercise_question = edit_exercise_question
+       
+    if request.method == 'GET':
+        # return create view
+        if exercise_question == 'new':
+            context = {
+                'exercise_question': exercise_question,
+                'lesson_name': lesson_name,
+                'part_name': part_name,
+                'course_id': course_id,
+                'alert':alert,
+            }
+            template = loader.get_template('home/exercise_creation.html')
+            return HttpResponse(template.render(context,request))
+        # return edit view
+        else:
+            pass
+
+    query = """
+        match (c:Course{{  id: {} }} )
+        with (c)
+        match (c)
+        optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+        with p,c
+        where p.name = '{}'
+        match (p)
+        optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+        with p,l,c
+        where l.name = '{}'
+        match (l)
+        optional match (l)-[:head]-(:Exercise)-[:next*0..]->(e:Exercise)
+        where e.question = '{}'
+        return e.question as exercise_question, e.answer as exercise_answer
+    """.format(course_id,part_name,lesson_name,exercise_question)
+    rs = myconnect.query(query)
+    exercise_info = list(rs)
+    if len(exercise_info) != 0:
+        exercise_info = exercise_info[0]
+    else: exercise_info = None
+
+    context = {
+        'lesson_name':lesson_name,
+        'exercise_info': exercise_info,
+        'exercise_question': exercise_question,
+        'part_name': part_name,
+        'course_id': course_id,
+        'alert':alert,
+    }
+    template = loader.get_template('home/exercise_creation.html')
+    return HttpResponse(template.render(context,request))
 
 
 
