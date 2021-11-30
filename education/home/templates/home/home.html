@@ -47,7 +47,10 @@
     <link rel="stylesheet" href="{% static 'home/assets/css/Ultimate-Testimonial-Slider-BS5.css' %}">
 </head>
 
-<body>
+<body style="position: relative;">
+    <div class="chat" style="width: 60px; height: 60px; background-color: hotpink; position: fixed; z-index: 10; border-radius: 50%; bottom: 50px; right: 50px; border: 4px dashed black;">
+        <a href="chat" style="display: flex;justify-content: center; align-items: center; height: 100%; width: 100%; color: white;">Chat</a>
+    </div>
     <nav class="navbar navbar-light navbar-expand-md navigation-clean-button" style="/*position: sticky;*/background-color: hotpink;">
         <div class="container"><a class="navbar-brand" data-bss-hover-animate="jello" href="/" style="transition: all ease 0.3s;/*height: auto;*/">&nbsp;<img src="{% static 'home/assets/img/newava.png' %}" style="width: 60px;height: 60px;">Simple Code</a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
             <div class="collapse navbar-collapse d-lg-flex" id="navcol-1" style="height: 70px;">

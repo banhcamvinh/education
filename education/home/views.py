@@ -96,7 +96,6 @@ def login(request):
                 alert = "Sai tên tài khoản hoặc mật khẩu"
             # Check password
             else:
-                print("Dô else")
                 query = """
                 MATCH (a:Account {{username:'{}',password:'{}'}}),
                 (a)-[:in_role]->(r:Role),
@@ -144,8 +143,12 @@ def register(request):
                     ,(c:Cart),(a)-[:has_cart]->(c)
                     create (u:User{{name:"",dob:"",phone:"",email:""}})
                     create (u)-[:has_account]->(a)
-                    create (a)-[:in_role]->(:Role{{value:'user'}})
-                    create (a)-[:in_status]->(:Status{{value:'active'}})
+                    with a
+                    match (r:Role),(s:Status)
+                    where r.value = 'user' and s.value = 'active'
+                    with a,r,s
+                    create (a)-[:in_role]->(r)
+                    create (a)-[:in_status]->(s)
                     """.format(username,password)
                     rs = myconnect.query(query)
                     alert="success"
@@ -1558,6 +1561,8 @@ def admin_teacher(request):
                 where r.value = 'user'
                 with a, r
                 create (a)-[:in_role]->(r)
+                with a
+                create (a)-[:has_teacher_register]->(:Teacher_Register)
             """.format(remove_username)
             myconnect.query(query)
             

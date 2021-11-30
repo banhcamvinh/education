@@ -80,11 +80,12 @@
             <div class="col-md-8 d-flex d-md-flex justify-content-start align-items-center">
                 <p style="margin-bottom: 0px;">{{el.username}}</p>
             </div>
-            {% if el.course == 0 %}
+            <div class="col"><a class="remove btn btn-primary" value="{{ el.username }}">Xóa quyền Teacher</a></div>
+            <!-- {% if el.course == 0 %}
             <div class="col"><a class="remove btn btn-primary" value="{{ el.username }}">Xóa quyền Teacher</a></div>
             {% else %}
             <div class="col"><button disabled class="remove btn btn-primary" value="{{ el.username }}">Xóa quyền Teacher</button></div>
-            {% endif %}
+            {% endif %} -->
         </div>
         {% endfor %}
     </div>
