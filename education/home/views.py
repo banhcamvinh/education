@@ -188,6 +188,9 @@ def subscribe(request):
     return redirect('/')
 
 def course(request):
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
     if request.method == 'GET':
         if request.GET.get("searchbtn"):
             searchbar = request.GET.get("searchbar","")
@@ -212,8 +215,12 @@ def course(request):
 
             # Get course_lst buy most
             query = """
+                match (ec:Course)<-[:to_course]-(:Enrollment)<-[:pay]-(:Account{{username:'{}'}})
+                with collect(ec.id) as ecid
                 match (c:Course)
                 optional match (c:Course)-[tc:to_course]-(e:Enrollment)
+                with c,ecid,e
+                where not c.id in ecid
                 with c, count(e) as num_of_enrollment
                 order by num_of_enrollment desc
                 limit 12
@@ -230,7 +237,7 @@ def course(request):
                 with course.id as id,course.name as name, apoc.agg.first(price)as price,num_of_enrollment,num_of_view, star
                 order by num_of_enrollment desc
                 return  id, name, price,num_of_enrollment,num_of_view, star
-            """
+            """.format(username)
             rs = myconnect.query(query)
             most_buy_course_lst = list(rs)
             most_buy_course_range = (len(most_buy_course_lst)-1) // 4 + 1
@@ -239,8 +246,12 @@ def course(request):
 
             # Get course_lst view most
             query = """
+                match (ec:Course)<-[:to_course]-(:Enrollment)<-[:pay]-(:Account{{username:'{}'}})
+                with collect(ec.id) as ecid
                 match (c:Course)
                 optional match (c:Course)<-[wc:watching_course]-(:Account)
+                with ecid, c,wc
+                where not c.id in ecid
                 with c,count(wc)as num_of_view
                 match (c)
                 optional match (c)-[:to_course]-(rc:Rating_Course)
@@ -251,7 +262,7 @@ def course(request):
                 order by year desc,month desc,day desc
                 return course.id as id,course.name as name, apoc.agg.first(price)as price,num_of_view, star
                 order by num_of_view desc
-            """
+            """.format(username)
             rs = myconnect.query(query)
             most_view_course_lst = list(rs)
             most_view_course_range = (len(most_view_course_lst)-1) // 4 + 1
@@ -305,6 +316,9 @@ def course(request):
             return HttpResponse(template.render(context,request))
 
 def coursesearch(request):
+    if 'username' not in request.session:
+        return redirect('/login')
+    username = request.session['username']
     if request.method == "GET":  
         searchkey = request.GET.get('searchkey',"")
         filter = request.GET.get('filter',"")
@@ -375,7 +389,7 @@ def coursesearch(request):
             condition += temp
 
 
-
+        # đoạn query này có xử lí loại bỏ course của tài khoản hiện tại nếu sai có thể bỏ phần đoạn cách
         query_for_count = """
             match (c:Course)
             optional match (c:Course)-[tc:to_course]-(:Enrollment)
@@ -404,8 +418,13 @@ def coursesearch(request):
             order by pyear desc,pmonth desc,pday desc
             {}
             with course.id as id,course.name as name, apoc.agg.first(price)as price,num_of_enrollment,num_of_view, star,day,month,year,category,level
+            
+            match (ec:Course)<-[:to_course]-(:Enrollment)<-[:pay]-(:Account{{username:'{}'}})
+            with id, name, price,num_of_enrollment,num_of_view, star,day,month,year,category,level, collect(ec.id) as ecid
+            where not id in ecid
+            
             return count(name) as count
-        """.format(condition)
+        """.format(condition,username)
         rs = myconnect.query(query_for_count)
         count = list(rs)
         count = count[0]['count']
@@ -452,18 +471,18 @@ def coursesearch(request):
             with  c as course, coalesce(cp.value,0) as price,pd.value as pday,pm.value as pmonth,py.value as pyear,num_of_enrollment,num_of_view,star,day, month, year,category,level
             order by pyear desc,pmonth desc,pday desc
             {}
-            return course.id as id,course.name as name,course.content as content, apoc.agg.first(price)as price,num_of_enrollment,num_of_view, star,day,month,year,category,level
+            with course.id as id,course.name as name,course.content as content, apoc.agg.first(price)as price,num_of_enrollment,num_of_view, star,day,month,year,category,level
+            match (ec:Course)<-[:to_course]-(:Enrollment)<-[:pay]-(:Account{{username:'{}'}})
+            with id, name,content, price,num_of_enrollment,num_of_view, star,day,month,year,category,level, collect(ec.id) as ecid
+            where not id in ecid
+            return id, name,content, price,num_of_enrollment,num_of_view, star,day,month,year,category,level
             {}
             {}
-        """.format(condition,orderby,pagination)
+        """.format(condition,username,orderby,pagination)
         rs = myconnect.query(query)
         course_list = list(rs)
         # for el in course_list:
         #     print(el)
-    
-
-
-
 
     context = {
         'searchkey':searchkey,
@@ -498,7 +517,13 @@ def courseoverview(request,id):
 
             username = request.session['username']
             if action == 'buy':
-                print('buy')
+                # add sản phẩm vào giỏ hàng trước và redirect
+                query ="""
+                    match (:Account{{username:'{}'}})-[:has_cart]-(ca:Cart),(co:Course{{id:{} }})
+                    merge (ca)-[:has_course]-(co)
+                """.format(username,id)
+                myconnect.query(query)
+                return redirect('/cart')
             elif action == 'add_cart':
                 query ="""
                     match (:Account{{username:'{}'}})-[:has_cart]-(ca:Cart),(co:Course{{id:{} }})
@@ -738,19 +763,18 @@ def pay(request,code):
     if code == 'nonecode':
         code = None
 
-    print(year,month,day,current_time,code,username)
+    # print(year,month,day,current_time,code,username)
     query = """
         // Create payment
-        merge (d:Day{{value:{} }})
-        merge (m:Month{{ value:{} }})
-        merge (d)<-[:in_day]-(m)
         merge (y:Year{{ value:{} }})
-        merge (m)<-[:in_month]-(y)
         merge (y)<-[:in_year]-(:Time)
+        merge (m:Month{{value:{} }})<-[:in_month]-(y)
+        merge (d:Day{{value:{} }})<-[:in_day]-(m)
         with d,m,y
         match (a:Account{{ username:'{}' }})
         with d,m,y,a
-        create (a)-[:pay]->(e:Enrollment{{ time:'{}' }})-[:at]->(d)
+        create (e:Enrollment{{ time:'{}' }})
+        create (a)-[:pay]->(e)-[:at]->(d)
         with a,e
         match (a)-[:has_cart]-(:Cart)-[hc:has_course]-(c:Course)
         create (e)-[:to_course]->(c)
@@ -758,9 +782,13 @@ def pay(request,code):
         with e
         match (dc:Discount_Code{{ value:'{}' }})
         create (e)-[:with_discount_code]->(dc)
-    """.format(day,month,year,username,current_time,code)
+    """.format(year,month,day,username,current_time,code)
     myconnect.query(query)
     print("Thanh toán thành công")
+
+
+    # Query thêm để lấy giá tiền và giá km -> tính ra thành tiền
+    # Kết hợp với chức năng thanh toán thật
 
     return redirect('/')
 
