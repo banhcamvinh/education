@@ -1,20 +1,17 @@
 from logging import currentframe
 from django import template
-from django.http import response
+from django.http import response,HttpResponseBadRequest, JsonResponse
 from django.http.response import HttpResponse
 from django.shortcuts import redirect, render
 from django.http import HttpResponse
 from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponseBadRequest, JsonResponse
 import json
 import db
 import mymail
 import mywit
 import time as t
-from datetime import timedelta
-from datetime import datetime
-from datetime import date
+from datetime import timedelta,datetime,date
 import math
 import numpy as np
 import pandas as pd
@@ -139,16 +136,16 @@ def register(request):
                 else:
                     myconnect = db.neo4j("bolt://localhost","neo4j","123")
                     query = """
-                    create (a:Account{{username:'{}',password:'{}' }})
-                    ,(c:Cart),(a)-[:has_cart]->(c)
-                    create (u:User{{name:"",dob:"",phone:"",email:""}})
-                    create (u)-[:has_account]->(a)
-                    with a
-                    match (r:Role),(s:Status)
-                    where r.value = 'user' and s.value = 'active'
-                    with a,r,s
-                    create (a)-[:in_role]->(r)
-                    create (a)-[:in_status]->(s)
+                        create (a:Account{{username:'{}',password:'{}' }})
+                        ,(c:Cart),(a)-[:has_cart]->(c)
+                        create (u:User{{name:"",dob:"",phone:"",email:""}})
+                        create (u)-[:has_account]->(a)
+                        with a
+                        match (r:Role),(s:Status)
+                        where r.value = 'user' and s.value = 'active'
+                        with a,r,s
+                        create (a)-[:in_role]->(r)
+                        create (a)-[:in_status]->(s)
                     """.format(username,password)
                     rs = myconnect.query(query)
                     alert="success"
@@ -188,9 +185,12 @@ def subscribe(request):
     return redirect('/')
 
 def course(request):
-    if 'username' not in request.session:
-        return redirect('/login')
-    username = request.session['username']
+    # if 'username' not in request.session:
+    #     return redirect('/login')
+    username = ""
+    if 'username' in request.session :
+        username = request.session['username']
+
     if request.method == 'GET':
         if request.GET.get("searchbtn"):
             searchbar = request.GET.get("searchbar","")
@@ -221,6 +221,9 @@ def course(request):
                 optional match (c:Course)-[tc:to_course]-(e:Enrollment)
                 with c,ecid,e
                 where not c.id in ecid
+                with c,e
+                match (c)-[:in_status]-(s:Status)
+                where s.value = 'active'
                 with c, count(e) as num_of_enrollment
                 order by num_of_enrollment desc
                 limit 12
@@ -252,6 +255,9 @@ def course(request):
                 optional match (c:Course)<-[wc:watching_course]-(:Account)
                 with ecid, c,wc
                 where not c.id in ecid
+                with c, wc
+                match (c)-[:in_status]-(s:Status)
+                where s.value = 'active'
                 with c,count(wc)as num_of_view
                 match (c)
                 optional match (c)-[:to_course]-(rc:Rating_Course)
@@ -275,7 +281,6 @@ def course(request):
             # check if logged in -> return continue list and recommend list
             if 'username' in request.session :
                 query = """
-                //Course watching
                     match (c:Course)<-[:watching_course]-(:Account{{username:"{}"}})
                     with c
                     limit 12
@@ -294,8 +299,6 @@ def course(request):
                 continue_course_range = (len(continue_course_lst)-1) // 4 + 1
                 continue_course_range = [*range(0,continue_course_range)]
                 continue_course_render_lst = list(chunks(continue_course_lst,4))
-
-
 
             context = {
                 'category_lst':category_lst,
@@ -316,9 +319,12 @@ def course(request):
             return HttpResponse(template.render(context,request))
 
 def coursesearch(request):
-    if 'username' not in request.session:
-        return redirect('/login')
-    username = request.session['username']
+    # if 'username' not in request.session:
+    #     return redirect('/login')
+    username = ""
+    if 'username' in request.session :
+        username = request.session['username']
+        
     if request.method == "GET":  
         searchkey = request.GET.get('searchkey',"")
         filter = request.GET.get('filter',"")
@@ -389,9 +395,16 @@ def coursesearch(request):
             condition += temp
 
 
-        # đoạn query này có xử lí loại bỏ course của tài khoản hiện tại nếu sai có thể bỏ phần đoạn cách
         query_for_count = """
+            match (ec:Course)<-[:to_course]-(:Enrollment)<-[:pay]-(:Account{{username:'{}'}})
+            with collect(ec) as ecid
             match (c:Course)
+            where not c.id in ecid
+            with c
+            match (c)-[in_status]-(s:Status)
+            where s.value = 'active'
+            with c
+            match (c)
             optional match (c:Course)-[tc:to_course]-(:Enrollment)
             with c, count(tc) as num_of_enrollment
             match (c)
@@ -418,13 +431,8 @@ def coursesearch(request):
             order by pyear desc,pmonth desc,pday desc
             {}
             with course.id as id,course.name as name, apoc.agg.first(price)as price,num_of_enrollment,num_of_view, star,day,month,year,category,level
-            
-            match (ec:Course)<-[:to_course]-(:Enrollment)<-[:pay]-(:Account{{username:'{}'}})
-            with id, name, price,num_of_enrollment,num_of_view, star,day,month,year,category,level, collect(ec.id) as ecid
-            where not id in ecid
-            
             return count(name) as count
-        """.format(condition,username)
+        """.format(username,condition)
         rs = myconnect.query(query_for_count)
         count = list(rs)
         count = count[0]['count']
@@ -445,7 +453,15 @@ def coursesearch(request):
 
         query = """
             // filter course
+            match (ec:Course)<-[:to_course]-(:Enrollment)<-[:pay]-(:Account{{username:'{}'}})
+            with collect(ec) as ecid
             match (c:Course)
+            where not c.id in ecid
+            with c
+            match (c)-[in_status]-(s:Status)
+            where s.value = 'active'
+            with c
+            match (c)
             optional match (c:Course)-[tc:to_course]-(:Enrollment)
             with c, count(tc) as num_of_enrollment
             match (c)
@@ -472,13 +488,10 @@ def coursesearch(request):
             order by pyear desc,pmonth desc,pday desc
             {}
             with course.id as id,course.name as name,course.content as content, apoc.agg.first(price)as price,num_of_enrollment,num_of_view, star,day,month,year,category,level
-            match (ec:Course)<-[:to_course]-(:Enrollment)<-[:pay]-(:Account{{username:'{}'}})
-            with id, name,content, price,num_of_enrollment,num_of_view, star,day,month,year,category,level, collect(ec.id) as ecid
-            where not id in ecid
             return id, name,content, price,num_of_enrollment,num_of_view, star,day,month,year,category,level
             {}
             {}
-        """.format(condition,username,orderby,pagination)
+        """.format(username,condition,orderby,pagination)
         rs = myconnect.query(query)
         course_list = list(rs)
         # for el in course_list:
@@ -549,7 +562,6 @@ def courseoverview(request,id):
                 """.format(username,id)
                 myconnect.query(query)
             
-
         isbought = False
         isadded = False
         ismarked =  False
@@ -558,16 +570,14 @@ def courseoverview(request,id):
             username = request.session['username']
             # check đã mua khóa học này chưa
             # mua rồi thì hiện nút vào học
-            # mua rồi thì cho phép đánh giá
 
             query = """
-            match (c:Course{{id:{}}})-[:to_course]-(:Enrollment)-[p:pay]-(:Account{{username:"{}"}})
-            return c
+                match (c:Course{{id:{}}})-[:to_course]-(:Enrollment)-[p:pay]-(:Account{{username:"{}"}})
+                return c
             """.format(id,username)
             rs = myconnect.query(query)
             if len(list(rs)) != 0:
                 isbought = True
-
 
             query = """
                 match (a:Account{{username:'{}'}})-[:has_cart]-(:Cart)-[:has_course]-(:Course{{ id:{} }})
@@ -605,7 +615,7 @@ def courseoverview(request,id):
             optional match (c)-[:has_price]->(cp:Course_Price)-[:at]-(pd:Day)<-[:in_day]-(pm:Month)-[:in_month]-(py:Year)
             with  c as course, coalesce(cp.value,0) as price,pd.value as pday,pm.value as pmonth,py.value as pyear,(c),(iv)as video ,views,star,part,lesson,duration/60 as duration
             order by pyear desc,pmonth desc,pday desc
-            return course.id as id,course.name as name,course.content as content,course.course_goal as goal,course.requirements as requirements,
+            return course.id as id,course.name as name,course.content as content,course.course_goal as goal,course.requirement as requirement,
             apoc.agg.first(price)as price,video as url ,views,star,part,lesson,duration
         """.format(id)
         rs = myconnect.query(query)
@@ -714,6 +724,9 @@ def cart(request):
             query = """
                 match (a:Account{{username:'{}'}})-[:has_cart]-(:Cart)-[:has_course]-(c:Course)
                 with c,a
+                match (c)-[:in_status]-(s:Status)
+                where s.value = 'active'
+                with c,a
                 match (c)
                 optional match (c)-[:with_course]-(:Course_Mark)-[hcm:has_course_mark]-(a)
                 with c,count(hcm) as ismark
@@ -776,8 +789,10 @@ def pay(request,code):
         create (e:Enrollment{{ time:'{}' }})
         create (a)-[:pay]->(e)-[:at]->(d)
         with a,e
-        match (a)-[:has_cart]-(:Cart)-[hc:has_course]-(c:Course)
+        match (a)-[:has_cart]-(:Cart)-[hc:has_course]-(c:Course)-[:in_status]-(s:Status)
+        where s.value = 'active'
         create (e)-[:to_course]->(c)
+        create (a)-[:watching_course]->(c)
         delete hc
         with e
         match (dc:Discount_Code{{ value:'{}' }})
@@ -800,6 +815,28 @@ def course_learn(request,id):
         data = json.load(request)
         finish_lesson_video = data.get('finish_lesson_video')
         is_final_lesson = data.get('is_final_lesson')
+        watching_lesson_video_time = data.get('watching_lesson_video_time')
+
+        if watching_lesson_video_time != None:
+            watching_lesson_video_time = round(watching_lesson_video_time)
+            cur_lesson = data.get('cur_lesson')
+            query = """
+                match (c:Course{{ id:{} }} )
+                with (c)
+                match (c)
+                optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+                with p,c
+                match (p)
+                optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+                with l
+                where l.name = '{}'
+                match (a:Account{{ username: '{}' }})-[:pay]-(e:Enrollment)
+                with e,l
+                merge (e)-[wl:watching_lesson]-(l)
+                set wl.time = {}
+            """.format(id,cur_lesson,username,watching_lesson_video_time)
+            myconnect.query(query)
+
         if finish_lesson_video != None:
             # delete finish cũ
             query = """
@@ -841,8 +878,7 @@ def course_learn(request,id):
                 """.format(username,id)
                 myconnect.query(query)
 
-
-        if finish_lesson_video == None:
+        if data.get('time') != None:
             time = data.get('time')
             if time != None:
                 time = math.floor(data.get('time'))
@@ -879,7 +915,8 @@ def course_learn(request,id):
                     match (cur_l{{ name:'{}'}})
                     where cur_l = l
                     with p,cur_l,c
-                    merge (a:Account{{ username:'{}' }})-[:create_notion]-(n:notion{{ time:{} }})-[:in_lesson]- (cur_l)
+                    match (a:Account{{ username:'{}' }})
+                    merge (a)-[:create_notion]-(n:notion{{ time:{} }})-[:in_lesson]-(cur_l)
                     on match
                     set n.content = '{}'
                     on create
@@ -887,7 +924,6 @@ def course_learn(request,id):
                 """.format(id,cur_lesson,username,time,note,time,note)
                 myconnect.query(query) 
                
-
     # Lesson nào xong thì tick
     if 'username' not in request.session:
         return redirect('/login')
@@ -1086,7 +1122,25 @@ def course_learn(request,id):
     is_final_lesson = 0
     if cur_lesson_index == lesson_count - 1:
         is_final_lesson = 1
-    # print(is_final_lesson)
+
+    # Get cur lesson url 
+    query = """
+        match (c:Course{{ id: {} }} )
+        with (c)
+        match (c)
+        optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+        with p,c
+        match (p)
+        optional match (p)-[:head]-(:Lesson)-[:next*0..]->(l:Lesson)
+        with l
+        where l.name = '{}'
+        return l.url as lesson_url
+    """.format(id,cur_lesson)
+    rs = myconnect.query(query)
+    rs = list(rs)
+    lesson_url = None
+    if len(rs) != 0:
+        lesson_url = rs[0]['lesson_url']
 
     context = {
         'course_id': id,
@@ -1103,6 +1157,7 @@ def course_learn(request,id):
         'check_finish_lesson': check_finish_lesson + 1,
         'cur_lesson_index':cur_lesson_index + 1,
         'is_final_lesson':is_final_lesson,
+        'lesson_url': lesson_url
     }
     template = loader.get_template('home/course_learn.html')
     return HttpResponse(template.render(context,request))
@@ -1141,11 +1196,28 @@ def course_rating(request,id):
     content = request.GET.get('content','')
     is_success = False
     if star != '':
+        dt = datetime.today()
+        year = dt.year
+        month = dt.month
+        day = dt.day
+
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+
         query = """
-            merge (a:Account{{username:'{}'}})-[:make_rating]-(rc:Rating_Course)-[:to_course]-(c:Course{{id:{} }})
+            merge (y:Year{{ value:{} }})
+            merge (y)<-[:in_year]-(:Time)
+            merge (m:Month{{value:{} }})<-[:in_month]-(y)
+            merge (d:Day{{value:{} }})<-[:in_day]-(m)
+            with d
+            match (a:Account{{username:'{}'}}),(c:Course{{id:{} }})
+            merge (a)-[:make_rating]-(rc:Rating_Course)-[:to_course]-(c)
             set rc.content = "{}"
             set rc.star = {}
-        """.format(username,id,content,star)
+            set rc.time = '{}'
+            with d,rc
+            create (rc)-[:at]->(d)
+        """.format(year,month,day,username,id,content,star,current_time)
         myconnect.query(query)
         is_success = True
     
@@ -1158,7 +1230,7 @@ def course_rating(request,id):
     """.format(username,id)
     rs = myconnect.query(query)
     rs_list = list(rs)
-    if rs_list != 0:
+    if len(rs_list) != 0:
         star = rs_list[0]['star']
         content = rs_list[0]['content']
 
@@ -1199,17 +1271,22 @@ def course_excercise(request,id,lesson_name):
     context = {
         'excercise_list': excercise_list,
         'course_id':id,
+        'lesson_name': lesson_name
     }
     template = loader.get_template('home/course_excercise.html')
     return HttpResponse(template.render(context,request))
 
 def user(request):
+    if 'username' not in request.session:
+        return redirect('/login')
     context = {
     }
     template = loader.get_template('home/user.html')
     return HttpResponse(template.render(context,request))
 
 def user_register_teacher(request):
+    if 'username' not in request.session:
+        return redirect('/login')
     alert = ""
     username = request.session['username']
     myconnect = db.neo4j("bolt://localhost","neo4j","123")
@@ -1282,6 +1359,8 @@ def user_account(request):
     return HttpResponse(template.render(context,request))
 
 def user_course(request):
+    if 'username' not in request.session:
+        return redirect('/login')
     if request.method == 'GET':
         myconnect = db.neo4j("bolt://localhost","neo4j","123")
 
@@ -1432,6 +1511,13 @@ def user_report(request):
     return HttpResponse(template.render(context,request))
 
 def admin(request):
+    if 'username' not in request.session:
+        return redirect('/login')
+    if 'role' not in request.session:
+        return redirect('/login')
+    role= request.session['role']
+    if role != "admin":
+        return redirect('/')
     context = {
     }
     template = loader.get_template('home/admin.html')
@@ -1440,6 +1526,11 @@ def admin(request):
 def admin_report(request):
     if 'username' not in request.session:
         return redirect('/login')
+    if 'role' not in request.session:
+        return redirect('/login')
+    role= request.session['role']
+    if role != "admin":
+        return redirect('/')
     username = request.session['username']
     myconnect = db.neo4j("bolt://localhost","neo4j","123")
     # Get count rating
@@ -1557,6 +1648,11 @@ def admin_report(request):
 def admin_teacher(request):
     if 'username' not in request.session:
         return redirect('/login')
+    if 'role' not in request.session:
+        return redirect('/login')
+    role= request.session['role']
+    if role != "admin":
+        return redirect('/')
     username = request.session['username']
     myconnect = db.neo4j("bolt://localhost","neo4j","123")
     register_list = list()
@@ -1625,6 +1721,11 @@ def admin_teacher(request):
 def admin_user(request):
     if 'username' not in request.session:
         return redirect('/login')
+    if 'role' not in request.session:
+        return redirect('/login')
+    role= request.session['role']
+    if role != "admin":
+        return redirect('/')
     username = request.session['username']
     myconnect = db.neo4j("bolt://localhost","neo4j","123")
     active_list = list()
@@ -1688,6 +1789,11 @@ def admin_user(request):
 def admin_course(request):
     if 'username' not in request.session:
         return redirect('/login')
+    if 'role' not in request.session:
+        return redirect('/login')
+    role= request.session['role']
+    if role != "admin":
+        return redirect('/')
     username = request.session['username']
     myconnect = db.neo4j("bolt://localhost","neo4j","123")
     active_list = list()
@@ -1745,6 +1851,13 @@ def admin_course(request):
 
 
 def teacher(request):
+    if 'username' not in request.session:
+        return redirect('/login')
+    if 'role' not in request.session:
+        return redirect('/login')
+    role= request.session['role']
+    if role != "teacher":
+        return redirect('/')
     context = {
     }
     template = loader.get_template('home/teacher.html')
@@ -1753,6 +1866,11 @@ def teacher(request):
 def teacher_report(request):
     if 'username' not in request.session:
         return redirect('/login')
+    if 'role' not in request.session:
+        return redirect('/login')
+    role= request.session['role']
+    if role != "teacher":
+        return redirect('/')
     username = request.session['username']
     myconnect = db.neo4j("bolt://localhost","neo4j","123")
     # Get count rating
@@ -1843,6 +1961,11 @@ def teacher_report(request):
 def teacher_course(request):
     if 'username' not in request.session:
         return redirect('/login')
+    if 'role' not in request.session:
+        return redirect('/login')
+    role= request.session['role']
+    if role != "teacher":
+        return redirect('/')
     username = request.session['username']
     myconnect = db.neo4j("bolt://localhost","neo4j","123")
     active_list = list()
@@ -1893,6 +2016,11 @@ def teacher_course(request):
 def teacher_part(request,course_id):
     if 'username' not in request.session:
         return redirect('/login')
+    if 'role' not in request.session:
+        return redirect('/login')
+    role= request.session['role']
+    if role != "teacher":
+        return redirect('/')
     username = request.session['username']
     myconnect = db.neo4j("bolt://localhost","neo4j","123")
 
@@ -2047,6 +2175,11 @@ def teacher_part(request,course_id):
 def teacher_lesson(request,course_id,part_name):
     if 'username' not in request.session:
         return redirect('/login')
+    if 'role' not in request.session:
+        return redirect('/login')
+    role= request.session['role']
+    if role != "teacher":
+        return redirect('/')
     username = request.session['username']
     myconnect = db.neo4j("bolt://localhost","neo4j","123")
 
@@ -2256,6 +2389,11 @@ def teacher_lesson(request,course_id,part_name):
 def teacher_exercise(request,course_id,part_name,lesson_name):
     if 'username' not in request.session:
         return redirect('/login')
+    if 'role' not in request.session:
+        return redirect('/login')
+    role= request.session['role']
+    if role != "teacher":
+        return redirect('/')
     username = request.session['username']
     myconnect = db.neo4j("bolt://localhost","neo4j","123")
 
@@ -2471,8 +2609,10 @@ def course_creation(request,id):
         course_name = request.POST.get('course_name','')
         course_content = request.POST.get('course_content','')
         course_goal = request.POST.get('course_goal','')
+        course_requirement = request.POST.get('course_requirement','')
+        course_price = request.POST.get('course_price','')
         if action == 'create':
-            if course_name == '' or course_content == '' or course_goal == '' or len(request.FILES) == 0:
+            if course_requirement == '' or course_price == '' or course_name == '' or course_content == '' or course_goal == '' or len(request.FILES) == 0:
                 alert = "Chưa nhập đầy đủ thông tin"
             else:
                 course_uuid = 0
@@ -2518,53 +2658,103 @@ def course_creation(request,id):
                     with d
                     match (a:Account{{ username:'{}' }})
                     create (a)-[:create]->(cc:Course_Creation)-[:at]->(d)
-                    with cc
+                    with cc,d
                     create (c:Course)
-                    set c.id = {},c.name = '{}', c.content = '{}', c.course_goal = '{}'
+                    set c.id = {},c.name = '{}', c.content = '{}', c.course_goal = '{}',c.requirement = '{}'
                     create (cc)-[:with_course]->(c)
                     create (iv:`Introduce Video`)
                     set iv.url = '{}'
                     create (c)-[:has_introduce_video]->(iv)
-                    with c
+                    with c,d
                     match (st:Status)
                     where st.value = 'waiting'
                     create (c)-[:in_status]->(st)
-                """.format(year,month,day,username,course_uuid,course_name,course_content,course_goal,url)
+                    with c,d
+                    create (cp:Course_Price)
+                    set cp.value = {}
+                    create (c)-[:has_price]->(cp)
+                    create (cp)-[:at]->(d)
+                """.format(year,month,day,username,course_uuid,course_name,course_content,course_goal,course_requirement,url,course_price)
                 myconnect.query(query)
                 id = course_uuid
+                alert = 'success'
         elif action == 'edit':
             course_uuid = id
-            if course_name == '' or course_content == '' or course_goal == '':
+            if course_requirement == '' or course_price == '' or course_name == '' or course_content == '' or course_goal == '':
                 alert = "Chưa nhập đầy đủ thông tin"
             # Bắt đầu edit
-            if len(request.FILES) == 0:
-                # Không cần cập nhật lại video
-                pass
-            else:
-                video_bytes = request.FILES['course_introduce_video'].read()
-                FILE_OUTPUT = '{}.mp4'.format(course_uuid)
-                with open(FILE_OUTPUT, "wb") as out_file: 
-                    out_file.write(video_bytes)
-                storage.child(str(course_uuid)).put(FILE_OUTPUT)
-                if os.path.isfile(FILE_OUTPUT):
-                    os.remove(FILE_OUTPUT)
-                url = storage.child(FILE_OUTPUT).get_url(None)
-                url = url.replace('.mp4?alt=media','')
-                response = requests.get(url)
-                data = response.json()
-                token = data['downloadTokens']
-                url += '?alt=media&token={}'.format(token)
-
+            # check xem có phải cùng một ngày không -> ko cho sửa
+            now = datetime.now()
+            year = now.year
+            month = now.month
+            day = now.day
             query = """
-                match (c:Course{{ id:{} }})-[:has_introduce_video]-(intro:`Introduce Video`)
-                set c.name = '{}', c.content = '{}', c.course_goal = '{}'
-            """.format(course_uuid,course_name,course_content,course_goal)
-            if len(request.FILES) != 0:
-                query += """
-                    , intro.url = '{}'
-                """.format(url)
-            myconnect.query(query)
-            alert = 'success'
+                match (c:Course{{ id:{} }})-[:has_price]-(:Course_Price)-[:at]-(d:Day)-[:in_day]-(m:Month)-[:in_month]-(y:Year)
+                where d.value = {} and m.value = {} and y.value = {}
+                return c
+            """.format(course_uuid,day,month,year)
+            rs = myconnect.query(query)
+            rs = list(rs)
+            is_same_day = False
+            if len(rs) != 0:
+                is_same_day = True
+            # Nếu cùng ngày mà cùng giá thì cho phép chỉnh sửa những field khác ko thi ko dc
+            if is_same_day:
+                query = """
+                    match (c:Course{{ id:{} }})-[:has_price]-(cp:Course_Price)
+                    where cp.value = {}
+                    return c
+                """.format(course_uuid,course_price)
+                is_same_price = False
+                rs = myconnect.query(query)
+                rs = list(rs)
+                if len(rs) != 0:
+                    is_same_price = True
+            if is_same_day and is_same_price == False:
+                alert = "Bạn mới vừa cập nhật giá hôm nay, vui lòng đợi đến ngày mai để cập nhật lại"
+            else:
+                if len(request.FILES) == 0:
+                    # Không cần cập nhật lại video
+                    pass
+                else:
+                    video_bytes = request.FILES['course_introduce_video'].read()
+                    FILE_OUTPUT = '{}.mp4'.format(course_uuid)
+                    with open(FILE_OUTPUT, "wb") as out_file: 
+                        out_file.write(video_bytes)
+                    storage.child(str(course_uuid)).put(FILE_OUTPUT)
+                    if os.path.isfile(FILE_OUTPUT):
+                        os.remove(FILE_OUTPUT)
+                    url = storage.child(FILE_OUTPUT).get_url(None)
+                    url = url.replace('.mp4?alt=media','')
+                    response = requests.get(url)
+                    data = response.json()
+                    token = data['downloadTokens']
+                    url += '?alt=media&token={}'.format(token)
+
+
+                now = datetime.now()
+                year = now.year
+                month = now.month
+                day = now.day
+
+                query = """
+                    match (c:Course{{ id:{} }})-[:has_introduce_video]-(intro:`Introduce Video`)
+                    set c.name = '{}', c.content = '{}', c.course_goal = '{}', c.requirement = '{}'
+                    with c
+                    merge (y:Year{{value:{} }})
+                    merge (y)-[:in_month]-(m:Month{{value:{} }})
+                    merge (m)-[:in_day]-(d:Day{{ value:{} }})
+                    create (cp:Course_Price)
+                    set cp.value = {}
+                    create (c)-[:has_price]->(cp)
+                    create (cp)-[:at]->(d)
+                """.format(course_uuid,course_name,course_content,course_goal,course_requirement,year,month,day,course_price)
+                if len(request.FILES) != 0:
+                    query += """
+                        , intro.url = '{}'
+                    """.format(url)
+                myconnect.query(query)
+                alert = 'success'
        
     if request.method == 'GET':
         # return create view
@@ -2582,7 +2772,13 @@ def course_creation(request,id):
     query = """
         match (c:Course{{ id:{} }}),
         (c)-[:has_introduce_video]->(intr:`Introduce Video`)
-        return c.name as course_name,c.content as course_content,c.course_goal as course_goal,intr.url as url
+        with c,intr
+        match (c)
+        optional match (c)-[:has_price]->(cp:Course_Price)-[:at]-(pd:Day)<-[:in_day]-(pm:Month)-[:in_month]-(py:Year)
+        with  c as course, coalesce(cp.value,0) as price,pd.value as pday,pm.value as pmonth,py.value as pyear,intr
+        order by pyear desc,pmonth desc,pday desc
+        return course.name as course_name,course.content as course_content,course.course_goal as course_goal,course.requirement as course_requirement,
+        apoc.agg.first(price)as course_price,intr.url as url
     """.format(id)
     rs = myconnect.query(query)
     course_info = list(rs)

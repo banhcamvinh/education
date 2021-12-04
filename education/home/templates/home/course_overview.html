@@ -99,7 +99,11 @@
                     <i class="fa fa-star" style="/*border-color: rgb(33,8,8);*//*color: rgb(41,40,33);*/"></i>
                 </span> -->
                 <span>&nbsp;{{course_detail.views}} views</span>
-                <p>Video giới thiệu</p><iframe allowfullscreen="" frameborder="0" src="{{course_detail.url}}" class="embed-responsive-item" width="560" height="315"></iframe>
+                <p>Video giới thiệu</p>
+                <video style="width: 560px; height: 315px;" controls>
+                    <source src="{{course_detail.url}}" type="video/mp4">
+                </video>
+                <!-- <iframe allowfullscreen="" frameborder="0" src="{{course_detail.url}}" class="embed-responsive-item" width="560" height="315"></iframe> -->
             </div>
             <div class="col-md-6">
                 <p style="font-size: 30px;color: rgb(0,0,0);">&nbsp;{{course_detail.price}} VNĐ</p>
@@ -141,7 +145,7 @@
                     {{course_detail.goal}}<br></p>
                 <p>- Description<br>{{course_detail.content}}<br></p>
                 <p style="margin-bottom: 0;">- Yêu cầu</p>
-                <p>{{course_detail.requirements}}</p>
+                <p>{{course_detail.requirement}}</p>
             </div>
         </div>
     </div>

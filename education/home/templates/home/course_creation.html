@@ -77,14 +77,17 @@
             <textarea name="course_content" style="width: 100%;height: 100px;padding-left: 20px;" placeholder="Nhập nội dung khóa học">{{course_info.course_content}}</textarea>
             <p style="margin-bottom: 0px;">Nhập nội Mục tiêu khóa học:</p>
             <textarea name="course_goal" style="width: 100%;height: 100px;padding-left: 20px;" placeholder="Nhập mục tiêu khóa học">{{course_info.course_goal}}</textarea>
-            
+            <p style="margin-bottom: 0px;">Nhập nội yêu cầu khóa học:</p>
+            <textarea name="course_requirement" style="width: 100%;height: 100px;padding-left: 20px;" placeholder="Nhập yêu cầu khóa học">{{course_info.course_requirement}}</textarea>
+            <p style="margin-bottom: 0px;">Nhập giá tiền khóa học:</p>
+            <input type="number" name="course_price" value="{{ course_info.course_price }}">
             {% if course_id == 0 %}
             <input style="display: none;" name="action" value="create">
             {% else %}
             <input style="display: none;" name="action" value="edit">
             {% endif %}
         </form>
-         
+        <br>
         {% if course_id == 0 %}
         <button onclick="submitForm()" class="btn btn-primary" type="button">Thêm khóa học</button>
         {% else %}

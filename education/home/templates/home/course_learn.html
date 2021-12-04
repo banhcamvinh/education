@@ -64,7 +64,8 @@
 <body>
     <!-- <iframe id="youtube_video" allowfullscreen="" frameborder="0" src="https://firebasestorage.googleapis.com/v0/b/education-5dcf4.appspot.com/o/test?alt=media&token=8ec574b6-6fc2-4861-89d6-a0d785db415c" height="0" style="width: 100%;height: 600px;"></iframe> -->
     <video id="myvideo" width="100%" style="height: 600px;" controls>
-        <source src="https://firebasestorage.googleapis.com/v0/b/education-5dcf4.appspot.com/o/test?alt=media&token=8ec574b6-6fc2-4861-89d6-a0d785db415c" type="video/mp4">
+        <!-- <source src="https://firebasestorage.googleapis.com/v0/b/education-5dcf4.appspot.com/o/test?alt=media&token=8ec574b6-6fc2-4861-89d6-a0d785db415c" type="video/mp4"> -->
+        <source src="{{lesson_url}}" type="video/mp4">
     </video>
     <div class="container">
         <div class="row">
@@ -262,8 +263,6 @@
     }
     {% endif %}
 
-
-
     let create_note_textarea = document.querySelector('#create_note_textarea')
     let create_note_btn = document.querySelector('#create_note_btn')
     let notion_area = document.querySelector('#notion_area')
@@ -289,6 +288,20 @@
     window.addEventListener('beforeunload', (event) => {
         event.preventDefault();
         // Bắn vào database để ghi lại event
+        $.ajax({
+            url: '/course_learn/{{course_id}}',
+            type: "POST",
+            dataType: "json",
+            data: JSON.stringify({ watching_lesson_video_time: video.currentTime,cur_lesson:cur_lesson }),
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            success: (data) => {
+            },
+            error: (error) => {
+                console.log(error);
+            }
+        });
     });
     video.onended = function(){videoended()};
     function videoended(){
