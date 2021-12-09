@@ -59,6 +59,7 @@
 
 <body>
     <div class="container">
+        <a href="/teacher" style="display: block;" class="btn btn-primary">Quay về</a>
         <form id="teacher_course_form" method="post" style="margin-top: 40px;" action="{% url 'home:teacher_course' %}">
             {% csrf_token %}
             <input style="display: none;" type="text" value="" name="active" class="active">

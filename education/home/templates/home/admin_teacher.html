@@ -59,6 +59,8 @@
 
 <body>
     <nav class="navbar navbar-light navbar-expand-md navigation-clean-button" style="/*position: sticky;*/background-color: hotpink;">
+
+        
         <div class="container"><a class="navbar-brand" data-bss-hover-animate="jello" href="/" style="transition: all ease 0.3s;/*height: auto;*/">&nbsp;<img src="{% static 'home/assets/img/newava.png' %}" style="width: 60px;height: 60px;">Simple Code</a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
             <div class="collapse navbar-collapse d-lg-flex" id="navcol-1" style="height: 70px;">
                 <ul class="navbar-nav me-auto">
@@ -81,12 +83,16 @@
         </div>
     </nav>
     <div class="container">
+        <a href="/admin" style="display: block;" class="btn btn-primary">Quay về</a>
         <form id="admin_teacher_form" method="post" style="margin-top: 40px;" action="{% url 'home:admin_teacher' %}">
             {% csrf_token %}
             <input style="display: none;" type="text" value="" name="approve" class="approve">
             <input style="display: none;" type="text" value="" name="remove" class="remove">
         </form>
         <h1>Duyệt User --&gt; Teacher</h1>
+        {% if not register_list %}
+        <p>Chưa có user nào để duyệt</p>
+        {% endif %}
         {% for el in register_list %}
         <div class="row d-md-flex">
             <div class="col-md-8 d-flex d-md-flex justify-content-start align-items-center">
@@ -97,6 +103,9 @@
         {% endfor %}
 
         <h1>Danh sách Teacher</h1>
+        {% if not teacher_list %}
+        <p>Chưa có user nào để duyệt</p>
+        {% endif %}
         {% for el in teacher_list %}
         <div class="row d-md-flex">
             <div class="col-md-8 d-flex d-md-flex justify-content-start align-items-center">

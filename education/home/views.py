@@ -1064,7 +1064,7 @@ def course_learn(request,id):
     # check xem finish course chưa -> turn on certificate button
     is_finish_course = False
     query = """
-        match (a:Account{{username:'{}'}})-[:finish_course]-(:Course{{id:{}}})
+        match (a:Account{{username:'{}'}})-[:pay]-(e:Enrollment)-[:finish_course]-(c:Course{{id:{}}})
         return a
     """.format(username,id)
     rs = myconnect.query(query)
@@ -1326,6 +1326,36 @@ def user_account(request):
         name = request.POST.get("name","")
         phone = request.POST.get("phone","")
         email = request.POST.get("email","")
+        level_list = request.POST.getlist('level',[])
+        category_list = request.POST.getlist('category',[])
+        topic_list = request.POST.getlist('topic',[])
+
+        if '' in level_list:
+            level_list.remove('')
+        if '' in category_list:
+            category_list.remove('')
+        if '' in topic_list:
+            topic_list.remove('')
+
+
+
+        if len(level_list) != 0:
+            query = """
+                match (a:Account{{username:'{}'}})
+                optional match (a:Account{{username:'{}'}})-[l:belong_level]-(:Level)
+                delete l
+            """.format(username,username)
+            index = 0
+            for el in level_list:
+                index += 1
+                query += """
+                    merge ({}:Level{{ value:'{}' }})
+                    create (a)-[:belong_level]->({})
+                """.format("l"+str(index),el,"l"+str(index))
+            myconnect.query(query)
+            
+
+
         rs_dict = dict()
         if name == "" or phone == "" or email == "":
             alert = "Bạn chưa điền đủ thông tin"
@@ -1341,19 +1371,52 @@ def user_account(request):
             rs = list(rs)
             form_rs = rs[0]
                     
-    if request.method == 'GET':
-        query = """
-            MATCH (a:Account {{username:'{}'}})<-[:has_account]-(u:User)
-            return u.name as name, u.phone as phone, u.email as email
-        """.format(username)
-        rs = myconnect.query(query)
-        rs = list(rs)
-        form_rs = rs[0]
-        print(type(form_rs))
+
+    query = """
+        MATCH (a:Account {{username:'{}'}})<-[:has_account]-(u:User)
+        return u.name as name, u.phone as phone, u.email as email
+    """.format(username)
+    rs = myconnect.query(query)
+    rs = list(rs)
+    form_rs = rs[0]
+    
+    query = """
+        match (c:Category)
+        with distinct c
+        match (c)
+        optional match (c)-[l:like_category]-(:Account{{ username:'{}' }})
+        return c.value as value, count(l) as status
+    """.format(username)
+    rs = myconnect.query(query)
+    category_list = list(rs)
+
+    query = """
+        match (t:Topic)
+        with distinct t
+        match (t)
+        optional match (t)-[l:like_topic]-(:Account{{ username:'{}' }})
+        return t.value as value, count(l) as status
+    """.format(username)
+    rs = myconnect.query(query)
+    topic_list = list(rs)
+
+    query = """
+        match (l:Level)
+        with distinct l
+        match (l)
+        optional match (l)-[li:belong_level]-(:Account{{ username:'{}' }})
+        return l.value as value, count(li) as status
+    """.format(username)
+    rs = myconnect.query(query)
+    level_list = list(rs)
+
 
     context = {
         'form_rs': form_rs,
-        'alert':alert
+        'alert':alert,
+        'category_list':category_list,
+        'topic_list':topic_list,
+        'level_list':level_list
     }
     template = loader.get_template('home/user_account.html')
     return HttpResponse(template.render(context,request))
@@ -1634,7 +1697,7 @@ def admin_report(request):
         sentiment_dict['point'] = point_list[index]
         sentiment_list.append(sentiment_dict)
 
-    print(star_dict)
+    # print(star_dict)
     context = {
         'star_dict':star_dict,
         'view_list': view_list,

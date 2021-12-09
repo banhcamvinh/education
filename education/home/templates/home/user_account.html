@@ -74,6 +74,62 @@
             <div class="form-group mb-3">
                 <p style="margin-bottom: 0px;">Email</p><input class="form-control" type="text" name="email" placeholder="Email" value="{{ form_rs.email }}">
             </div>
+
+            <div class="form-group mb-3">
+                <p style="margin-bottom: 0px;">Chọn trình độ bạn quan tâm</p>
+                <div style="width: 100%; overflow-y: scroll; height: 80px;"> 
+                    <div>
+                        {% for el in level_list %}
+                        <p style="margin: 0;">
+                            {% if el.status == 1 %}
+                            <input type="checkbox" checked value="{{ el.value }}"  name="level">
+                            {% else %}
+                            <input type="checkbox" value="{{ el.value }}"  name="level">
+                            {% endif %}
+                            <label for="level">{{ el.value }}</label>
+                        </p>
+                        {% endfor %}
+                    </div>
+                </div>
+                <span>** Khác:</span><input type="text" name="level" >
+            </div>
+            <div class="form-group mb-3">
+                <p style="margin-bottom: 0px;">Chọn danh mục bạn quan tâm</p>
+                <div style="width: 100%; overflow-y: scroll; height: 80px;"> 
+                    <div>
+                        {% for el in category_list %}
+                        <p style="margin: 0;">
+                            {% if el.status == 1 %}
+                            <input type="checkbox" checked value="{{ el.value }}"  name="category">
+                            {% else %}
+                            <input type="checkbox" value="{{ el.value }}"  name="category">
+                            {% endif %}
+                            <label for="category">{{ el.value }}</label>
+                        </p>
+                        {% endfor %}
+                    </div>
+                </div>
+                <span>** Khác:</span><input type="text" name="category">
+            </div>
+            <div class="form-group mb-3">
+                <p style="margin-bottom: 0px;">Chọn Chủ đề bạn quan tâm</p>
+                <div style="width: 100%; overflow-y: scroll; height: 80px;"> 
+                    <div>
+                        {% for el in topic_list %}
+                        <p style="margin: 0;">
+                            {% if el.status == 1 %}
+                            <input type="checkbox" checked value="{{ el.value }}"  name="topic">
+                            {% else %}
+                            <input type="checkbox" value="{{ el.value }}"  name="topic">
+                            {% endif %}
+                            <label for="topic">{{ el.value }}</label>
+                        </p>
+                        {% endfor %}
+                    </div>
+                </div>
+                <span>** Khác:</span><input type="text" name="topic">
+            </div>
+
             <div class="form-group mb-3">
                 <a class="btn btn-primary text-uppercase d-block w-100" data-bss-hover-animate="pulse" href="javascript: void(0)" onclick="submitForm()" style="background: hotpink;">OK</a>
                 <p class="text-start" style="color: hotpink;text-align: left;">{{alert}}</p>

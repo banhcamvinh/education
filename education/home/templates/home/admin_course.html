@@ -81,12 +81,17 @@
         </div>
     </nav>
     <div class="container">
+        <a href="/admin" style="display: block;" class="btn btn-primary">Quay về</a>
+        
         <form id="admin_course_form" method="post" style="margin-top: 40px;" action="{% url 'home:admin_course' %}">
             {% csrf_token %}
             <input style="display: none;" type="text" value="" name="active" class="active">
             <input style="display: none;" type="text" value="" name="inactive" class="inactive">
         </form>
         <h1>Danh Sách Course active</h1>
+        {% if not active_list %}
+        <p>Danh sách rỗng</p>
+        {% endif %}
         {% for el in active_list %}
         <div class="row d-md-flex">
             <div class="col-md-8 d-flex d-md-flex justify-content-start align-items-center">
@@ -97,6 +102,9 @@
         {% endfor %}
 
         <h1>Danh sách Course inactive</h1>
+        {% if not inactive_list %}
+        <p>Danh sách rỗng</p>
+        {% endif %}
         {% for el in inactive_list %}
         <div class="row d-md-flex">
             <div class="col-md-8 d-flex d-md-flex justify-content-start align-items-center">
