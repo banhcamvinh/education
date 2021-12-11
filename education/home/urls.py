@@ -14,6 +14,7 @@ urlpatterns = [
     path('course_overview/<int:id>',views.courseoverview,name='courseoverview'),
     path('cart', views.cart,name='cart'),
     path('pay/<str:code>', views.pay, name='pay'),
+    path('paysuccess', views.paysuccess, name='paysucess'),
     path('course_learn/<int:id>', views.course_learn, name='course_learn'),
     path('course_certificate/<int:id>', views.course_certificate, name='course_certificate'),
     path('course_rating/<int:id>', views.course_rating, name='course_rating'),

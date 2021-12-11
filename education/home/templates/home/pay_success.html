@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     {% load static %}
-
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>simplecode</title>
@@ -57,52 +58,8 @@
     <link rel="stylesheet" href="{% static 'home/assets/css/User-Rating-F19690.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Video-Responsive-YouTube.css' %}">
 </head>
-
 <body>
-    <div class="container">
-        <nav class="navbar navbar-light navbar-expand-md navigation-clean-button" style="/*position: sticky;*/background-color: hotpink;">
-            <div class="container"><a class="navbar-brand" data-bss-hover-animate="jello" href="/" style="transition: all ease 0.3s;/*height: auto;*/">&nbsp;<img src="{% static 'home/assets/img/newava.png' %}" style="width: 60px;height: 60px;">Simple Code</a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
-                <div class="collapse navbar-collapse d-lg-flex" id="navcol-1" style="height: 70px;">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="{% url 'home:course' %}" style="font-family: Roboto, sans-serif;font-weight: bold;">Khóa học</a></li>
-                        <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"></li>
-                        <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="{% url 'home:cart' %}" style="font-family: Roboto, sans-serif;font-weight: bold;">Giỏ hàng</a></li>
-                        <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="{{ request.session.role }}" style="font-family: Roboto, sans-serif;font-weight: bold;">Quản lí</a></li>
-                    </ul>
-                    <!-- If đăng nhập rồi thì đổi thành nút đăng xuất -->
-                    {% if request.session.username %}
-                    <span class="navbar-text actions" data-bss-disabled-mobile="true" data-bss-hover-animate="swing"> <a class="btn btn-light text-uppercase action-button" role="button" href="{% url 'home:login' %}" style="margin-right: 10px;margin-left: 10px;background: rgba(10,10,9,0.51);">Đăng xuất</a></span>
-                    <span class="navbar-text actions" data-bss-disabled-mobile="true" data-bss-hover-animate="swing"> <a class="btn btn-light text-uppercase action-button" role="button" href="#" style="margin-right: 10px;margin-left: 10px;background: rgba(10,10,9,0.51);">{{ request.session.username }}</a></span>
-                    {% else %}
-                    <span class="navbar-text actions" data-bss-disabled-mobile="true" data-bss-hover-animate="swing"> <a class="btn btn-light text-uppercase action-button" role="button" href="{% url 'home:login' %}" style="margin-right: 10px;margin-left: 10px;background: rgba(10,10,9,0.51);">Đăng nhập</a></span>
-                    {% endif %}
-                    
-                </div>
-            </div>
-        </nav>
-        <div>
-            {% for el in excercise_list %}
-            <button class="ps-accordion" type="button">Excercise {{forloop.counter}}: {{el.question}}</button>
-            <div class="ps-panel">
-                <p>{{el.answer}}<br></p>
-            </div>
-            {% endfor %}
-        </div>
-        <a href="/course_learn/{{course_id}}?lesson={{lesson_name}}" class="btn btn-primary" style="width: 100%;">Quay về</a>
-    </div>
-    <script src="{% static 'home/assets/bootstrap/js/bootstrap.min.js' %}"></script>
-    <script src="{% static 'home/assets/js/bs-init.js' %}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.10.0/baguetteBox.min.js"></script>
-    <script src="{% static 'home/assets/js/--mp---Multiple-items-slider-responsive-1.js' %}"></script>
-    <script src="{% static 'home/assets/js/--mp---Multiple-items-slider-responsive.js' %}"></script>
-    <script src="{% static 'home/assets/js/Accordion-3338arvorept.js' %}"></script>
-    <script src="{% static 'home/assets/js/Counting.js' %}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick.js"></script>
-    <script src="https://code.jquery.com/jquery-2.2.0.min.js&quot; type=&quot;text/javascript"></script>
-    <script src="{% static 'home/assets/js/Lightbox-Gallery.js' %}"></script>
-    <script src="{% static 'home/assets/js/Media-Slider-Bootstrap-3.js' %}"></script>
-    <script src="{% static 'home/assets/js/Swipe-Slider-7.js' %}"></script>
-    <script src="{% static 'home/assets/js/Ultimate-Testimonial-Slider-BS5.js' %}"></script>
+    <img src="{% static 'home/assets/img/pay_success.webp'%}" style="height: 100vh; width: 100%;">
+    <a href="/" style="display: block;" class="btn btn-primary">Quay về</a>
 </body>
-
 </html>

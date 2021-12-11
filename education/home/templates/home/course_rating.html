@@ -57,6 +57,26 @@
 </head>
 
 <body>
+    <nav class="navbar navbar-light navbar-expand-md navigation-clean-button" style="/*position: sticky;*/background-color: hotpink;">
+        <div class="container"><a class="navbar-brand" data-bss-hover-animate="jello" href="/" style="transition: all ease 0.3s;/*height: auto;*/">&nbsp;<img src="{% static 'home/assets/img/newava.png' %}" style="width: 60px;height: 60px;">Simple Code</a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse d-lg-flex" id="navcol-1" style="height: 70px;">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="{% url 'home:course' %}" style="font-family: Roboto, sans-serif;font-weight: bold;">Khóa học</a></li>
+                    <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"></li>
+                    <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="{% url 'home:cart' %}" style="font-family: Roboto, sans-serif;font-weight: bold;">Giỏ hàng</a></li>
+                    <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="{{ request.session.role }}" style="font-family: Roboto, sans-serif;font-weight: bold;">Quản lí</a></li>
+                </ul>
+                <!-- If đăng nhập rồi thì đổi thành nút đăng xuất -->
+                {% if request.session.username %}
+                <span class="navbar-text actions" data-bss-disabled-mobile="true" data-bss-hover-animate="swing"> <a class="btn btn-light text-uppercase action-button" role="button" href="{% url 'home:login' %}" style="margin-right: 10px;margin-left: 10px;background: rgba(10,10,9,0.51);">Đăng xuất</a></span>
+                <span class="navbar-text actions" data-bss-disabled-mobile="true" data-bss-hover-animate="swing"> <a class="btn btn-light text-uppercase action-button" role="button" href="#" style="margin-right: 10px;margin-left: 10px;background: rgba(10,10,9,0.51);">{{ request.session.username }}</a></span>
+                {% else %}
+                <span class="navbar-text actions" data-bss-disabled-mobile="true" data-bss-hover-animate="swing"> <a class="btn btn-light text-uppercase action-button" role="button" href="{% url 'home:login' %}" style="margin-right: 10px;margin-left: 10px;background: rgba(10,10,9,0.51);">Đăng nhập</a></span>
+                {% endif %}
+                
+            </div>
+        </div>
+    </nav>
     <div class="bg-light border rounded border-light jumbotron py-5 px-4">
         <div class="card">
             <div class="card-body">

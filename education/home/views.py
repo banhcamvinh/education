@@ -22,6 +22,7 @@ import urllib
 import pyrebase
 import requests
 from moviepy.editor import VideoFileClip
+import re
 
 firebaseConfig={
     "apiKey": "AIzaSyBOHxmgm-uhY4tQbK8YLLdNpP4IJYcHMrs",
@@ -278,6 +279,62 @@ def course(request):
             continue_course_lst = []
             continue_course_render_lst=[]
             continue_course_range=[]
+
+            rec_course_lst = []
+            rec_course_render_lst=[]
+            rec_course_range=[]
+            # check exist gds neo4j ? -> create
+            query = """
+                RETURN gds.graph.exists('CategoryGraph') AS status
+                union all
+                RETURN gds.graph.exists('TopicGraph') AS status
+                union all
+                RETURN gds.graph.exists('LevelGraph') AS status
+            """.format()
+            rs = myconnect.query(query)
+            rs = list(rs)
+            for el in rs:
+                if el['status'] == False:
+                    query = """
+                        CALL gds.graph.create(
+                            'CategoryGraph',
+                            ['Account', 'Category'],
+                            {
+                                like_category: {
+                                    type: 'like_category',
+                                    properties: {
+                                    }
+                                }
+                            }
+                        );
+
+                        CALL gds.graph.create(
+                            'TopicGraph',
+                            ['Account', 'Topic'],
+                            {
+                                like_topic: {
+                                    type: 'like_topic',
+                                    properties: {
+                                    }
+                                }
+                            }
+                        );
+
+                        CALL gds.graph.create(
+                            'LevelGraph',
+                            ['Account', 'Level'],
+                            {
+                                belong_level: {
+                                    type: 'belong_level',
+                                    properties: {
+                                    }
+                                }
+                            }
+                        );
+                    """.format()
+                    myconnect.query(query)
+                    break
+
             # check if logged in -> return continue list and recommend list
             if 'username' in request.session :
                 query = """
@@ -300,6 +357,99 @@ def course(request):
                 continue_course_range = [*range(0,continue_course_range)]
                 continue_course_render_lst = list(chunks(continue_course_lst,4))
 
+                # Get recommend course
+                # Get 3 course from same topic
+                username = request.session['username']
+
+                query = """
+                    CALL gds.nodeSimilarity.stream('TopicGraph')
+                    YIELD node1, node2, similarity
+                    RETURN gds.util.asNode(node1).username AS Person1, gds.util.asNode(node2).username AS Person2, similarity
+                    ORDER BY similarity DESCENDING, Person1, Person2
+                """.format()
+                rs = myconnect.query(query)
+                topic_similar_lst = list(rs)
+                for el in topic_similar_lst:
+                    if el['Person1'] != username:
+                        topic_similar_lst.remove(el)
+                topic_similar = None
+                if topic_similar_lst != 0:
+                    topic_similar = topic_similar_lst[0]['Person2']
+                # Get 3 course from same level
+                query = """
+                    CALL gds.nodeSimilarity.stream('LevelGraph')
+                    YIELD node1, node2, similarity
+                    RETURN gds.util.asNode(node1).username AS Person1, gds.util.asNode(node2).username AS Person2, similarity
+                    ORDER BY similarity DESCENDING, Person1, Person2
+                """.format()
+                rs = myconnect.query(query)
+                level_similar_lst = list(rs)
+                for el in level_similar_lst:
+                    if el['Person1'] != username:
+                        level_similar_lst.remove(el)
+                level_similar = None
+                if level_similar_lst != 0:
+                    level_similar = level_similar_lst[0]['Person2']
+                # Get 3 course from same category
+                query = """
+                    CALL gds.nodeSimilarity.stream('CategoryGraph')
+                    YIELD node1, node2, similarity
+                    RETURN gds.util.asNode(node1).username AS Person1, gds.util.asNode(node2).username AS Person2, similarity
+                    ORDER BY similarity DESCENDING, Person1, Person2
+                """.format()
+                rs = myconnect.query(query)
+                category_similar_lst = list(rs)
+                for el in category_similar_lst:
+                    if el['Person1'] != username:
+                        category_similar_lst.remove(el)
+                category_similar = None
+                if category_similar_lst != 0:
+                    category_similar = category_similar_lst[0]['Person2']
+
+                similar_user_list = [topic_similar,category_similar,level_similar]
+                # Trường hợp không có ai similar -> đưa ra giống khóa học bán chạy
+                if topic_similar == None and category_similar == None and level_similar == None:
+                    rec_course_lst = most_buy_course_lst
+                    rec_course_range = most_buy_course_range
+                    rec_course_render_lst = most_buy_course_render_lst
+                # Trường hợp có 1 trong 3
+                query = ""
+                for el in similar_user_list:
+                    if el != None:
+                        query += """
+                            match (ec:Course)<-[:to_course]-(:Enrollment)<-[:pay]-(:Account{{ username:'{}' }})
+                            with collect(ec.id) as ecid
+                            with ecid
+                            match (a:Account{{username:'{}' }})
+                            with a,ecid
+                            match (a)-[:pay]-(:Enrollment)-[:to_course]-(c:Course)-[:in_status]-(s:Status)
+                            where s.value = 'active'
+                            with c,ecid
+                            where not c.id in ecid
+                            with c
+                            match (c:Course)
+                            optional match (c:Course)<-[wc:watching_course]-(:Account)
+                            with c, count(wc) as num_of_view
+                            match (c)
+                            optional match (c)-[:to_course]-(rc:Rating_Course)
+                            with c,num_of_view, coalesce(avg(rc.star),0) as star
+                            match (c)
+                            optional match (c)-[:has_price]->(cp:Course_Price)-[:at]-(d:Day)<-[:in_day]-(m:Month)-[:in_month]-(y:Year)
+                            with  c as course, cp.value as price,d.value as day,m.value as month,y.value as year,num_of_view,star
+                            order by year desc,month desc,day desc
+                            return course.id as id,course.name as name, apoc.agg.first(price)as price,num_of_view, star
+                            order by num_of_view desc
+                            limit 2
+                            union
+                        """.format(username,el)
+                query = query.strip()
+                query = re.sub("union\Z", "", query)
+                rs = myconnect.query(query)
+                rec_course_lst = list(rs)
+                rec_course_range = (len(rec_course_lst)-1) // 4 + 1
+                rec_course_range = [*range(0,rec_course_range)]
+                rec_course_render_lst = list(chunks(rec_course_lst,4))
+
             context = {
                 'category_lst':category_lst,
 
@@ -314,6 +464,10 @@ def course(request):
                 'continue_course_lst':continue_course_lst,
                 'continue_course_render_lst':continue_course_render_lst,
                 'continue_course_range':continue_course_range,
+
+                'rec_course_lst':rec_course_lst,
+                'rec_course_render_lst':rec_course_render_lst,
+                'rec_course_range':rec_course_range,
             }
             template = loader.get_template('home/course.html')
             return HttpResponse(template.render(context,request))
@@ -799,13 +953,15 @@ def pay(request,code):
         create (e)-[:with_discount_code]->(dc)
     """.format(year,month,day,username,current_time,code)
     myconnect.query(query)
-    print("Thanh toán thành công")
 
 
     # Query thêm để lấy giá tiền và giá km -> tính ra thành tiền
     # Kết hợp với chức năng thanh toán thật
 
     return redirect('/')
+
+def paysuccess(request):
+    return render(request,'home/pay_success.html')
 
 @csrf_exempt
 def course_learn(request,id):
@@ -1170,7 +1326,7 @@ def course_certificate(request,id):
     myconnect = db.neo4j("bolt://localhost","neo4j","123")
     # Check user hoàn thành khóa học hay chưa
     query = """
-        match (a:Account{{username:'{}'}})-[:finish_course]-(c:Course{{id:{}}})
+        match (a:Account{{username:'{}'}})-[:pay]-(:Enrollment)-[:finish_course]-(c:Course{{id:{}}})
         return c.name as course_name
     """.format(username,id)
     rs = myconnect.query(query)
@@ -1183,6 +1339,7 @@ def course_certificate(request,id):
     context = {
         'username':username,
         'course_name': course_name,
+        'course_id': id,
     }
     template = loader.get_template('home/course_certificate.html')
     return HttpResponse(template.render(context,request))
@@ -1337,23 +1494,46 @@ def user_account(request):
         if '' in topic_list:
             topic_list.remove('')
 
-
+        query = """
+            match (a:Account{{ username:'{}' }})
+            with distinct a
+            match (a)-[bl:belong_level]-(:Level)
+            delete bl
+            with distinct a
+            match (a)-[lt:like_topic]-(:Topic)
+            delete lt
+            with distinct a
+            match (a)-[lc:like_category]-(:Category)
+            delete lc
+        """.format(username)
+        myconnect.query(query)
 
         if len(level_list) != 0:
-            query = """
-                match (a:Account{{username:'{}'}})
-                optional match (a:Account{{username:'{}'}})-[l:belong_level]-(:Level)
-                delete l
-            """.format(username,username)
-            index = 0
             for el in level_list:
-                index += 1
-                query += """
-                    merge ({}:Level{{ value:'{}' }})
-                    create (a)-[:belong_level]->({})
-                """.format("l"+str(index),el,"l"+str(index))
-            myconnect.query(query)
-            
+                query =  """
+                    match (a:Account{{ username:'{}' }})
+                    merge (l:Level{{value:'{}' }})
+                    merge (a)-[:belong_level]->(l)
+                """.format(username,el)
+                myconnect.query(query)
+
+        if len(category_list) != 0:
+            for el in category_list:
+                query =  """
+                    match (a:Account{{ username:'{}' }})
+                    merge (c:Category{{value:'{}' }})
+                    merge (a)-[:like_category]->(c)
+                """.format(username,el)
+                myconnect.query(query)
+
+        if len(topic_list) != 0:
+            for el in topic_list:
+                query =  """
+                    match (a:Account{{ username:'{}' }})
+                    merge (t:Topic{{value:'{}' }})
+                    merge (a)-[:like_topic]->(t)
+                """.format(username,el)
+                myconnect.query(query)
 
 
         rs_dict = dict()
@@ -2740,6 +2920,45 @@ def course_creation(request,id):
                 """.format(year,month,day,username,course_uuid,course_name,course_content,course_goal,course_requirement,url,course_price)
                 myconnect.query(query)
                 id = course_uuid
+
+                level_list = request.POST.getlist('level',[])
+                category_list = request.POST.getlist('category',[])
+                topic_list = request.POST.getlist('topic',[])
+
+                if '' in level_list:
+                    level_list.remove('')
+                if '' in category_list:
+                    category_list.remove('')
+                if '' in topic_list:
+                    topic_list.remove('')
+
+                if len(level_list) != 0:
+                    for el in level_list:
+                        query =  """
+                            match (c:Course{{ id:{} }})
+                            merge (l:Level{{value:'{}' }})
+                            merge (c)-[:belong_level]->(l)
+                        """.format(id,el)
+                        myconnect.query(query)
+
+                if len(category_list) != 0:
+                    for el in category_list:
+                        query =  """
+                            match (c:Course{{ id:{} }})
+                            merge (ca:Category{{value:'{}' }})
+                            merge (c)-[:belong_category]->(ca)
+                        """.format(id,el)
+                        myconnect.query(query)
+
+                if len(topic_list) != 0:
+                    for el in topic_list:
+                        query =  """
+                            match (c:Course{{ id:{} }})
+                            merge (t:Topic{{value:'{}' }})
+                            merge (c)-[:belong_topic]->(t)
+                        """.format(id,el)
+                        myconnect.query(query)
+                
                 alert = 'success'
         elif action == 'edit':
             course_uuid = id
@@ -2817,14 +3036,101 @@ def course_creation(request,id):
                         , intro.url = '{}'
                     """.format(url)
                 myconnect.query(query)
+
+                level_list = request.POST.getlist('level',[])
+                category_list = request.POST.getlist('category',[])
+                topic_list = request.POST.getlist('topic',[])
+
+                if '' in level_list:
+                    level_list.remove('')
+                if '' in category_list:
+                    category_list.remove('')
+                if '' in topic_list:
+                    topic_list.remove('')
+
+                query = """
+                    match (c:Course{{ id: {} }})
+                    with distinct c
+                    match (c)-[bl:belong_level]-(:Level)
+                    delete bl
+                    with distinct c
+                    match (c)-[bt:belong_topic]-(:Topic)
+                    delete btS
+                    with distinct c
+                    match (c)-[bc:belong_category]-(:Category)
+                    delete bc
+                """.format(id)
+                myconnect.query(query)
+
+                if len(level_list) != 0:
+                    for el in level_list:
+                        query =  """
+                            match (c:Course{{ id:{} }})
+                            merge (l:Level{{value:'{}' }})
+                            merge (c)-[:belong_level]->(l)
+                        """.format(id,el)
+                        myconnect.query(query)
+
+                if len(category_list) != 0:
+                    for el in category_list:
+                        query =  """
+                            match (c:Course{{ id:{} }})
+                            merge (ca:Category{{value:'{}' }})
+                            merge (c)-[:belong_category]->(ca)
+                        """.format(id,el)
+                        myconnect.query(query)
+
+                if len(topic_list) != 0:
+                    for el in topic_list:
+                        query =  """
+                            match (c:Course{{ id:{} }})
+                            merge (t:Topic{{value:'{}' }})
+                            merge (c)-[:belong_topic]->(t)
+                        """.format(id,el)
+                        myconnect.query(query)
+                
+
                 alert = 'success'
        
+    query = """
+        match (c:Category)
+        with distinct c
+        match (c)
+        optional match (c)-[bc:belong_category]-(:Course{{ id:{} }})
+        return c.value as value, count(bc) as status
+    """.format(id)
+    rs = myconnect.query(query)
+    category_list = list(rs)
+
+    query = """
+        match (l:Level)
+        with distinct l
+        match (l)
+        optional match (l)-[bl:belong_level]-(:Course{{ id:{} }})
+        return l.value as value, count(bl) as status
+    """.format(id)
+    rs = myconnect.query(query)
+    level_list = list(rs)
+
+    query = """
+        match (t:Topic)
+        with distinct t
+        match (t)
+        optional match (t)-[bt:belong_topic]-(:Course{{ id:{} }})
+        return t.value as value, count(bt) as status
+    """.format(id)
+    rs = myconnect.query(query)
+    topic_list = list(rs)
+
     if request.method == 'GET':
         # return create view
         if id == 0:
             context = {
                 'course_id':id,
                 'alert':alert,
+                'category_list':category_list,
+                'level_list':level_list,
+                'topic_list':topic_list
             }
             template = loader.get_template('home/course_creation.html')
             return HttpResponse(template.render(context,request))
@@ -2853,6 +3159,9 @@ def course_creation(request,id):
         'course_info':course_info,
         'course_id':id,
         'alert':alert,
+        'category_list':category_list,
+        'level_list':level_list,
+        'topic_list':topic_list
     }
     template = loader.get_template('home/course_creation.html')
     return HttpResponse(template.render(context,request))
