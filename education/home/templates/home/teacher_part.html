@@ -64,7 +64,11 @@
             <input style="display: none;" type="text" value="" name="delete" class="delete">
         </form>
         <h1>Danh Sách các chương học</h1>
+        {% if not can_del %}
+        <button disabled class="btn btn-primary">Tạo Chương mới</button>
+        {% else %}
         <a class="btn btn-primary" href="/course_creation/{{course_id}}/part_creation/new">Tạo Chương mới</a>
+        {% endif %}
         <a class="btn btn-primary" href="/course_creation/{{course_id}}">Trở về</a>
         <a class="btn btn-primary" href="/teacher_course">Trở về danh sách các khóa học</a>
         {% for el in part_list %}

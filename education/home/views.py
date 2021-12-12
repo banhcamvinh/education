@@ -40,7 +40,11 @@ storage=firebase.storage()
 
 
 def get_sentiment(input):
-    result = sentiment(str(input))
+    result = ""
+    try:
+        result = sentiment(str(input))
+    except:
+        result = "Đã có lỗi xảy ra"
     return result
 
 def chunks(lst, n):
@@ -95,10 +99,10 @@ def login(request):
             # Check password
             else:
                 query = """
-                MATCH (a:Account {{username:'{}',password:'{}'}}),
-                (a)-[:in_role]->(r:Role),
-                (a)-[:in_status]->(s:Status)
-                return a.username as username,r.value as role,s.value as status
+                    MATCH (a:Account {{username:'{}',password:'{}'}}),
+                    (a)-[:in_role]->(r:Role),
+                    (a)-[:in_status]->(s:Status)
+                    return a.username as username,r.value as role,s.value as status
                 """.format(username,password)
                 rs = myconnect.query(query)
                 rs = list(rs)
@@ -135,6 +139,10 @@ def register(request):
                 if password != confirmPassword:
                     alert= "Mật khẩu chưa khớp"
                 else:
+                    dt = datetime.today()
+                    year = dt.year
+                    month = dt.month
+                    day = dt.day
                     myconnect = db.neo4j("bolt://localhost","neo4j","123")
                     query = """
                         create (a:Account{{username:'{}',password:'{}' }})
@@ -147,7 +155,13 @@ def register(request):
                         with a,r,s
                         create (a)-[:in_role]->(r)
                         create (a)-[:in_status]->(s)
-                    """.format(username,password)
+                        merge (y:Year{{ value:{} }})
+                        merge (y)<-[:in_year]-(:Time)
+                        merge (m:Month{{value:{} }})<-[:in_month]-(y)
+                        merge (d:Day{{value:{} }})<-[:in_day]-(m)
+                        with d,m,y,a
+                        create (a)-[:create_at]->(d)
+                    """.format(username,password,year,month,day)
                     rs = myconnect.query(query)
                     alert="success"
         return render(request,'home/register.html',{'alert':alert})
@@ -181,9 +195,11 @@ def subscribe(request):
         email = request.POST.get("email","")
         try:
             mymail.send_email(email,"Đăng ký nhận tin thành công","")
-        except:
+        except Exception as e:
+            print("Lỗi")
+            print(e)
             pass
-    return redirect('/')
+    return redirect('/paysuccess')
 
 def course(request):
     # if 'username' not in request.session:
@@ -307,7 +323,9 @@ def course(request):
                                 }
                             }
                         );
-
+                    """
+                    myconnect.query(query)
+                    query = """
                         CALL gds.graph.create(
                             'TopicGraph',
                             ['Account', 'Topic'],
@@ -319,7 +337,9 @@ def course(request):
                                 }
                             }
                         );
-
+                    """
+                    myconnect.query(query)
+                    query = """
                         CALL gds.graph.create(
                             'LevelGraph',
                             ['Account', 'Level'],
@@ -331,8 +351,10 @@ def course(request):
                                 }
                             }
                         );
-                    """.format()
+                    """
                     myconnect.query(query)
+
+
                     break
 
             # check if logged in -> return continue list and recommend list
@@ -360,7 +382,6 @@ def course(request):
                 # Get recommend course
                 # Get 3 course from same topic
                 username = request.session['username']
-
                 query = """
                     CALL gds.nodeSimilarity.stream('TopicGraph')
                     YIELD node1, node2, similarity
@@ -369,11 +390,14 @@ def course(request):
                 """.format()
                 rs = myconnect.query(query)
                 topic_similar_lst = list(rs)
-                for el in topic_similar_lst:
-                    if el['Person1'] != username:
-                        topic_similar_lst.remove(el)
+                index = 0
+                while index < len(topic_similar_lst):
+                    if topic_similar_lst[index]['Person1'] != username:
+                        topic_similar_lst.remove(topic_similar_lst[index])
+                        index -= 1
+                    index += 1
                 topic_similar = None
-                if topic_similar_lst != 0:
+                if len(topic_similar_lst) != 0:
                     topic_similar = topic_similar_lst[0]['Person2']
                 # Get 3 course from same level
                 query = """
@@ -384,11 +408,14 @@ def course(request):
                 """.format()
                 rs = myconnect.query(query)
                 level_similar_lst = list(rs)
-                for el in level_similar_lst:
-                    if el['Person1'] != username:
-                        level_similar_lst.remove(el)
+                index = 0
+                while index < len(level_similar_lst):
+                    if level_similar_lst[index]['Person1'] != username:
+                        level_similar_lst.remove(level_similar_lst[index])
+                        index -= 1
+                    index += 1
                 level_similar = None
-                if level_similar_lst != 0:
+                if len(level_similar_lst) != 0:
                     level_similar = level_similar_lst[0]['Person2']
                 # Get 3 course from same category
                 query = """
@@ -399,11 +426,14 @@ def course(request):
                 """.format()
                 rs = myconnect.query(query)
                 category_similar_lst = list(rs)
-                for el in category_similar_lst:
-                    if el['Person1'] != username:
-                        category_similar_lst.remove(el)
+                index = 0
+                while index < len(category_similar_lst):
+                    if category_similar_lst[index]['Person1'] != username:
+                        category_similar_lst.remove(category_similar_lst[index])
+                        index -= 1
+                    index += 1
                 category_similar = None
-                if category_similar_lst != 0:
+                if len(category_similar_lst) != 0:
                     category_similar = category_similar_lst[0]['Person2']
 
                 similar_user_list = [topic_similar,category_similar,level_similar]
@@ -413,42 +443,43 @@ def course(request):
                     rec_course_range = most_buy_course_range
                     rec_course_render_lst = most_buy_course_render_lst
                 # Trường hợp có 1 trong 3
-                query = ""
-                for el in similar_user_list:
-                    if el != None:
-                        query += """
-                            match (ec:Course)<-[:to_course]-(:Enrollment)<-[:pay]-(:Account{{ username:'{}' }})
-                            with collect(ec.id) as ecid
-                            with ecid
-                            match (a:Account{{username:'{}' }})
-                            with a,ecid
-                            match (a)-[:pay]-(:Enrollment)-[:to_course]-(c:Course)-[:in_status]-(s:Status)
-                            where s.value = 'active'
-                            with c,ecid
-                            where not c.id in ecid
-                            with c
-                            match (c:Course)
-                            optional match (c:Course)<-[wc:watching_course]-(:Account)
-                            with c, count(wc) as num_of_view
-                            match (c)
-                            optional match (c)-[:to_course]-(rc:Rating_Course)
-                            with c,num_of_view, coalesce(avg(rc.star),0) as star
-                            match (c)
-                            optional match (c)-[:has_price]->(cp:Course_Price)-[:at]-(d:Day)<-[:in_day]-(m:Month)-[:in_month]-(y:Year)
-                            with  c as course, cp.value as price,d.value as day,m.value as month,y.value as year,num_of_view,star
-                            order by year desc,month desc,day desc
-                            return course.id as id,course.name as name, apoc.agg.first(price)as price,num_of_view, star
-                            order by num_of_view desc
-                            limit 2
-                            union
-                        """.format(username,el)
-                query = query.strip()
-                query = re.sub("union\Z", "", query)
-                rs = myconnect.query(query)
-                rec_course_lst = list(rs)
-                rec_course_range = (len(rec_course_lst)-1) // 4 + 1
-                rec_course_range = [*range(0,rec_course_range)]
-                rec_course_render_lst = list(chunks(rec_course_lst,4))
+                else:
+                    query = ""
+                    for el in similar_user_list:
+                        if el != None:
+                            query += """
+                                match (ec:Course)<-[:to_course]-(:Enrollment)<-[:pay]-(:Account{{ username:'{}' }})
+                                with collect(ec.id) as ecid
+                                with ecid
+                                match (a:Account{{username:'{}' }})
+                                with a,ecid
+                                match (a)-[:pay]-(:Enrollment)-[:to_course]-(c:Course)-[:in_status]-(s:Status)
+                                where s.value = 'active'
+                                with c,ecid
+                                where not c.id in ecid
+                                with c
+                                match (c:Course)
+                                optional match (c:Course)<-[wc:watching_course]-(:Account)
+                                with c, count(wc) as num_of_view
+                                match (c)
+                                optional match (c)-[:to_course]-(rc:Rating_Course)
+                                with c,num_of_view, coalesce(avg(rc.star),0) as star
+                                match (c)
+                                optional match (c)-[:has_price]->(cp:Course_Price)-[:at]-(d:Day)<-[:in_day]-(m:Month)-[:in_month]-(y:Year)
+                                with  c as course, cp.value as price,d.value as day,m.value as month,y.value as year,num_of_view,star
+                                order by year desc,month desc,day desc
+                                return course.id as id,course.name as name, apoc.agg.first(price)as price,num_of_view, star
+                                order by num_of_view desc
+                                limit 2
+                                union
+                            """.format(username,el)
+                    query = query.strip()
+                    query = re.sub("union\Z", "", query)
+                    rs = myconnect.query(query)
+                    rec_course_lst = list(rs)
+                    rec_course_range = (len(rec_course_lst)-1) // 4 + 1
+                    rec_course_range = [*range(0,rec_course_range)]
+                    rec_course_render_lst = list(chunks(rec_course_lst,4))
 
             context = {
                 'category_lst':category_lst,
@@ -946,19 +977,20 @@ def pay(request,code):
         match (a)-[:has_cart]-(:Cart)-[hc:has_course]-(c:Course)-[:in_status]-(s:Status)
         where s.value = 'active'
         create (e)-[:to_course]->(c)
-        create (a)-[:watching_course]->(c)
         delete hc
         with e
         match (dc:Discount_Code{{ value:'{}' }})
         create (e)-[:with_discount_code]->(dc)
     """.format(year,month,day,username,current_time,code)
     myconnect.query(query)
+        # create (a)-[:watching_course]->(c)
+
 
 
     # Query thêm để lấy giá tiền và giá km -> tính ra thành tiền
     # Kết hợp với chức năng thanh toán thật
 
-    return redirect('/')
+    return redirect('/paysuccess')
 
 def paysuccess(request):
     return render(request,'home/pay_success.html')
@@ -1029,8 +1061,8 @@ def course_learn(request,id):
             myconnect.query(query)
             if is_final_lesson == 1:
                 query = """
-                    match (a:Account{{username: '{}'}}),(c:Course{{ id: {} }})
-                    create (a)-[:finish_course]->(c)
+                    match (a:Account{{username: '{}'}})-[:pay]-(e:Enrollment)-[:to_course]-(c:Course{{ id: {} }})
+                    create (e)-[:finish_course]->(c)
                 """.format(username,id)
                 myconnect.query(query)
 
@@ -1095,6 +1127,13 @@ def course_learn(request,id):
     rs = myconnect.query(query)
     if len(list(rs)) == 0:
         return redirect('/course_overview/{}'.format(id))
+
+    # Nếu chưa watching thì cho watching
+    query = """
+        match (c:Course{{ id: {} }}), (a:Account{{username:'{}'}})
+        merge (a)-[:watching_course]->(c)
+    """.format(id,username)
+    rs = myconnect.query(query)  
 
     # Đổ dữ liệu chung cho từng bài học
     query = """
@@ -1614,17 +1653,20 @@ def user_course(request):
         if 'username' in request.session :
             query = """
             //Course watching
-                match (c:Course)<-[:watching_course]-(:Account{{username:"{}"}})
-                with c
+                match (c:Course)<-[:watching_course]-(a:Account{{username:"{}"}})
+                with c,a
+                match (c)
+                optional match (c)-[f:finish_course]-(:Enrollment)-[:pay]-(a)
+                with c, count(f) as finish
                 match (c)
                 optional match (c)-[:to_course]-(rc:Rating_Course)
-                with c, coalesce(avg(rc.star),0) as star
+                with c, coalesce(avg(rc.star),0) as star,finish
                 match (c)-[wc:watching_course]-(:Account)
-                with c, count(wc) as num_of_view,star
+                with c, count(wc) as num_of_view,star,finish
                 optional match (c)-[:has_price]->(cp:Course_Price)-[:at]-(d:Day)<-[:in_day]-(m:Month)-[:in_month]-(y:Year)
-                with  c as course, cp.value as price,d.value as day,m.value as month,y.value as year,star,num_of_view
+                with  c as course, cp.value as price,d.value as day,m.value as month,y.value as year,star,num_of_view,finish
                 order by year desc,month desc,day desc
-                return course.id as id,course.name as name, apoc.agg.first(price)as price, star,num_of_view
+                return course.id as id,course.name as name, apoc.agg.first(price)as price, star,num_of_view,finish
             """.format(request.session['username'])
             rs = myconnect.query(query)
             continue_course_lst = list(rs)
@@ -1652,7 +1694,29 @@ def user_course(request):
             mark_course_range = [*range(0,mark_course_range)]
             mark_course_render_lst = list(chunks(mark_course_lst,4))
 
-
+            query = """
+            //Course Enrolled
+               match (c:Course)<-[:to_course]-(:Enrollment)-[:pay]-(a:Account{{username:"{}"}})
+                with c,a
+                match (c)
+                optional match (c)-[f:finish_course]-(:Enrollment)-[:pay]-(a)
+                with c, count(f) as finish
+                match (c)
+                optional match (c)-[:to_course]-(rc:Rating_Course)
+                with c, coalesce(avg(rc.star),0) as star,finish
+                match (c)
+                optional match (c)-[wc:watching_course]-(:Account)
+                with c, count(wc) as num_of_view,star,finish
+                optional match (c)-[:has_price]->(cp:Course_Price)-[:at]-(d:Day)<-[:in_day]-(m:Month)-[:in_month]-(y:Year)
+                with  c as course, cp.value as price,d.value as day,m.value as month,y.value as year,star,num_of_view,finish
+                order by year desc,month desc,day desc
+                return course.id as id,course.name as name, apoc.agg.first(price)as price, star,num_of_view,finish
+            """.format(request.session['username'])
+            rs = myconnect.query(query)
+            enroll_course_lst = list(rs)
+            enroll_course_range = (len(enroll_course_lst)-1) // 4 + 1
+            enroll_course_range = [*range(0,enroll_course_range)]
+            enroll_course_render_lst = list(chunks(enroll_course_lst,4))
 
         context = {
             'continue_course_lst':continue_course_lst,
@@ -1661,6 +1725,9 @@ def user_course(request):
             'mark_course_lst':mark_course_lst,
             'mark_course_render_lst':mark_course_render_lst,
             'mark_course_range':mark_course_range,
+            'enroll_course_lst':enroll_course_lst,
+            'enroll_course_render_lst':enroll_course_render_lst,
+            'enroll_course_range':enroll_course_range,
         }
         template = loader.get_template('home/user_course.html')
         return HttpResponse(template.render(context,request))
@@ -1745,6 +1812,7 @@ def user_report(request):
         finish_lesson['not_finish'] = finish_lesson['total'] - finish_lesson['finish']
         finish_duration['not_finish'] = finish_duration['total'] - finish_duration['finish']
 
+    
     context = {
         'finish_course':finish_course,
         'finish_lesson':finish_lesson,
@@ -1820,15 +1888,25 @@ def admin_report(request):
     enrollment_list = list(rs)
 
     # Get accout role by date
+    # query = """
+    #     match (a:Account)-[:in_role]-(r:Role)
+    #     where r.value <> "admin"
+    #     with a,r.value as role
+    #     match (a)-[:create_at]-(d:Day)-[:in_day]-(m:Month)-[:in_month]-(y:Year)
+    #     return 
+    #     sum(case role when "user" then 1 else 0 end) as user,
+    #     sum(case role when "teacher" then 1 else 0 end) as teacher
+    #     ,d.value as day, m.value - 1 as month, y.value as year
+    # """.format()
+    # rs = myconnect.query(query)
+    # role_list = list(rs)
+
     query = """
-        match (a:Account)-[:in_role]-(r:Role)
-        where r.value <> "admin"
-        with a,r.value as role
-        match (a)-[:create_at]-(d:Day)-[:in_day]-(m:Month)-[:in_month]-(y:Year)
-        return 
-        sum(case role when "user" then 1 else 0 end) as user,
-        sum(case role when "teacher" then 1 else 0 end) as teacher
-        ,d.value as day, m.value - 1 as month, y.value as year
+        match (r:Role)
+        where r.value <> 'admin'
+        optional match(r:Role)-[:in_role]-(a:Account)
+        where r.value <> 'admin'
+        return r.value as role_name,count(a) as count
     """.format()
     rs = myconnect.query(query)
     role_list = list(rs)
@@ -1877,6 +1955,7 @@ def admin_report(request):
         sentiment_dict['point'] = point_list[index]
         sentiment_list.append(sentiment_dict)
 
+    print(enrollment_list)
     # print(star_dict)
     context = {
         'star_dict':star_dict,
@@ -2192,11 +2271,27 @@ def teacher_report(request):
         sentiment_percentage = positive_sentiment_count / value_sentiment_count * 1.0
         sentiment_percentage_dict[row['course_name']] = sentiment_percentage
 
+
+    # get rating sentiment table
+    query = """
+        match (a:Account{{ username:'{}' }})-[:create]-(:Course_Creation)-[:with_course]-(c:Course)-[:to_course]-(rc:Rating_Course)
+        return c.name as course_name, rc.content as rate_content
+    """.format(username)
+    rs = myconnect.query(query)
+    sentiment_table = []
+    for el in rs:
+        tmp_row = []
+        tmp_row.append(el['course_name'])
+        tmp_row.append(el['rate_content'])
+        tmp_row.append(get_sentiment(el['rate_content']))
+        sentiment_table.append(tmp_row)
+
     context = {
         'course_list':course_list,
         'view_list':view_list,
         'enrollment_list':enrollment_list,
         'sentiment_percentage_dict':sentiment_percentage_dict,
+        'sentiment_table':sentiment_table
     }
     template = loader.get_template('home/teacher_report.html')
     return HttpResponse(template.render(context,request))
@@ -3721,24 +3816,20 @@ def chat(request):
         if len(wit_res['intents']) == 0:
             out_mesasge = "Huhu chúng tớ chưa hiểu rõ câu hỏi mong bạn đặt lại câu hỏi hoặc nhờ hỗ trợ giúp mình nhé <3"
         elif wit_res['intents'][0]['name'] == 'Support' and wit_res['intents'][0]['confidence'] > 0.5:
-            out_mesasge = """
-            - Cần hỗ trợ gì bạn có thể nhắn lại tin nhắn + chủ đề đó
-            - Cần hỗ trợ gấp bạn có thể gọi 113 hoặc gửi mail cho chúng tôi
+            out_mesasge = """- Cần hỗ trợ gì bạn có thể nhắn lại tin nhắn + chủ đề đó
+            - Cần hỗ trợ gấp bạn có thể gọi cho chúng tôi hoặc gửi mail cho chúng tôi
             - Hoặc các bạn có thể liên lạc qua mạng xã hội
             """
         elif wit_res['intents'][0]['name'] == 'Course_Lifetime_Access' and wit_res['intents'][0]['confidence'] > 0.5:
-            out_mesasge = """
-            - Sau khi thanh toán bạn đã có thể vào học
+            out_mesasge = """- Sau khi thanh toán bạn đã có thể vào học
             - Khóa học được sử dụng vô thời hạn
             - Bạn có thể sử dụng bất cứ đâu và bất cứ khi nào
             """
         elif wit_res['intents'][0]['name'] == 'Course_Price' and wit_res['intents'][0]['confidence'] > 0.5:
-            out_mesasge = """
-            - Các khóa học bao gồm có phí và miễn phí, sẽ được ghi cụ thể trên trang web
+            out_mesasge = """- Các khóa học bao gồm có phí và miễn phí, sẽ được ghi cụ thể trên trang web
             """
         elif wit_res['intents'][0]['name'] == 'Course_info' and wit_res['intents'][0]['confidence'] > 0.5:
-            out_mesasge = """
-            - Các khóa học bao gồm video, các chương, bài học, bài tập mỗi bài và bài tập cuối khóa học
+            out_mesasge = """- Các khóa học bao gồm video, các chương, bài học, bài tập mỗi bài và bài tập cuối khóa học
             - Bạn có thể sử dụng khóa học sau khi đã thanh toán
             - Khóa học sẽ cung cấp chứng chỉ sau khi học xong
             """

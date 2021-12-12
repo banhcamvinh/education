@@ -124,6 +124,21 @@ finish_duration_chart.render();
 <div id="finish_course_chartContainer" style="height: 370px; width: 100%;"></div>
 <div id="finish_lesson_chartContainer" style="height: 370px; width: 100%;"></div>
 <div id="finish_duration_chartContainer" style="height: 370px; width: 100%;"></div>
+
+{% if not finish_course %}
+<h1>Finish course report</h1>
+<p>Chưa có thông tin</p>
+{% endif %}
+{% if not finish_lesson %}
+<h1>Finish lesson report</h1>
+<p>Chưa có thông tin</p>
+{% endif %}
+{% if not finish_duration %}
+<h1>Finish duration report</h1>
+<p>Chưa có thông tin</p>
+{% endif %}
+
+
 <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
 </body>
 </html>

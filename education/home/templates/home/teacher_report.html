@@ -197,6 +197,15 @@ sentiment_chart.render();
 <link rel="stylesheet" href="{% static 'home/assets/css/Ultimate-Testimonial-Slider-BS5.css' %}">
 <link rel="stylesheet" href="{% static 'home/assets/css/User-Rating-F19690.css' %}">
 <link rel="stylesheet" href="{% static 'home/assets/css/Video-Responsive-YouTube.css' %}">
+<style>
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+th, td {
+  padding: 15px;
+}
+</style>
 </head>
 <body>
 
@@ -206,6 +215,38 @@ sentiment_chart.render();
 <div id="view_chartContainer" style="height: 370px; width: 100%;"></div>
 <div id="enroll_chartContainer" style="height: 370px; width: 100%;"></div>
 <div id="sentiment_chartContainer" style="height: 370px; width: 100%;"></div>
+
+<div style="overflow:auto; max-height: 300px; margin-bottom: 100px;">
+	<table style="margin: 0 auto; ">
+		<tr>
+		  <th>Course</th>
+		  <th>Rate content</th>
+		  <th>Sentiment</th>
+		</tr>
+		{% for el in sentiment_table %}
+		<tr>
+			{% for ell in el %}
+			{% if ell == 'negative' %}
+			<td style="background-color: tomato;">
+				{{ell}}
+			</td>
+			{% else %}
+				{% if ell == 'positive' %}
+				<td style="background-color: springgreen;">
+					{{ell}}
+				</td>
+				{% else %}
+				<td>
+					{{ell}}
+				</td>
+				{% endif %}
+			{% endif %}
+			{% endfor %}
+		</tr>
+		{% endfor %}
+	  </table>
+	
+</div>
 
 
 <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>

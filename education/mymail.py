@@ -5,7 +5,7 @@ from email.mime.multipart import MIMEMultipart
 def send_email(sendto:str,subject:str,content:str):
     sender_email = "n17dccn187@student.ptithcm.edu.vn"
     receiver_email = sendto
-    password = "banhcamvinh123"
+    password = "Daylapassgoogle@123"
 
     message = MIMEMultipart("alternative")
     message["Subject"] = subject

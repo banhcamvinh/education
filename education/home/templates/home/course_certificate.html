@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Simple Code</title>
 </head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.js"></script>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.2/jspdf.min.js"></script>
+<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.2/jspdf.min.js"></script> -->
 <body>
-    <div id='dom-to-print' style="width:800px; height:400px; padding:20px; text-align:center; border: 10px solid #787878">
+    <div id="tablecontainer" style="width:800px; height:400px; padding:20px; text-align:center; border: 10px solid #787878 b;background-color: white;">
         <div style="width:750px; height:350px; padding:20px; text-align:center; border: 5px solid #787878">
                <span style="font-size:50px; font-weight:bold">Certificate of Completion</span>
                <br><br>
@@ -22,15 +23,51 @@
                <span style="font-size:20px">with complete  <b>100%</b></span>
         </div>
     </div>
-    <button id='print-btn'>Start print process</button>
+    <button style="width: 100%; padding: 10px 0; background-color: rgb(146, 211, 146);" id='print-btn' onclick="downloadtable()">Start print process</button>
     <a href="/course_learn/{{course_id}}" style="display: block; text-align: center; padding: 10px; text-decoration: none; background-color: hotpink; color: white;">Quay về</a>
+
+
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+        integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+
 </body>
 <script>
-$('#print-btn').click(()=>{
-var pdf = new jsPDF('p','pt','a4');
-pdf.addHTML(document.body,function() {
-    pdf.save('{{course_name}}'+'_certificate.pdf');
-});
-})
+// $('#print-btn').click(()=>{
+// var pdf = new jsPDF('p','pt','a4');
+// pdf.addHTML(document.body,function() {
+//     pdf.save('{{course_name}}'+'_certificate.pdf');
+// });
+// })
+
+function downloadtable() {
+        var node = document.getElementById('tablecontainer');
+        domtoimage.toPng(node)
+            .then(function (dataUrl) {
+                var img = new Image();
+                img.src = dataUrl;
+                downloadURI(dataUrl, "records.png")
+            })
+            .catch(function (error) {
+                console.error('oops, something went wrong', error);
+            });
+    }
+    function downloadURI(uri, name) {
+        var link = document.createElement("a");
+        link.download = name;
+        link.href = uri;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        delete link;
+    }
+
+
 </script>
 </html>

@@ -101,64 +101,87 @@ enrollment_chart.render();
 var role_chart = new CanvasJS.Chart("role_chartContainer", {
 	animationEnabled: true,
 	title:{
-		text: "User and Teacher count by time"
-	},
-	axisX: {
-		interval: 1,
-		intervalType: "day",
-		valueFormatString: "DD MM YYYY"
-	},
-	axisY: {
-		suffix: "%"
-	},
-	toolTip: {
-		shared: true
-	},
-	legend: {
-		reversed: true,
-		verticalAlign: "center",
-		horizontalAlign: "right"
+		text: "Role",
+		horizontalAlign: "left"
 	},
 	data: [{
-		type: "stackedColumn100",
-		name: "User",
-		showInLegend: true,
-		// xValueFormatString: "YYYY",
-		// yValueFormatString: "#,##0\"%\"",
+		type: "doughnut",
+		startAngle: 60,
+		//innerRadius: 60,
+		indexLabelFontSize: 17,
+		indexLabel: "{label} - #percent%",
+		toolTipContent: "<b>{label}:</b> {y} (#percent%)",
 		dataPoints: [
-            {% for el in role_list%}
-			{ x: new Date({{el.year}},{{el.month}},{{el.day}}), y: {{el.user}} },
+            {% for el in role_list %}
+			{ y: {{el.count}}, label: "{{el.role_name}}" },
             {% endfor %}
-			// { x: new Date(2010,0,1), y: 40 },
-			// { x: new Date(2010,0,2), y: 50 },
-			// { x: new Date(2010,0,3), y: 60 },
-			// { x: new Date(2010,0,5), y: 63 },
-			// { x: new Date(2010,0,6), y: 65 },
-			// { x: new Date(2010,0,7), y: 67 }
 		]
-	}, 
-	{
-		type: "stackedColumn100",
-		name: "Teacher",
-		showInLegend: true,
-		// xValueFormatString: "YYYY",
-		// yValueFormatString: "#,##0\"%\"",
-		dataPoints: [
-            {% for el in role_list%}
-			{ x: new Date({{el.year}},{{el.month}},{{el.day}}), y: {{el.teacher}} },
-            {% endfor %}
-			// { x: new Date(2010,0,1), y: 28 },
-			// { x: new Date(2010,0,2), y: 18 },
-			// { x: new Date(2010,0,3), y: 12 },
-			// { x: new Date(2010,0,5), y: 10 },
-			// { x: new Date(2010,0,6), y: 7 },
-			// { x: new Date(2010,0,7), y: 5 }
-		]
-	}, 
-	
-	]
+	}]
 });
 role_chart.render();
+
+// var role_chart = new CanvasJS.Chart("role_chartContainer", {
+// 	animationEnabled: true,
+// 	title:{
+// 		text: "User and Teacher count by time"
+// 	},
+// 	axisX: {
+// 		// interval: 6,
+// 		// intervalType: "month",
+// 		valueFormatString: "DD MM YYYY"
+// 	},
+// 	axisY: {
+// 		suffix: "%"
+// 	},
+// 	toolTip: {
+// 		shared: true
+// 	},
+// 	dataPointMinWidth: 100,
+// 	legend: {
+// 		reversed: true,
+// 		verticalAlign: "center",
+// 		horizontalAlign: "right"
+// 	},
+// 	data: [{
+// 		type: "stackedColumn100",
+// 		name: "User",
+// 		showInLegend: true,
+// 		// xValueFormatString: "YYYY",
+// 		// yValueFormatString: "#,##0\"%\"",
+// 		dataPoints: [
+//             {% for el in role_list%}
+// 			{ x: new Date({{el.year}},{{el.month}},{{el.day}}), y: {{el.user}} },
+//             {% endfor %}
+// 			// { x: new Date(2010,0,1), y: 40 },
+// 			// { x: new Date(2010,0,2), y: 50 },
+// 			// { x: new Date(2010,0,3), y: 60 },
+// 			// { x: new Date(2010,0,5), y: 63 },
+// 			// { x: new Date(2010,0,6), y: 65 },
+// 			// { x: new Date(2010,0,7), y: 67 }
+// 		]
+// 	}, 
+// 	{
+// 		type: "stackedColumn100",
+// 		name: "Teacher",
+// 		showInLegend: true,
+// 		// xValueFormatString: "YYYY",
+// 		// yValueFormatString: "#,##0\"%\"",
+// 		dataPoints: [
+//             {% for el in role_list%}
+// 			{ x: new Date({{el.year}},{{el.month}},{{el.day}}), y: {{el.teacher}} },
+//             {% endfor %}
+// 			// { x: new Date(2010,0,1), y: 28 },
+// 			// { x: new Date(2010,0,2), y: 18 },
+// 			// { x: new Date(2010,0,3), y: 12 },
+// 			// { x: new Date(2010,0,5), y: 10 },
+// 			// { x: new Date(2010,0,6), y: 7 },
+// 			// { x: new Date(2010,0,7), y: 5 }
+// 		]
+// 	}, 
+	
+// 	]
+// });
+// role_chart.render();
 
 var sentiment_chart = new CanvasJS.Chart("sentiment_chartContainer", {
 	animationEnabled: true,  
@@ -255,8 +278,8 @@ sentiment_chart.render();
 <div id="rating_chartContainer" style="height: 370px; width: 100%;"></div>
 <div id="view_chartContainer" style="height: 370px; width: 100%;"></div>
 <div id="enrollment_chartContainer" style="height: 370px; width: 100%;"></div>
-<div id="role_chartContainer" style="height: 370px; width: 100%;"></div>
 <div id="sentiment_chartContainer" style="height: 370px; width: 100%;"></div>
+<div id="role_chartContainer" style="height: 370px; width: 100%;"></div>
 
 
 <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>

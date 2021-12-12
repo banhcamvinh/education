@@ -65,10 +65,8 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="{% url 'home:course' %}" style="font-family: Roboto, sans-serif;font-weight: bold;">Khóa học</a></li>
                     <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"></li>
-                    <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="#rating" style="font-family: Roboto, sans-serif;font-weight: bold;">Đánh giá</a></li>
-                    <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="#contact" style="font-family: Roboto, sans-serif;font-weight: bold;">Liên hệ</a></li>
                     <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="{% url 'home:cart' %}" style="font-family: Roboto, sans-serif;font-weight: bold;">Giỏ hàng</a></li>
-                    <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="{{ request.session.role }}" style="font-family: Roboto, sans-serif;font-weight: bold;">Quản lí</a></li>
+                    <li class="nav-item text-uppercase" data-bss-hover-animate="pulse" style="font-family: Roboto, sans-serif;font-weight: bold;"><a class="nav-link text-uppercase" data-bss-hover-animate="pulse" href="/{{ request.session.role }}" style="font-family: Roboto, sans-serif;font-weight: bold;">Quản lí</a></li>
                 </ul>
                 <!-- If đăng nhập rồi thì đổi thành nút đăng xuất -->
                 {% if request.session.username %}

@@ -64,7 +64,11 @@
             <input style="display: none;" type="text" value="" name="delete" class="delete">
         </form>
         <h1>Danh Sách các bài học</h1>
+        {% if not can_del %}
+        <button disabled class="btn btn-primary" >Tạo bài học mới </button>
+        {% else %}
         <a class="btn btn-primary" href="/course_creation/{{course_id}}/part_creation/{{part_name}}/lesson_creation/new">Tạo bài học mới </a>
+        {% endif %}
         <a class="btn btn-primary" href="/course_creation/{{course_id}}/part_creation/{{part_name}}">Trở về</a>
         <a class="btn btn-primary" href="/teacher_course">Trở về danh sách khóa học</a>
         <a class="btn btn-primary" href="/teacher_part/{{course_id}}">Trở về danh sách chương</a>
