@@ -68,7 +68,7 @@
         <form id="course_creation_form" method="post" action="/course_creation/{{course_id}}" enctype="multipart/form-data">
             {% csrf_token %}
             <span>Chọn video giới thiệu:&nbsp;</span>
-            <input class="course_introduce_video" name="course_introduce_video" type="file">
+            <input class="course_introduce_video" name="course_introduce_video" type="file" accept="video/*">
             <br>File cũ
             <p href="{{course_info.url}}">{{course_info.url}}</p>
             <p style="margin-bottom: 0px;">Nhập tên khóa học:</p>

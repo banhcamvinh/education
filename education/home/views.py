@@ -24,6 +24,7 @@ import requests
 from moviepy.editor import VideoFileClip
 import re
 
+
 firebaseConfig={
     "apiKey": "AIzaSyBOHxmgm-uhY4tQbK8YLLdNpP4IJYcHMrs",
     "authDomain": "education-5dcf4.firebaseapp.com",
@@ -37,7 +38,6 @@ firebaseConfig={
 firebase=pyrebase.initialize_app(firebaseConfig)
 #define storage
 storage=firebase.storage()
-
 
 def get_sentiment(input):
     result = ""
@@ -1179,8 +1179,8 @@ def course_learn(request,id):
             lesson_dict[lesson]['finish_list'].append(finish)
         part_dict[rc['part_name']] = lesson_dict
     
-    finish_part = 0
-    finish_lesson = 0
+    finish_part = -1
+    finish_lesson = -1
     part_index = 0
     lesson_index = 0
     is_not_start = False
@@ -1336,6 +1336,9 @@ def course_learn(request,id):
     lesson_url = None
     if len(rs) != 0:
         lesson_url = rs[0]['lesson_url']
+
+    print(finish_lesson)
+    print(finish_part)
 
     context = {
         'course_id': id,
@@ -1955,14 +1958,34 @@ def admin_report(request):
         sentiment_dict['point'] = point_list[index]
         sentiment_list.append(sentiment_dict)
 
-    print(enrollment_list)
-    # print(star_dict)
+    query = """
+        match (a:Account)-[:create]-(:Course_Creation)-[:with_course]-(c:Course)-[:to_course]-(rt:Rating_Course)
+        return distinct a.username as username, c.id as course_id, c.name as course_name, collect(rt.star) as course_star,collect(rt.content) as rating_content
+    """.format()
+    rs = myconnect.query(query)
+    rs = list(rs)
+    course_rating_list = list()
+    for el in rs:
+        temp = dict()
+        temp['username'] = el['username']
+        temp['course_id'] = el['course_id']
+        temp['course_name'] = el['course_name']
+        temp['course_star'] = round( sum(el['course_star'])/len(el['course_star']),2)
+        count_pos = 0
+        for content in el['rating_content']:
+            sentiment = get_sentiment(content) 
+            if sentiment == 'positive':
+                count_pos += 1
+        temp['course_sentiment'] = round(count_pos/len(el['rating_content']),2)
+        course_rating_list.append(temp)
+    
     context = {
         'star_dict':star_dict,
         'view_list': view_list,
         'enrollment_list': enrollment_list,
         'role_list':role_list,
-        'sentiment_list':sentiment_list
+        'sentiment_list':sentiment_list,
+        'course_rating_list':course_rating_list
     }
     template = loader.get_template('home/admin_report.html')
     return HttpResponse(template.render(context,request))
@@ -2478,6 +2501,54 @@ def teacher_part(request,course_id):
                 """.format(course_id,del_part_name,prev_part_name,next_part_name)
                 myconnect.query(query)
 
+        # Sau khi del part thì check toàn bộ part đã có lesson hết chưa nếu rồi -> course đã ổn
+        query = """
+            match (c:Course{{  id: {} }} )
+            with (c)
+            match (c)
+            optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+            with p,c
+            match (p)
+            optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+            with p.name as part_name, count(l) as count_lesson
+            order by count_lesson asc
+            return *
+        """.format(course_id)
+        rs = myconnect.query(query)
+        rs = list(rs)
+        is_course_finish = True
+        for rc in rs:
+            count = rc['count_lesson']
+            if count == 0:
+                is_course_finish = False
+                break
+        if not is_course_finish:
+            # Nếu tất cả các part đã có lesson thì updatae status cho course lại thành active
+            query = """
+                match (ws:Status),(ia:Status)
+                where ws.value = 'waiting' and ia.value = 'inactive'
+                with ws,ia
+                match (c:Course{{ id: {} }})
+                with c,ws,ia
+                match (c)-[st:in_status]-(ia)
+                delete st
+                merge (c)-[:in_status]->(ws)
+            """.format(course_id)
+            myconnect.query(query)
+        else: 
+            query = """
+                match (ws:Status),(ia:Status)
+                where ws.value = 'waiting' and ia.value = 'inactive'
+                with ws,ia
+                match (c:Course{{ id: {} }})
+                with c,ws,ia
+                match (c)-[st:in_status]-(ws)
+                delete st
+                merge (c)-[:in_status]->(ia)
+            """.format(course_id)
+            myconnect.query(query)
+
+
     can_del = True
     query = """
         match (c:Course{{ id: {} }})
@@ -2651,6 +2722,66 @@ def teacher_lesson(request,course_id,part_name):
                     create (prev_l)-[:next]->(next_l)
                 """.format(course_id,part_name,del_lesson_name,prev_lesson_name,next_lesson_name)
                 myconnect.query(query)
+            
+        # Sau khi del lesson thì check toàn bộ part đã có lesson hết chưa nếu rồi -> course đã ổn
+        query = """
+            match (c:Course{{  id: {} }} )
+            with (c)
+            match (c)
+            optional match (c)-[:head]-(:Part)-[:next*0..]->(p:Part)
+            with p,c
+            match (p)
+            optional match (p)-[:head]-(ltest:Lesson)-[:next*0..]->(l:Lesson)
+            with p.name as part_name, count(l) as count_lesson
+            order by count_lesson asc
+            return *
+        """.format(course_id)
+        rs = myconnect.query(query)
+        rs = list(rs)
+        print(rs)
+        is_course_finish = True
+        for rc in rs:
+            count = rc['count_lesson']
+            if count == 0:
+                is_course_finish = False
+                break
+        print(is_course_finish)
+        if not is_course_finish:
+            # Nếu tất cả các part đã có lesson thì updatae status cho course lại
+            query = """
+                match (ws:Status),(ia:Status)
+                where ws.value = 'waiting' and ia.value = 'inactive'
+                with ws,ia
+                match (c:Course{{ id: {} }})
+                with c,ws,ia
+                match (c)-[st:in_status]-(ia)
+                delete st
+                merge (c)-[:in_status]->(ws)
+            """.format(course_id)
+            myconnect.query(query)   
+        else:
+            query = """
+                match (ws:Status),(ia:Status)
+                where ws.value = 'waiting' and ia.value = 'inactive'
+                with ws,ia
+                match (c:Course{{ id: {} }})
+                with c,ws,ia
+                match (c)-[st:in_status]-(ws)
+                delete st
+                merge (c)-[:in_status]->(ia)
+            """.format(course_id)
+            myconnect.query(query)        
+
+
+
+
+
+
+
+
+
+
+            
 
         # Sau khi delete thì check lại các part đã có lesson hết chưa nếu chưa thì update lại trạng thái waiting
         query = """
@@ -2972,6 +3103,7 @@ def course_creation(request,id):
                 # course_uuid = uuid.uuid1().int
                 video_bytes = request.FILES['course_introduce_video'].read()
                 FILE_OUTPUT = '{}.mp4'.format(course_uuid)
+                
                 with open(FILE_OUTPUT, "wb") as out_file: 
                     out_file.write(video_bytes)
                 storage.child(str(course_uuid)).put(FILE_OUTPUT)
@@ -3327,6 +3459,18 @@ def part_creation(request,course_id, part_name):
                             delete oldtail
                         """.format(edit_part_name,edit_part_description,course_id)
                         myconnect.query(query)
+                    # sau khi add part -> chuyển status thành waitting cho course
+                    query = """
+                        match (ws:Status),(ia:Status)
+                        where ws.value = 'waiting' and ia.value = 'inactive'
+                        with ws,ia
+                        match (c:Course{{ id: {} }})
+                        with c,ws,ia
+                        match (c)-[st:in_status]-(ia)
+                        delete st
+                        merge (c)-[:in_status]->(ws)
+                    """.format(course_id)
+                    myconnect.query(query)
                     alert = "success"
                     part_name = edit_part_name
 
@@ -3514,15 +3658,15 @@ def lesson_creation(request,course_id, part_name, lesson_name):
                     if is_course_finish:
                         # Nếu tất cả các part đã có lesson thì updatae status cho course lại thành active
                         query = """
-                            match (ws:Status),(at:Status)
-                            where ws.value = 'waiting' and at.value = 'active'
-                            with ws,at
+                            match (ws:Status),(ia:Status)
+                            where ws.value = 'waiting' and ia.value = 'inactive'
+                            with ws,ia
                             match (c:Course{{ id: {} }})
-                            with c,ws,at
+                            with c,ws,ia
                             match (c)-[st:in_status]-(ws)
                             delete st
-                            with c,at
-                            create (c)-[:in_status]->(at)
+                            with c,ia
+                            merge (c)-[:in_status]->(ia)
                         """.format(course_id)
                         myconnect.query(query)
 

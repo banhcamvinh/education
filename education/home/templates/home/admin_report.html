@@ -270,6 +270,15 @@ sentiment_chart.render();
     <link rel="stylesheet" href="{% static 'home/assets/css/Ultimate-Testimonial-Slider-BS5.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/User-Rating-F19690.css' %}">
     <link rel="stylesheet" href="{% static 'home/assets/css/Video-Responsive-YouTube.css' %}">
+	<style>
+		table, th, td {
+		  border: 1px solid black;
+		  border-collapse: collapse;
+		}
+		th, td {
+		  padding: 15px;
+		}
+		</style>
 </head>
 <body>
 
@@ -280,6 +289,56 @@ sentiment_chart.render();
 <div id="enrollment_chartContainer" style="height: 370px; width: 100%;"></div>
 <div id="sentiment_chartContainer" style="height: 370px; width: 100%;"></div>
 <div id="role_chartContainer" style="height: 370px; width: 100%;"></div>
+
+<h1 style="text-align: center;">Course rating</h1>
+<div style="overflow:auto; max-height: 300px; margin-bottom: 100px;">
+	<table style="margin: 0 auto; ">
+		<tr>
+		  <th>User</th>
+		  <th>Course_name</th>
+		  <th>Course_rating</th>
+		  <th>Rating_status</th>
+		  <th>Course_sentiment</th>
+		  <th>Sentiment_status</th>
+		</tr>
+		{% for el in course_rating_list %}
+		<tr>
+			<td>
+				<a href="/admin_teacher">{{el.username}}</a>
+			</td>
+			<td>
+				<a href="/admin_course">{{el.course_name}}</a>
+			</td>
+			<td>
+				{{el.course_star}}
+			</td>
+			{% if el.course_star < 2 %}
+			<td style="background-color: red;">
+				Check !!!
+			</td>
+			{% else %}
+			<td style="background-color: greenyellow;">
+				Normal ^^
+			</td>
+			{% endif %}
+			<td>
+				{{el.course_sentiment}}
+			</td>
+			{% if el.course_sentiment < 0.2 %}
+			<td style="background-color: red;">
+				Check !!!
+			</td>
+			{% else %}
+			<td style="background-color: greenyellow;">
+				Normal ^^
+			</td>
+			{% endif %}
+		</tr>
+		{% endfor %}
+	  </table>	
+</div>
+
+
 
 
 <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>

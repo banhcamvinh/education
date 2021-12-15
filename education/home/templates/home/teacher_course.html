@@ -86,7 +86,11 @@
             {% if el.status == 'waiting' %}
             <div class="col"><button disabled class="active btn btn-primary" style="background-color: red !important;" value="{{ el.course_id }}">Waiting</button></div>
             {% else %}
-            <div class="col"><button disabled class="active btn btn-primary" style="background-color: green !important;" value="{{ el.course_id }}">Finished</button></div>
+                {% if el.status == 'active' %}
+                <div class="col"><button disabled class="active btn btn-primary" style="background-color: green !important;" value="{{ el.course_id }}">Active</button></div>
+                {% else %}
+                <div class="col"><button disabled class="active btn btn-primary" style="background-color: rgb(145, 145, 138) !important;" value="{{ el.course_id }}">Finish ?</button></div>
+                {% endif %}
             {% endif %}
         </div> 
         {% endfor %}
