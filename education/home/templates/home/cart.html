@@ -226,11 +226,16 @@
 
         </div>
         <div class="col d-flex flex-column justify-content-center align-items-start">
-        {% if codevalid %}
-        <a href="/pay/{{code}}" class="pay btn btn-primary" >Thanh toán</a></div>
+        {% if cart_list %}
+            {% if codevalid %}
+            <a href="/pay_pal/{{code}}" class="pay btn btn-primary" >Thanh toán</a></div>
+            {% else %}
+            <a href="/pay_pal/nonecode" class="pay btn btn-primary" >Thanh toán</a></div>
+            {% endif %}
         {% else %}
-        <a href="/pay/nonecode" class="pay btn btn-primary" >Thanh toán</a></div>
+        <button disabled class="pay btn btn-primary" >Thanh toán</button></div>
         {% endif %}
+      
     </div>
     <script src="{% static 'home/assets/bootstrap/js/bootstrap.min.js' %}"></script>
     <script src="{% static 'home/assets/js/bs-init.js' %}"></script>

@@ -1,0 +1,64 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% load static %}
+    <!-- Add meta tags for mobile and IE -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title> PayPal Checkout Integration | Client Demo </title>
+</head>
+
+<body>
+    <!-- Set up a container element for the button -->
+    <div id="paypal-button-container"></div>
+
+    <!-- Include the PayPal JavaScript SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AV3aJwGszy6qL4MytYEMbb1eI6XgKE6_uJ3JQun2Ucj6W8nvB2H3gmTFG3Iom_g6wAkDuEoZTzzdoVew&currency=USD"></script>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', (event) => {
+            if ({{pay_price}} == 0){
+                actions.redirect('http://127.0.0.1:8000/course');
+            }
+        });
+        // Render the PayPal button into #paypal-button-container
+        paypal.Buttons({
+
+            // Set up the transaction
+            createOrder: function(data, actions) {
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: {{pay_price}}
+                        }
+                    }]
+                });
+            },
+
+            // Finalize the transaction
+            onApprove: function(data, actions) {
+                return actions.order.capture().then(function(orderData) {
+                    // Successful capture! For demo purposes:
+                    // console.log('Capture result', orderData, JSON.stringify(orderData, null, 2));
+                    // var transaction = orderData.purchase_units[0].payments.captures[0];
+                    // alert('Transaction '+ transaction.status + ': ' + transaction.id + '\n\nSee console for all available details');
+
+                    // Replace the above to show a success message within this page, e.g.
+                    // const element = document.getElementById('paypal-button-container');
+                    // element.innerHTML = '';
+                    // element.innerHTML = '<h3>Thank you for your payment!</h3>';
+                    // Or go to another URL:  actions.redirect('thank_you.html');
+                    actions.redirect('http://127.0.0.1:8000/pay/{{code}}');
+                    // window.location = "https://www.example.com";
+                });
+            }
+
+
+        }).render('#paypal-button-container');
+    </script>
+</body>
+
+</html>
+    

@@ -962,6 +962,27 @@ def pay(request,code):
         code = None
 
     # print(year,month,day,current_time,code,username)
+    # query = """
+    #     // Create payment
+    #     merge (y:Year{{ value:{} }})
+    #     merge (y)<-[:in_year]-(:Time)
+    #     merge (m:Month{{value:{} }})<-[:in_month]-(y)
+    #     merge (d:Day{{value:{} }})<-[:in_day]-(m)
+    #     with d,m,y
+    #     match (a:Account{{ username:'{}' }})
+    #     with d,m,y,a
+    #     create (e:Enrollment{{ time:'{}' }})
+    #     create (a)-[:pay]->(e)-[:at]->(d)
+    #     with a,e
+    #     match (a)-[:has_cart]-(:Cart)-[hc:has_course]-(c:Course)-[:in_status]-(s:Status)
+    #     where s.value = 'active'
+    #     create (e)-[:to_course]->(c)
+    #     delete hc
+    #     with e
+    #     match (dc:Discount_Code{{ value:'{}' }})
+    #     create (e)-[:with_discount_code]->(dc)
+    # """.format(year,month,day,username,current_time,code)
+
     query = """
         // Create payment
         merge (y:Year{{ value:{} }})
@@ -971,13 +992,12 @@ def pay(request,code):
         with d,m,y
         match (a:Account{{ username:'{}' }})
         with d,m,y,a
-        create (e:Enrollment{{ time:'{}' }})
-        create (a)-[:pay]->(e)-[:at]->(d)
-        with a,e
         match (a)-[:has_cart]-(:Cart)-[hc:has_course]-(c:Course)-[:in_status]-(s:Status)
         where s.value = 'active'
-        create (e)-[:to_course]->(c)
+        with d,a,c,hc
         delete hc
+        create (e:Enrollment{{ time:'{}' }})-[:to_course]->(c)
+        create (a)-[:pay]->(e)-[:at]->(d)
         with e
         match (dc:Discount_Code{{ value:'{}' }})
         create (e)-[:with_discount_code]->(dc)
@@ -985,12 +1005,69 @@ def pay(request,code):
     myconnect.query(query)
         # create (a)-[:watching_course]->(c)
 
-
-
     # Query thêm để lấy giá tiền và giá km -> tính ra thành tiền
     # Kết hợp với chức năng thanh toán thật
 
     return redirect('/paysuccess')
+
+def pay_pal(request,code):
+    if 'username' not in request.session:
+            return redirect('/login')
+    username = request.session['username']
+    myconnect = db.neo4j("bolt://localhost","neo4j","123")
+
+    discount_price = 0
+    if code and code != 'nonecode':
+        query ="""
+            match (:Discount_Code{{value:'{}'}})-[:has_discount_price]-(p:Discount_Price)
+            return p.value as price
+        """.format(code)
+        rs = myconnect.query(query)
+        price = list(rs)
+        if len(price) != 0:
+            codevalid = True
+            discount_price = price[0]['price']
+    
+    # Get cart_list
+    query = """
+        match (a:Account{{username:'{}'}})-[:has_cart]-(:Cart)-[:has_course]-(c:Course)
+        with c,a
+        match (c)-[:in_status]-(s:Status)
+        where s.value = 'active'
+        with c,a
+        match (c)
+        optional match (c)-[:with_course]-(:Course_Mark)-[hcm:has_course_mark]-(a)
+        with c,count(hcm) as ismark
+        with c,ismark
+        match (c)
+        optional match (c)-[wc:watching_course]-(:Account)
+        with c, count(wc) as num_of_view,ismark
+        match (c)
+        optional match (c)-[:to_course]-(rc:Rating_Course)
+        with c,num_of_view, coalesce(avg(rc.star),0) as star,ismark
+        match (c)
+        optional match (c)-[:has_price]->(cp:Course_Price)-[:at]-(d:Day)<-[:in_day]-(m:Month)-[:in_month]-(y:Year)
+        with  c as course, cp.value as price,d.value as day,m.value as month,y.value as year,num_of_view,star,ismark
+        order by year desc,month desc,day desc
+        return course.id as id,course.name as name, apoc.agg.first(price)as price,num_of_view, star,ismark
+    """.format(username)
+    rs = myconnect.query(query)
+    cart_list = list(rs)
+    total_price = 0
+    for el in cart_list:
+        total_price += el['price']
+    
+    pay_price = total_price - discount_price
+    if pay_price < 0:
+        pay_price = 0
+        return redirect('/pay/{}'.format(code))
+
+    context = {
+        'code':code,
+        'pay_price': pay_price,
+    }
+    template = loader.get_template('home/pay_pal.html')
+    return HttpResponse(template.render(context,request))
 
 def paysuccess(request):
     return render(request,'home/pay_success.html')
