@@ -360,14 +360,16 @@ def course(request):
             # check if logged in -> return continue list and recommend list
             if 'username' in request.session :
                 query = """
-                    match (c:Course)<-[:watching_course]-(:Account{{username:"{}"}})
+                    match (c:Course)-[:to_course]-(:Enrollment)<-[:pay]-(:Account{{ username:"{}" }})
                     with c
                     limit 12
                     match (c)
                     optional match (c)-[:to_course]-(rc:Rating_Course)
                     with c, coalesce(avg(rc.star),0) as star
-                    match (c)-[wc:watching_course]-(:Account)
+                    match (c)
+                    optional match (c)-[wc:watching_course]-(:Account)
                     with c, count(wc) as num_of_view,star
+                    match (c)
                     optional match (c)-[:has_price]->(cp:Course_Price)-[:at]-(d:Day)<-[:in_day]-(m:Month)-[:in_month]-(y:Year)
                     with  c as course, cp.value as price,d.value as day,m.value as month,y.value as year,star,num_of_view
                     order by year desc,month desc,day desc

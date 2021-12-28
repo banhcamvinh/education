@@ -1,0 +1,3 @@
+- install cac thu vien can thiet trong python
+- data -> coppy file text data.txt vao neo4j de tao data
+- chay server -> python manage.py runserver
